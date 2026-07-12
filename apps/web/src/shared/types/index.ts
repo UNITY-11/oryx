@@ -1,4 +1,4 @@
-export type Category = "Massage" | "Facial" | "Nails" | "Hair" | "Products";
+export type Category = "Massage" | "Facial" | "Nails" | "Hair" | "Products" | "Spa" | "Therapy";
 
 export interface Item {
   id: string;

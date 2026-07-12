@@ -61,7 +61,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
       </div>
 
       {/* Content Container (Overlapping) */}
-      <div className="flex-1 bg-background rounded-t-3xl -mt-6 relative z-10 px-6 pt-8 pb-32">
+      <div className="flex-1 bg-gray-50 rounded-t-3xl -mt-6 relative z-10 px-6 pt-8 pb-32">
         <div className="prose prose-sm text-text-secondary leading-relaxed mb-8">
           <p className="text-[15px]">{item.description}</p>
         </div>
@@ -71,32 +71,32 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           <div className="mb-8">
             <h3 className="font-serif text-lg text-primary-dark mb-4">Select Duration</h3>
             <div className="space-y-3">
-              {item.variants.map(variant => (
-                <div 
-                  key={variant.id}
-                  onClick={() => setSelectedVariant(variant)}
-                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
-                    selectedVariant?.id === variant.id 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-primary/10 bg-surface'
-                  }`}
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium text-text-primary text-[15px]">{variant.name}</span>
-                    {variant.duration && (
-                      <span className="text-xs text-text-secondary mt-0.5">{variant.duration} mins</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-primary">${variant.price}</span>
-                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      selectedVariant?.id === variant.id ? 'border-primary bg-primary text-white' : 'border-gray-300'
-                    }`}>
-                      {selectedVariant?.id === variant.id && <div className="w-2 h-2 bg-white rounded-full" />}
+              {item.variants.map(variant => {
+                const isSelected = selectedVariant?.id === variant.id;
+                return (
+                  <div 
+                    key={variant.id}
+                    onClick={() => setSelectedVariant(variant)}
+                    className={`bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer ${
+                      isSelected ? 'border-primary/50 ring-1 ring-primary/20' : 'border-gray-100'
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium text-text-primary text-[15px] mb-1">{variant.name}</span>
+                      <span className="font-semibold text-text-primary text-sm">${variant.price}</span>
                     </div>
+                    <button 
+                      className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                        isSelected 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-gray-200 text-text-secondary'
+                      }`}
+                    >
+                      {isSelected ? 'Selected' : 'Select'}
+                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -112,19 +112,23 @@ export function ServiceDetailClient({ item }: { item: Item }) {
                   <div 
                     key={addon.id}
                     onClick={() => toggleAddon(addon)}
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
-                      isSelected ? 'border-primary bg-primary/5' : 'border-primary/10 bg-surface'
+                    className={`bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer ${
+                      isSelected ? 'border-primary/50 ring-1 ring-primary/20' : 'border-gray-100'
                     }`}
                   >
-                    <span className="font-medium text-text-primary text-[15px]">{addon.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-primary">+${addon.price}</span>
-                      <div className={`w-5 h-5 rounded-[6px] border flex items-center justify-center ${
-                        isSelected ? 'border-primary bg-primary text-white' : 'border-gray-300'
-                      }`}>
-                        {isSelected && <Check className="w-3.5 h-3.5" />}
-                      </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-text-primary text-[15px] mb-1">{addon.name}</span>
+                      <span className="font-semibold text-text-primary text-sm">+${addon.price}</span>
                     </div>
+                    <button 
+                      className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                        isSelected 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-gray-200 text-text-secondary'
+                      }`}
+                    >
+                      {isSelected ? 'Selected' : 'Select'}
+                    </button>
                   </div>
                 );
               })}

@@ -45,7 +45,7 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen">
       {/* Header & Search in a zero-height sticky wrapper to prevent layout shift */}
       <div className="sticky top-0 z-40 h-0 overflow-visible w-full">
-        <div className="bg-[#f5e6de]/90 backdrop-blur-xl px-6 pt-3 pb-3 border-b border-[#d4a373]/20 shadow-sm rounded-b-[40px]">
+        <div className="bg-[#f5e6de]/90 backdrop-blur-xl px-4 pt-3 pb-3 border-b border-[#d4a373]/20 shadow-sm rounded-b-[36px]">
           <div className="flex justify-center items-center mb-4 min-h-[32px]">
             <img
               ref={logoRef}

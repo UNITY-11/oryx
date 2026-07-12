@@ -21,13 +21,7 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@11.9.0",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "11.9.0"
-    }
-  },
+  "packageManager": "pnpm@9.12.3",
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",

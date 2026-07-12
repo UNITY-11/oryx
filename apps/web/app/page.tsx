@@ -63,10 +63,10 @@ export default function HomePage() {
                 placeholder="Search treatments or products..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-shadow"
+                className="w-full bg-gray-50 border border-gray-100 rounded-full py-3.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-shadow"
               />
             </div>
-            <Link href="/profile" className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0 text-text-secondary hover:text-primary transition-colors">
+            <Link href="/profile" className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center flex-shrink-0 text-text-secondary hover:text-primary transition-colors">
               <User className="w-5 h-5" />
             </Link>
           </div>

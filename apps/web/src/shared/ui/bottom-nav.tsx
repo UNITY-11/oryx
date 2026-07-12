@@ -21,8 +21,8 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="w-full bg-white/90 backdrop-blur-xl border-t border-gray-100" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex h-20 items-center justify-between px-6">
+    <nav className="w-full bg-white/90 backdrop-blur-xl border-t border-gray-100 rounded-t-3xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="flex h-16 items-center justify-between px-6">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -32,7 +32,7 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative -top-6 flex flex-col items-center justify-center focus:outline-none"
+                className="relative -top-4 flex flex-col items-center justify-center focus:outline-none"
               >
                 <div className={`flex h-14 w-14 items-center justify-center rounded-full shadow-spa transition-colors ${isActive ? 'bg-primary-dark' : 'bg-primary'}`}>
                   <Icon className="h-6 w-6 text-surface" strokeWidth={2.5} />

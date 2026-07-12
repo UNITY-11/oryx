@@ -80,32 +80,75 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Catalog List */}
-        <section>
-          <h2 className="font-serif text-xl text-primary-dark mb-4">
-            {searchQuery ? "Search Results" : "Featured Services & Products"}
-          </h2>
-          <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
-            {filteredItems.map(item => (
-              <Link 
-                href={`/service/${item.id}`} 
-                key={item.id} 
-                className="flex-none w-44 group block"
-              >
-                <div className="relative h-56 w-full rounded-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
+        {/* Search Results */}
+        {searchQuery && (
+          <section>
+            <h2 className="font-serif text-xl text-primary-dark mb-4">Search Results</h2>
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+              {filteredItems.map(item => (
+                <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-44 group block">
+                  <div className="relative h-56 w-full rounded-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
+                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <h3 className="absolute bottom-4 left-4 right-4 font-serif text-white font-medium text-lg leading-tight drop-shadow-md">
+                      {item.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+              {filteredItems.length === 0 && (
+                <p className="text-center text-text-secondary py-8 w-full">No items found.</p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Featured Services */}
+        {!searchQuery && (
+          <section>
+            <div className="flex justify-between items-end mb-4">
+              <h2 className="font-serif text-xl text-primary-dark">Featured Services</h2>
+            </div>
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+              {filteredItems.filter(item => !item.isProduct).map(item => (
+                <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-44 group block">
+                  <div className="relative h-56 w-full rounded-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
+                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <h3 className="absolute bottom-4 left-4 right-4 font-serif text-white font-medium text-lg leading-tight drop-shadow-md">
+                      {item.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Products Section */}
+        {!searchQuery && (
+          <section>
+            <div className="flex justify-between items-end mb-4">
+              <h2 className="font-serif text-xl text-primary-dark">Shop Products</h2>
+              <Link href="/products" className="text-sm text-primary font-medium">Show All</Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
+                <Link href={`/service/${item.id}`} key={item.id} className="relative aspect-square rounded-2xl overflow-hidden group shadow-sm transition-transform group-hover:scale-[1.02]">
                   <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <h3 className="absolute bottom-4 left-4 right-4 font-serif text-white font-medium text-lg leading-tight drop-shadow-md">
-                    {item.name}
-                  </h3>
-                </div>
-              </Link>
-            ))}
-            {filteredItems.length === 0 && (
-              <p className="text-center text-text-secondary py-8 w-full">No items found.</p>
-            )}
-          </div>
-        </section>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 flex flex-col">
+                    <h3 className="font-serif text-white font-medium text-sm leading-tight drop-shadow-md line-clamp-1">{item.name}</h3>
+                    <span className="font-sans font-semibold text-primary mt-1 text-sm">${item.price}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <Link href="/products" className="mt-4 w-full block text-center py-3 rounded-2xl border border-gray-200 text-sm font-medium text-text-secondary hover:bg-gray-50 transition-colors">
+              View All Products
+            </Link>
+          </section>
+        )}
       </div>
     </div>
   );

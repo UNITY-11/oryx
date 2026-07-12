@@ -17,23 +17,17 @@ export default function ProductsPage() {
           <Link 
             key={item.id}
             href={`/service/${item.id}`}
-            className="flex flex-col bg-gray-50 rounded-2xl overflow-hidden group border border-gray-100"
+            className="relative aspect-square rounded-2xl overflow-hidden group shadow-sm transition-transform group-hover:scale-[1.02]"
           >
-            <div className="relative aspect-square w-full bg-white">
-              <img 
-                src={item.imageUrl} 
-                alt={item.name} 
-                className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-              />
-            </div>
-            <div className="p-3 flex flex-col justify-between flex-1">
-              <div>
-                <h3 className="font-medium text-sm text-text-primary line-clamp-1">{item.name}</h3>
-                <span className="font-medium text-primary mt-1 block">${item.price}</span>
-              </div>
-              <button className="mt-3 bg-white border border-gray-200 text-text-primary text-xs font-medium py-2 rounded-lg flex items-center justify-center group-hover:border-primary group-hover:text-primary transition-colors">
-                <ShoppingBag className="w-3.5 h-3.5 mr-1" /> View Detail
-              </button>
+            <img 
+              src={item.imageUrl} 
+              alt={item.name} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute bottom-3 left-3 right-3 flex flex-col">
+              <h3 className="font-serif text-white font-medium text-sm leading-tight drop-shadow-md line-clamp-1">{item.name}</h3>
+              <span className="font-sans font-semibold text-primary mt-1 text-sm">${item.price}</span>
             </div>
           </Link>
         ))}

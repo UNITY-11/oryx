@@ -36,9 +36,9 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface relative">
+    <div className="absolute inset-0 z-40 flex flex-col bg-surface overflow-hidden">
       {/* Header Image */}
-      <div className="relative h-[40vh] w-full">
+      <div className="relative h-[40vh] w-full flex-none">
         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
@@ -61,7 +61,10 @@ export function ServiceDetailClient({ item }: { item: Item }) {
       </div>
 
       {/* Content Container (Overlapping) */}
-      <div className="flex-1 bg-gray-50 rounded-t-3xl -mt-6 relative z-10 px-6 pt-8 pb-32">
+      <div 
+        className="flex-1 bg-gray-50 rounded-t-3xl -mt-6 relative z-10 px-6 pt-8 pb-32 overflow-y-auto overscroll-contain"
+        data-lenis-prevent
+      >
         <div className="prose prose-sm text-text-secondary leading-relaxed mb-8">
           <p className="text-[15px]">{item.description}</p>
         </div>

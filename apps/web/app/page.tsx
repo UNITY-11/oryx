@@ -43,8 +43,8 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header & Search in a zero-height sticky wrapper to prevent layout shift */}
-      <div className="sticky top-0 z-40 h-0 overflow-visible w-full">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-40 w-full">
         <div className="bg-[#f5e6de]/90 backdrop-blur-xl px-6 pt-6 pb-4 border-b border-[#d4a373]/20 shadow-sm rounded-b-[40px]">
           <div className="flex justify-center items-center mb-4 min-h-[32px]">
             <img 
@@ -73,8 +73,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Static spacer to push content below the large header initially */}
-      <div className="pt-[210px]" />
 
       <div className="px-6 pb-6 space-y-8 flex-1">
         {/* Hero Carousel */}

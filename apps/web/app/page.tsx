@@ -20,7 +20,7 @@ export default function HomePage() {
       const scrollY = mainArea.scrollTop;
 
       const startHeight = 100;
-      const endHeight = 48;
+      const endHeight = 64;
 
       // Reduce height by 1px for every 1px scrolled down, clamped to the endHeight
       const newHeight = Math.max(endHeight, startHeight - scrollY);
@@ -74,7 +74,7 @@ export default function HomePage() {
       </div>
 
       {/* Static spacer to push content below the large header initially */}
-      <div className="pt-[210px]" />
+      <div className="pt-[190px]" />
 
 
       <div className="px-6 pb-6 space-y-8 flex-1">

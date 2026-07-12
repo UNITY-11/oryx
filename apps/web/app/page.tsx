@@ -225,7 +225,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-4">
               {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="group block">
-                  <div className="relative aspect-square rounded-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02] mb-2 bg-surface">
+                  <div className="relative aspect-square rounded-2xl overflow-hidden transition-transform group-hover:scale-[1.02] mb-2 bg-surface">
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex flex-col px-1">

@@ -17,17 +17,18 @@ export default function ProductsPage() {
           <Link 
             key={item.id}
             href={`/service/${item.id}`}
-            className="relative aspect-square rounded-2xl overflow-hidden group shadow-sm transition-transform group-hover:scale-[1.02]"
+            className="flex flex-col bg-surface rounded-2xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1"
           >
-            <img 
-              src={item.imageUrl} 
-              alt={item.name} 
-              className="w-full h-full object-cover" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute bottom-3 left-3 right-3 flex flex-col">
-              <h3 className="font-serif text-white font-medium text-sm leading-tight drop-shadow-md line-clamp-1">{item.name}</h3>
-              <span className="font-sans font-semibold text-primary mt-1 text-sm">${item.price}</span>
+            <div className="relative aspect-square">
+              <img 
+                src={item.imageUrl} 
+                alt={item.name} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+            <div className="p-3 flex flex-col">
+              <h3 className="font-serif text-text-primary font-medium text-sm leading-tight line-clamp-2">{item.name}</h3>
+              <span className="font-sans font-semibold text-primary-dark mt-1.5 text-sm">${item.price}</span>
             </div>
           </Link>
         ))}

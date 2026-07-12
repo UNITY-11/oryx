@@ -8,7 +8,7 @@ export const MOCK_SERVICES: Item[] = [
     price: 120,
     duration: 60,
     category: "Massage",
-    imageUrl: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/services/image.png",
   },
   {
     id: "s2",
@@ -17,7 +17,7 @@ export const MOCK_SERVICES: Item[] = [
     price: 150,
     duration: 90,
     category: "Massage",
-    imageUrl: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/services/image%20copy.png",
   },
   {
     id: "s3",
@@ -26,7 +26,7 @@ export const MOCK_SERVICES: Item[] = [
     price: 95,
     duration: 45,
     category: "Facial",
-    imageUrl: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/services/image%20copy%202.png",
   },
   {
     id: "s4",
@@ -35,7 +35,7 @@ export const MOCK_SERVICES: Item[] = [
     price: 45,
     duration: 45,
     category: "Nails",
-    imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/services/image%20copy%203.png",
   }
 ];
 
@@ -47,7 +47,7 @@ export const MOCK_PRODUCTS: Item[] = [
     price: 65,
     category: "Products",
     isProduct: true,
-    imageUrl: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/products/image%20copy%204.png",
   },
   {
     id: "p2",
@@ -56,7 +56,7 @@ export const MOCK_PRODUCTS: Item[] = [
     price: 35,
     category: "Products",
     isProduct: true,
-    imageUrl: "https://images.unsplash.com/photo-1608248593842-8eb44a6ec3f9?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/products/image%20copy%205.png",
   },
   {
     id: "p3",
@@ -65,7 +65,7 @@ export const MOCK_PRODUCTS: Item[] = [
     price: 28,
     category: "Products",
     isProduct: true,
-    imageUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/products/image%20copy%206.png",
   },
   {
     id: "p4",
@@ -74,7 +74,7 @@ export const MOCK_PRODUCTS: Item[] = [
     price: 42,
     category: "Products",
     isProduct: true,
-    imageUrl: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/products/image%20copy%207.png",
   },
   {
     id: "p5",
@@ -83,7 +83,7 @@ export const MOCK_PRODUCTS: Item[] = [
     price: 55,
     category: "Products",
     isProduct: true,
-    imageUrl: "https://images.unsplash.com/photo-1614859324967-bdfce6b4c10a?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/products/image%20copy%208.png",
   },
   {
     id: "p6",
@@ -92,7 +92,7 @@ export const MOCK_PRODUCTS: Item[] = [
     price: 75,
     category: "Products",
     isProduct: true,
-    imageUrl: "https://images.unsplash.com/photo-1629198688000-71f23e745b6e?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/images/products/image%20copy%209.png",
   }
 ];
 

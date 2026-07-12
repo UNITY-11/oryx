@@ -46,11 +46,9 @@ export default function RootLayout({
         <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-[#fcf4f0] shadow-2xl sm:border-x sm:border-gray-100">
           
           {/* Main Scrollable Content */}
-          <main id="main-scroll-container" className="flex-1 overflow-y-auto scrollbar-hide">
-            <LenisProvider>
-              {children}
-            </LenisProvider>
-          </main>
+          <LenisProvider>
+            {children}
+          </LenisProvider>
 
           {/* Bottom Navigation - stays above browser chrome */}
           <div className="shrink-0 z-50">

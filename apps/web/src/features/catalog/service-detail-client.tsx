@@ -13,13 +13,13 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   const [selectedVariant, setSelectedVariant] = useState<ItemVariant | undefined>(
     item.variants && item.variants.length > 0 ? item.variants[0] : undefined
   );
-  
+
   const [selectedAddons, setSelectedAddons] = useState<ItemVariant[]>([]);
 
   const toggleAddon = (addon: ItemVariant) => {
-    setSelectedAddons(prev => 
-      prev.find(a => a.id === addon.id) 
-        ? prev.filter(a => a.id !== addon.id) 
+    setSelectedAddons(prev =>
+      prev.find(a => a.id === addon.id)
+        ? prev.filter(a => a.id !== addon.id)
         : [...prev, addon]
     );
   };
@@ -38,11 +38,11 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   return (
     <div className="absolute inset-0 z-40 flex flex-col bg-surface overflow-hidden">
       {/* Header Image */}
-      <div className="relative h-[40vh] w-full flex-none">
+      <div className="relative h-[25vh] w-full flex-none">
         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        
-        <button 
+
+        <button
           onClick={() => router.back()}
           className="absolute top-12 left-6 bg-white/20 p-2.5 rounded-full backdrop-blur-md text-white hover:bg-white/30 transition-colors z-10"
         >
@@ -61,8 +61,8 @@ export function ServiceDetailClient({ item }: { item: Item }) {
       </div>
 
       {/* Content Container (Overlapping) */}
-      <div 
-        className="flex-1 bg-gray-50 rounded-t-3xl -mt-6 relative z-10 px-6 pt-8 pb-32 overflow-y-auto overscroll-contain"
+      <div
+        className="flex-1 bg-gray-50 rounded-t-4xl -mt-6 relative z-10 px-6 pt-8 pb-42 overflow-y-auto overscroll-contain"
         data-lenis-prevent
       >
         <div className="prose prose-sm text-text-secondary leading-relaxed mb-8">
@@ -77,23 +77,21 @@ export function ServiceDetailClient({ item }: { item: Item }) {
               {item.variants.map(variant => {
                 const isSelected = selectedVariant?.id === variant.id;
                 return (
-                  <div 
+                  <div
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
-                    className={`bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer ${
-                      isSelected ? 'border-primary/50 ring-1 ring-primary/20' : 'border-gray-100'
-                    }`}
+                    className={`bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer ${isSelected ? 'border-primary/50 ring-1 ring-primary/20' : 'border-gray-100'
+                      }`}
                   >
                     <div className="flex flex-col">
                       <span className="font-medium text-text-primary text-[15px] mb-1">{variant.name}</span>
                       <span className="font-semibold text-text-primary text-sm">${variant.price}</span>
                     </div>
-                    <button 
-                      className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-                        isSelected 
-                          ? 'border-primary text-primary bg-primary/5' 
-                          : 'border-gray-200 text-text-secondary'
-                      }`}
+                    <button
+                      className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${isSelected
+                        ? 'border-primary text-primary bg-primary/5'
+                        : 'border-gray-200 text-text-secondary'
+                        }`}
                     >
                       {isSelected ? 'Selected' : 'Select'}
                     </button>
@@ -112,23 +110,21 @@ export function ServiceDetailClient({ item }: { item: Item }) {
               {item.addons.map(addon => {
                 const isSelected = selectedAddons.some(a => a.id === addon.id);
                 return (
-                  <div 
+                  <div
                     key={addon.id}
                     onClick={() => toggleAddon(addon)}
-                    className={`bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer ${
-                      isSelected ? 'border-primary/50 ring-1 ring-primary/20' : 'border-gray-100'
-                    }`}
+                    className={`bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border transition-all cursor-pointer ${isSelected ? 'border-primary/50 ring-1 ring-primary/20' : 'border-gray-100'
+                      }`}
                   >
                     <div className="flex flex-col">
                       <span className="font-medium text-text-primary text-[15px] mb-1">{addon.name}</span>
                       <span className="font-semibold text-text-primary text-sm">+${addon.price}</span>
                     </div>
-                    <button 
-                      className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-                        isSelected 
-                          ? 'border-primary text-primary bg-primary/5' 
-                          : 'border-gray-200 text-text-secondary'
-                      }`}
+                    <button
+                      className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${isSelected
+                        ? 'border-primary text-primary bg-primary/5'
+                        : 'border-gray-200 text-text-secondary'
+                        }`}
                     >
                       {isSelected ? 'Selected' : 'Select'}
                     </button>
@@ -146,7 +142,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           <span className="text-text-secondary text-sm font-medium">Total</span>
           <span className="font-serif text-2xl font-bold text-primary-dark">${totalPrice}</span>
         </div>
-        <button 
+        <button
           onClick={handleAdd}
           className="w-full bg-primary text-white py-4 rounded-full font-medium text-lg flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-[0.98]"
         >

@@ -26,6 +26,35 @@ const SLIDES = [
 
 export function HeroCarousel() {
   const [current, setCurrent] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance (in px) to trigger slide change
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null); // Reset touch end to avoid stale values
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEndHandler = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      next();
+    }
+    if (isRightSwipe) {
+      prev();
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -38,7 +67,12 @@ export function HeroCarousel() {
   const prev = () => setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
 
   return (
-    <div className="relative w-full h-64 overflow-hidden rounded-3xl shadow-spa">
+    <div 
+      className="relative w-full h-64 overflow-hidden rounded-3xl shadow-spa"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEndHandler}
+    >
       <div 
         className="flex h-full transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${current * 100}%)` }}

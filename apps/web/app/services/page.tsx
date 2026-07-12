@@ -12,7 +12,7 @@ export default function ServicesPage() {
         <p className="mt-2 text-text-secondary text-sm">Explore our signature spa treatments.</p>
       </div>
 
-      <div className="px-6 grid grid-cols-2 gap-4 pb-32">
+      <div className="px-6 grid grid-cols-2 gap-4 pb-6">
         {services.map((item) => (
           <Link 
             key={item.id}

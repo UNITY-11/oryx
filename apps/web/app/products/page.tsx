@@ -12,7 +12,7 @@ export default function ProductsPage() {
         <p className="mt-2 text-text-secondary text-sm">Discover our premium spa products.</p>
       </div>
 
-      <div className="px-6 grid grid-cols-2 gap-4 pb-32">
+      <div className="px-6 grid grid-cols-2 gap-4 pb-6">
         {products.map((item) => (
           <Link 
             key={item.id}

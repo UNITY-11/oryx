@@ -19,7 +19,7 @@ export default function ServicesPage() {
             href={`/service/${item.id}`}
             className="group block"
           >
-            <div className="relative h-56 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
+            <div className="relative h-56 w-full rounded-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
               <img 
                 src={item.imageUrl} 
                 alt={item.name} 

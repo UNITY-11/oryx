@@ -57,6 +57,42 @@ export const MOCK_PRODUCTS: Item[] = [
     category: "Products",
     isProduct: true,
     imageUrl: "https://images.unsplash.com/photo-1608248593842-8eb44a6ec3f9?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: "p3",
+    name: "Hydrating Rose Mist",
+    description: "Refreshing facial mist with organic rose water.",
+    price: 28,
+    category: "Products",
+    isProduct: true,
+    imageUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: "p4",
+    name: "Charcoal Detox Mask",
+    description: "Deep cleansing clay mask for purifying pores.",
+    price: 42,
+    category: "Products",
+    isProduct: true,
+    imageUrl: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: "p5",
+    name: "Shea Butter Body Cream",
+    description: "Ultra-rich moisturizing cream for dry skin.",
+    price: 55,
+    category: "Products",
+    isProduct: true,
+    imageUrl: "https://images.unsplash.com/photo-1614859324967-bdfce6b4c10a?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: "p6",
+    name: "Vitamin C Eye Serum",
+    description: "Brightening eye treatment to reduce dark circles.",
+    price: 75,
+    category: "Products",
+    isProduct: true,
+    imageUrl: "https://images.unsplash.com/photo-1629198688000-71f23e745b6e?auto=format&fit=crop&q=80&w=800",
   }
 ];
 

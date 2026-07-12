@@ -32,9 +32,6 @@ export default function ServicesPage() {
                 </h3>
               </div>
             </div>
-            <div className="mt-2 text-center">
-              <span className="font-sans font-semibold text-primary-dark text-sm">${item.price}</span>
-            </div>
           </Link>
         ))}
         {services.length === 0 && (

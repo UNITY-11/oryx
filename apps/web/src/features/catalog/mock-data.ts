@@ -36,6 +36,24 @@ export const MOCK_SERVICES: Item[] = [
     duration: 45,
     category: "Nails",
     imageUrl: "/images/services/image%20copy%203.png",
+  },
+  {
+    id: "s5",
+    name: "Aromatherapy Soak",
+    description: "A relaxing floral bath soak with essential oils.",
+    price: 65,
+    duration: 30,
+    category: "Spa",
+    imageUrl: "/images/services/image.png",
+  },
+  {
+    id: "s6",
+    name: "Hot Stone Therapy",
+    description: "Melt away tension with smooth, heated stones.",
+    price: 135,
+    duration: 75,
+    category: "Massage",
+    imageUrl: "/images/services/image%20copy.png",
   }
 ];
 

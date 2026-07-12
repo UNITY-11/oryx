@@ -21,7 +21,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="w-full bg-white/90 backdrop-blur-xl border-t border-gray-100 pb-safe">
+    <nav className="w-full bg-white/90 backdrop-blur-xl border-t border-gray-100" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex h-20 items-center justify-between px-6">
         {navItems.map((item) => {
           const isActive = pathname === item.href;

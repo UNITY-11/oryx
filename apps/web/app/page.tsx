@@ -20,7 +20,7 @@ export default function HomePage() {
       const scrollY = mainArea.scrollTop;
 
       const startHeight = 100;
-      const endHeight = 64;
+      const endHeight = 54;
 
       // Reduce height by 1px for every 1px scrolled down, clamped to the endHeight
       const newHeight = Math.max(endHeight, startHeight - scrollY);

@@ -43,18 +43,20 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${cinzel.variable}`}>
       <body suppressHydrationWarning className="min-h-screen bg-[#fcf4f0] text-text-primary antialiased">
         {/* Mobile Shell Wrapper */}
-        <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-[#fcf4f0] shadow-2xl sm:border-x sm:border-gray-100">
-          
+        <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-[#fcf4f0] shadow-2xl relative sm:border-x sm:border-gray-100">
+
           {/* Main Scrollable Content */}
           <LenisProvider>
             {children}
           </LenisProvider>
 
-          {/* Bottom Navigation - stays above browser chrome */}
-          <div className="shrink-0 z-50">
-            <BottomNav />
+          {/* Bottom Navigation - transparent overlay over content */}
+          <div className="absolute bottom-0 left-0 w-full z-50 pointer-events-none">
+            <div className="pointer-events-auto">
+              <BottomNav />
+            </div>
           </div>
-          
+
         </div>
       </body>
     </html>

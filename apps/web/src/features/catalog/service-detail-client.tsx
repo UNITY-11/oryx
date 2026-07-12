@@ -1,58 +1,147 @@
 "use client";
 
-import { Item } from "@/shared/types";
+import { Item, ItemVariant } from "@/shared/types";
 import { useCartStore } from "@/shared/store";
-import { ChevronLeft, Clock, ShoppingBag } from "lucide-react";
+import { ChevronLeft, Clock, ShoppingBag, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function ServiceDetailClient({ item }: { item: Item }) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
 
+  const [selectedVariant, setSelectedVariant] = useState<ItemVariant | undefined>(
+    item.variants && item.variants.length > 0 ? item.variants[0] : undefined
+  );
+  
+  const [selectedAddons, setSelectedAddons] = useState<ItemVariant[]>([]);
+
+  const toggleAddon = (addon: ItemVariant) => {
+    setSelectedAddons(prev => 
+      prev.find(a => a.id === addon.id) 
+        ? prev.filter(a => a.id !== addon.id) 
+        : [...prev, addon]
+    );
+  };
+
+  const currentPrice = selectedVariant ? selectedVariant.price : item.price;
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.price, 0);
+  const totalPrice = currentPrice + addonsTotal;
+
+  const currentDuration = selectedVariant ? selectedVariant.duration : item.duration;
+
   const handleAdd = () => {
-    addItem(item);
+    addItem(item, selectedVariant, selectedAddons);
     router.push("/booking");
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <div className="relative h-72 w-full">
+    <div className="flex flex-col min-h-screen bg-surface relative">
+      {/* Header Image */}
+      <div className="relative h-[40vh] w-full">
         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        
         <button 
           onClick={() => router.back()}
-          className="absolute top-12 left-6 bg-white/20 p-2 rounded-full backdrop-blur-md text-white hover:bg-white/40 transition"
+          className="absolute top-12 left-6 bg-white/20 p-2.5 rounded-full backdrop-blur-md text-white hover:bg-white/30 transition-colors z-10"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
+
+        <div className="absolute bottom-10 left-6 right-6">
+          <h1 className="font-serif text-3xl font-medium text-white mb-2 leading-tight">{item.name}</h1>
+          {currentDuration && (
+            <div className="flex items-center text-sm text-white/80">
+              <Clock className="w-4 h-4 mr-1.5" />
+              {currentDuration} minutes
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex-1 px-6 pt-6 pb-32">
-        <div className="flex justify-between items-start mb-4">
-          <h1 className="font-serif text-3xl font-medium text-primary-dark">{item.name}</h1>
-          <span className="font-serif text-2xl font-bold text-primary">${item.price}</span>
+      {/* Content Container (Overlapping) */}
+      <div className="flex-1 bg-background rounded-t-3xl -mt-6 relative z-10 px-6 pt-8 pb-32">
+        <div className="prose prose-sm text-text-secondary leading-relaxed mb-8">
+          <p className="text-[15px]">{item.description}</p>
         </div>
-        
-        {item.duration && (
-          <div className="flex items-center text-sm text-text-secondary mb-6">
-            <Clock className="w-4 h-4 mr-1.5" />
-            {item.duration} minutes
+
+        {/* Variants */}
+        {item.variants && item.variants.length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-serif text-lg text-primary-dark mb-4">Select Duration</h3>
+            <div className="space-y-3">
+              {item.variants.map(variant => (
+                <div 
+                  key={variant.id}
+                  onClick={() => setSelectedVariant(variant)}
+                  className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+                    selectedVariant?.id === variant.id 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-primary/10 bg-surface'
+                  }`}
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium text-text-primary text-[15px]">{variant.name}</span>
+                    {variant.duration && (
+                      <span className="text-xs text-text-secondary mt-0.5">{variant.duration} mins</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-primary">${variant.price}</span>
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                      selectedVariant?.id === variant.id ? 'border-primary bg-primary text-white' : 'border-gray-300'
+                    }`}>
+                      {selectedVariant?.id === variant.id && <div className="w-2 h-2 bg-white rounded-full" />}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="prose prose-sm text-text-secondary leading-relaxed">
-          <h3 className="text-primary-dark font-medium mb-2 text-base">Description</h3>
-          <p>{item.description}</p>
-          <p className="mt-4">
-            Our luxury spa treatments use only the finest natural ingredients to ensure a rejuvenating and relaxing experience. Our therapists are highly trained to customize this treatment exactly for your needs.
-          </p>
-        </div>
+        {/* Addons */}
+        {item.addons && item.addons.length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-serif text-lg text-primary-dark mb-4">Enhance Your Experience</h3>
+            <div className="space-y-3">
+              {item.addons.map(addon => {
+                const isSelected = selectedAddons.some(a => a.id === addon.id);
+                return (
+                  <div 
+                    key={addon.id}
+                    onClick={() => toggleAddon(addon)}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+                      isSelected ? 'border-primary bg-primary/5' : 'border-primary/10 bg-surface'
+                    }`}
+                  >
+                    <span className="font-medium text-text-primary text-[15px]">{addon.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-primary">+${addon.price}</span>
+                      <div className={`w-5 h-5 rounded-[6px] border flex items-center justify-center ${
+                        isSelected ? 'border-primary bg-primary text-white' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <Check className="w-3.5 h-3.5" />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 pb-safe">
+      {/* Floating Booking Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-primary/10 z-50">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-text-secondary text-sm font-medium">Total</span>
+          <span className="font-serif text-2xl font-bold text-primary-dark">${totalPrice}</span>
+        </div>
         <button 
           onClick={handleAdd}
-          className="w-full bg-primary text-white py-4 rounded-2xl font-medium text-lg flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary-dark transition"
+          className="w-full bg-primary text-white py-4 rounded-full font-medium text-lg flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-[0.98]"
         >
           <ShoppingBag className="w-5 h-5 mr-2" />
           Add to Booking

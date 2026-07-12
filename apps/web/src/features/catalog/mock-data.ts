@@ -9,6 +9,16 @@ export const MOCK_SERVICES: Item[] = [
     duration: 60,
     category: "Massage",
     imageUrl: "/images/services/image.png",
+    variants: [
+      { id: "v1", name: "60 Minutes", price: 120, duration: 60 },
+      { id: "v2", name: "90 Minutes", price: 170, duration: 90 },
+      { id: "v3", name: "120 Minutes", price: 210, duration: 120 },
+    ],
+    addons: [
+      { id: "a1", name: "Hot Stones", price: 25 },
+      { id: "a2", name: "Aromatherapy", price: 15 },
+      { id: "a3", name: "Deep Tissue Upgrade", price: 20 },
+    ]
   },
   {
     id: "s2",
@@ -27,6 +37,14 @@ export const MOCK_SERVICES: Item[] = [
     duration: 45,
     category: "Facial",
     imageUrl: "/images/services/image%20copy%202.png",
+    variants: [
+      { id: "f1", name: "Standard (45 Min)", price: 95, duration: 45 },
+      { id: "f2", name: "Deluxe (60 Min)", price: 130, duration: 60 },
+    ],
+    addons: [
+      { id: "fa1", name: "LED Light Therapy", price: 30 },
+      { id: "fa2", name: "Collagen Eye Mask", price: 15 },
+    ]
   },
   {
     id: "s4",

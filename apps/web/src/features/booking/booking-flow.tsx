@@ -80,7 +80,7 @@ export function BookingFlow() {
                     </span>
                     {inCart ? (
                       <div className="flex items-center space-x-3 bg-primary/10 px-3 py-1 rounded-full">
-                        <button onClick={() => removeItem(item.id)} className="text-primary"><Minus className="w-4 h-4" /></button>
+                        <button onClick={() => removeItem(inCart.id)} className="text-primary"><Minus className="w-4 h-4" /></button>
                         <span className="text-sm font-medium">{inCart.quantity}</span>
                         <button onClick={() => addItem(item)} className="text-primary"><Plus className="w-4 h-4" /></button>
                       </div>

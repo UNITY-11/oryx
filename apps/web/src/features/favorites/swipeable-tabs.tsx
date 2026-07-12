@@ -17,11 +17,11 @@ export function SwipableFavorites() {
 
   const onTouchStart = (e: TouchEvent) => {
     touchEnd.current = null;
-    touchStart.current = e.targetTouches[0].clientX;
+    touchStart.current = e.targetTouches[0]?.clientX ?? null;
   };
 
   const onTouchMove = (e: TouchEvent) => {
-    touchEnd.current = e.targetTouches[0].clientX;
+    touchEnd.current = e.targetTouches[0]?.clientX ?? null;
   };
 
   const onTouchEnd = () => {

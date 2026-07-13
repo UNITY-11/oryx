@@ -52,7 +52,7 @@ export function TopNav() {
       {/* Right side: Search, Favorites & Profile */}
       <div className="flex items-center justify-end space-x-4 flex-1">
         <div className="relative w-48 xl:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
           <input
             type="text"
             placeholder="Search treatments or products..."

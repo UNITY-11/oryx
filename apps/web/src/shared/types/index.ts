@@ -35,3 +35,13 @@ export interface CartItem {
   selectedAddons?: ItemVariant[];
   totalPrice: number; // Calculated price for this specific configured item
 }
+
+export interface Booking {
+  id: string;
+  cartItems: CartItem[];
+  totalPrice: number;
+  date: string;
+  time: string;
+  status: "upcoming" | "completed";
+  bookingRef: string;
+}

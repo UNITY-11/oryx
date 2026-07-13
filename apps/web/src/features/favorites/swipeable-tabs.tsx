@@ -75,19 +75,18 @@ export function SwipableFavorites() {
     }
 
     return (
-      <div className="space-y-6 pt-6 pb-24 px-6 md:px-0 max-w-2xl mx-auto">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pt-6 pb-24 px-4 md:px-0 max-w-5xl mx-auto">
         {items.map(item => {
           const favorite = isFavorite(item.id);
           
           return (
             <div 
               key={item.id} 
-              className="relative rounded-3xl overflow-hidden shadow-lg border border-primary/10 group cursor-pointer transition-all active:scale-[0.98]"
+              className="relative rounded-[24px] md:rounded-[32px] overflow-hidden bg-white shadow-sm border border-primary/10 group cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
               onClick={() => router.push(item.isProduct ? `/product/${item.id}` : `/session/${item.id}`)}
             >
-              <div className="h-64 w-full relative">
+              <div className="h-40 md:h-56 w-full relative overflow-hidden">
                 <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 
                 {/* Floating Heart Button */}
                 <button 
@@ -95,28 +94,21 @@ export function SwipableFavorites() {
                     e.stopPropagation();
                     toggleFavorite(item);
                   }}
-                  className={`absolute top-4 right-4 p-3 rounded-full backdrop-blur-md transition-all z-10 shadow-sm
-                    ${favorite ? 'bg-white text-[#E5C37A]' : 'bg-black/30 text-white hover:bg-white/30'}
+                  className={`absolute top-3 right-3 md:top-4 md:right-4 p-2 md:p-2.5 rounded-full backdrop-blur-md transition-all z-10 shadow-sm
+                    ${favorite ? 'bg-white text-[#E5C37A]' : 'bg-black/20 text-white hover:bg-white/30'}
                   `}
                 >
-                  <Heart className={`w-5 h-5 transition-colors ${favorite ? 'fill-[#E5C37A]' : ''}`} />
+                  <Heart className={`w-4 h-4 md:w-5 md:h-5 transition-colors ${favorite ? 'fill-[#E5C37A]' : ''}`} />
                 </button>
+              </div>
                 
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end">
-                  <div className="flex justify-between items-end">
-                    <div className="flex-1 pr-4">
-                      <h3 className="font-serif text-2xl text-white mb-1 leading-tight shadow-sm drop-shadow-md">{item.name}</h3>
-                      <p className="text-white/80 text-sm line-clamp-1 flex items-center drop-shadow-sm">
-                        {item.category}
-                        <span className="mx-2 opacity-50">•</span>
-                        {item.duration || "Item"}
-                      </p>
-                    </div>
-                    <div className="shrink-0 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                      <span className="font-medium text-white shadow-sm drop-shadow-sm">QAR {item.price}</span>
-                    </div>
-                  </div>
+              {/* Content Below Image */}
+              <div className="p-4 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-serif text-[13px] md:text-lg text-primary-dark leading-snug truncate">{item.name}</h3>
+                </div>
+                <div className="mt-2 md:mt-3">
+                  <p className="text-[#E5C37A] font-bold text-sm md:text-base">QAR {item.price}</p>
                 </div>
               </div>
             </div>

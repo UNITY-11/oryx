@@ -42,7 +42,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen overflow-x-hidden">
       {/* Header & Search in a zero-height sticky wrapper to prevent layout shift */}
       <div className="md:hidden sticky top-0 z-40 h-0 overflow-visible w-full">
         <div className="bg-[#f5e6de]/90 backdrop-blur-xl px-4 pt-3 pb-3 border-b border-[#d4a373]/20 shadow-sm rounded-b-[36px]">
@@ -112,7 +112,7 @@ export default function HomePage() {
         {/* Promotional Banner */}
         {!searchQuery && (
           <section>
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0 md:mx-0">
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0 md:mx-0">
               {/* Card 1 */}
               <div className="flex-none w-[92%] md:w-full bg-primary/5 rounded-2xl relative overflow-hidden shadow-sm">
 
@@ -196,7 +196,7 @@ export default function HomePage() {
         {searchQuery && (
           <section>
             <h2 className="font-serif text-xl md:text-3xl text-primary-dark mb-4">Search Results</h2>
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
               {filteredItems.map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-44 group block">
                   <div className="relative h-56 w-full rounded-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
@@ -221,7 +221,7 @@ export default function HomePage() {
               <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Featured Services</h2>
               <Link href="/services" className="text-sm text-primary font-medium">See All</Link>
             </div>
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
               {filteredItems.filter(item => !item.isProduct).map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-[44%] md:w-80 group block">
                   <div className="relative h-56 md:h-96 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm border-2 border-[#E5C37A]">

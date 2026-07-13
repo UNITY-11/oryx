@@ -42,9 +42,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${cinzel.variable}`}>
-      <body suppressHydrationWarning className="min-h-screen bg-[#fcf4f0] text-text-primary antialiased">
+      <body suppressHydrationWarning className="min-h-screen bg-[#fcf4f0] text-text-primary antialiased overflow-x-hidden">
         {/* App Layout Wrapper */}
-        <div className="mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-col bg-[#fcf4f0] shadow-2xl relative">
+        <div className="mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-col bg-[#fcf4f0] shadow-2xl relative overflow-x-hidden">
 
           <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none md:pointer-events-auto">
             <TopNav />

@@ -105,7 +105,7 @@ function CartItemCard({ cartItem, setItemToDelete, removeItem, addItem }: {
   );
 }
 
-export function BookingFlow() {
+export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState<"services" | "time" | "auth" | "success">("services");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -249,13 +249,17 @@ export function BookingFlow() {
         {step !== "success" && (
           <>
             <div className={`absolute top-0 w-full left-0 right-0 px-6 pt-6 pb-4 flex items-center justify-center z-40 ${step === "auth" ? "bg-[#ddbdae] md:bg-white" : "bg-[#faf6f3] md:bg-white"}`}>
-              <button 
-                onClick={handleBack} 
-                className={`absolute left-6 p-2 flex items-center justify-center rounded-full transition-colors ${step === "auth" ? "text-white md:text-text-secondary hover:bg-white/20 md:hover:bg-black/5" : "text-text-secondary hover:bg-black/5"}`}
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <h1 className={`font-serif text-3xl font-medium text-center ${step === "auth" ? "text-white md:text-primary-dark" : "text-primary-dark"}`}>Book Session</h1>
+              {(!isIntegrated || step !== "services") && (
+                <button 
+                  onClick={handleBack} 
+                  className={`absolute left-6 p-2 flex items-center justify-center rounded-full transition-colors ${step === "auth" ? "text-white md:text-text-secondary hover:bg-white/20 md:hover:bg-black/5" : "text-text-secondary hover:bg-black/5"}`}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+              {!isIntegrated && (
+                <h1 className={`font-serif text-3xl font-medium text-center ${step === "auth" ? "text-white md:text-primary-dark" : "text-primary-dark"}`}>Book Session</h1>
+              )}
             </div>
             {/* Spacer to push content below fixed header */}
             <div className="h-[76px] w-full shrink-0 md:bg-white" />

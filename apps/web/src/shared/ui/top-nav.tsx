@@ -14,6 +14,10 @@ export function TopNav() {
     { name: "Booking", href: "/booking", icon: Calendar },
   ];
 
+  if (pathname.startsWith("/service/")) {
+    return null;
+  }
+
   return (
     <nav className="hidden md:flex w-full bg-white/90 backdrop-blur-xl border border-primary/10 rounded-full px-8 py-4 items-center justify-between z-50 shrink-0 shadow-sm">
       {/* Left side: Links */}

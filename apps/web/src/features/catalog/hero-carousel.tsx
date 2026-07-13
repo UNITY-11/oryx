@@ -68,7 +68,7 @@ export function HeroCarousel() {
 
   return (
     <div 
-      className="relative w-full h-64 overflow-hidden rounded-3xl shadow-spa"
+      className="relative w-full h-64 md:h-[100vh] overflow-hidden rounded-3xl md:rounded-none shadow-spa md:shadow-none"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEndHandler}

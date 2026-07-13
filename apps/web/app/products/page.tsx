@@ -6,13 +6,13 @@ export default function ProductsPage() {
   const products = ALL_MOCK_ITEMS.filter((item) => item.isProduct);
 
   return (
-    <div className="flex flex-col h-full pt-6">
-      <div className="px-6 pb-4">
-        <h1 className="font-serif text-3xl font-medium text-primary-dark">Products</h1>
-        <p className="mt-2 text-text-secondary text-sm">Discover our premium spa products.</p>
+    <div className="flex flex-col h-full pt-6 md:pt-36 max-w-screen-2xl mx-auto w-full">
+      <div className="px-6 md:px-12 lg:px-16 pb-4">
+        <h1 className="font-serif text-3xl md:text-5xl font-medium text-primary-dark">Products</h1>
+        <p className="mt-2 md:mt-4 text-text-secondary text-sm md:text-lg">Discover our premium spa products.</p>
       </div>
 
-      <div className="px-6 grid grid-cols-2 gap-4 pb-6">
+      <div className="px-6 md:px-12 lg:px-16 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 pb-6 mt-4 md:mt-12">
         {products.map((item) => (
           <Link 
             key={item.id}
@@ -26,14 +26,14 @@ export default function ProductsPage() {
                 className="w-full h-full object-cover" 
               />
             </div>
-            <div className="p-3 flex flex-col">
-              <h3 className="font-serif text-text-primary font-medium text-sm leading-tight line-clamp-2">{item.name}</h3>
-              <span className="font-sans font-semibold text-primary-dark mt-1.5 text-sm">${item.price}</span>
+            <div className="p-3 md:p-6 flex flex-col">
+              <h3 className="font-serif text-text-primary font-medium text-sm md:text-xl leading-tight line-clamp-2">{item.name}</h3>
+              <span className="font-sans font-semibold text-primary-dark mt-1.5 md:mt-3 text-sm md:text-xl">${item.price}</span>
             </div>
           </Link>
         ))}
         {products.length === 0 && (
-          <p className="col-span-2 text-center text-text-secondary py-8">No products available.</p>
+          <p className="col-span-2 md:col-span-3 text-center text-text-secondary py-8">No products available.</p>
         )}
       </div>
     </div>

@@ -92,7 +92,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
                   >
                     <div className="flex flex-col">
                       <span className="font-medium text-text-primary text-[15px] mb-1">{variant.name}</span>
-                      <span className="font-semibold text-text-primary text-sm">${variant.price}</span>
+                      <span className="font-semibold text-text-primary text-sm">QAR {variant.price}</span>
                     </div>
                     <button
                       className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${isSelected
@@ -125,7 +125,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
                   >
                     <div className="flex flex-col">
                       <span className="font-medium text-text-primary text-[15px] mb-1">{addon.name}</span>
-                      <span className="font-semibold text-text-primary text-sm">+${addon.price}</span>
+                      <span className="font-semibold text-text-primary text-sm">+ QAR {addon.price}</span>
                     </div>
                     <button
                       className={`px-5 py-1.5 rounded-lg border text-sm font-medium transition-colors ${isSelected
@@ -147,7 +147,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-primary/10 z-50">
         <div className="flex items-center justify-between mb-4">
           <span className="text-text-secondary text-sm font-medium">Total</span>
-          <span className="font-serif text-2xl font-bold text-primary-dark">${totalPrice}</span>
+          <span className="font-serif text-2xl font-bold text-primary-dark">QAR {totalPrice}</span>
         </div>
         <button
           onClick={handleAdd}

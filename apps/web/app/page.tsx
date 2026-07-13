@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, Sparkles, Flower2, Droplets, Scissors, User, MapPin, Phone } from "lucide-react";
+import { Search, Sparkles, Flower2, Droplets, Scissors, User, MapPin, Phone, Brush, Wind, Heart, Bath } from "lucide-react";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
 import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
 import { Item } from "@/shared/types";
@@ -91,18 +91,34 @@ export default function HomePage() {
             <div className="flex justify-between items-end mb-4">
               <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Categories</h2>
             </div>
-            <div className="grid grid-cols-4 gap-4 md:gap-8">
+            <div className="flex flex-row justify-between w-full overflow-x-auto md:overflow-visible pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+              <style dangerouslySetInnerHTML={{ __html: `
+                @media (min-width: 768px) {
+                  .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }
+                  .cat-icon { width: clamp(40px, 4vw, 55px) !important; height: clamp(40px, 4vw, 55px) !important; }
+                  .cat-text { font-size: clamp(12px, 1.2vw, 15px) !important; }
+                }
+                @media (min-width: 1024px) {
+                  .cat-circle { width: clamp(100px, 9vw, 130px) !important; height: clamp(100px, 9vw, 130px) !important; }
+                  .cat-icon { width: clamp(50px, 4.5vw, 65px) !important; height: clamp(50px, 4.5vw, 65px) !important; }
+                  .cat-text { font-size: clamp(14px, 1.2vw, 17px) !important; }
+                }
+              `}} />
               {[
-                { name: "Massage", icon: <Flower2 className="w-6 h-6 md:w-10 md:h-10" /> },
-                { name: "Facial", icon: <Sparkles className="w-6 h-6 md:w-10 md:h-10" /> },
-                { name: "Nails", icon: <Scissors className="w-6 h-6 md:w-10 md:h-10" /> },
-                { name: "Therapy", icon: <Droplets className="w-6 h-6 md:w-10 md:h-10" /> },
+                { name: "Massage", icon: <Flower2 className="w-6 h-6 cat-icon" /> },
+                { name: "Facial", icon: <Sparkles className="w-6 h-6 cat-icon" /> },
+                { name: "Nails", icon: <Scissors className="w-6 h-6 cat-icon" /> },
+                { name: "Therapy", icon: <Droplets className="w-6 h-6 cat-icon" /> },
+                { name: "Hair Care", icon: <Wind className="w-6 h-6 cat-icon" /> },
+                { name: "Makeup", icon: <Brush className="w-6 h-6 cat-icon" /> },
+                { name: "Wellness", icon: <Heart className="w-6 h-6 cat-icon" /> },
+                { name: "Spa Bath", icon: <Bath className="w-6 h-6 cat-icon" /> },
               ].map((cat, idx) => (
-                <div key={idx} className="flex flex-col items-center group cursor-pointer">
-                  <div className="w-14 h-14 md:w-24 md:h-24 bg-gray-50 border border-primary rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <div key={idx} className="flex-none flex flex-col items-center group cursor-pointer w-[72px] md:w-auto">
+                  <div className="w-14 h-14 bg-gray-50 border border-primary rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-sm hover:shadow-md shrink-0 cat-circle">
                     {cat.icon}
                   </div>
-                  <span className="text-[11px] md:text-sm font-medium text-text-secondary mt-2 md:mt-3">{cat.name}</span>
+                  <span className="text-[11px] font-medium text-text-secondary mt-2 md:mt-4 text-center cat-text">{cat.name}</span>
                 </div>
               ))}
             </div>

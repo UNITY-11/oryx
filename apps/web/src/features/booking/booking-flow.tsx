@@ -282,6 +282,15 @@ export function BookingFlow() {
 
               {/* Add more & Billing */}
               <div className="mt-auto px-6 pt-4 pb-8 space-y-6">
+                
+                <Link 
+                  href="/services" 
+                  className="w-full py-3.5 rounded-xl border-2 border-primary/20 text-primary font-medium flex items-center justify-center transition-colors hover:bg-primary/5 bg-transparent"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add More Services
+                </Link>
+
                 <div className="bg-primary/5 rounded-soft p-5 space-y-3">
                   <h3 className="font-serif text-lg text-primary-dark mb-4">Billing Details</h3>
                   <div className="flex justify-between text-sm text-text-secondary">

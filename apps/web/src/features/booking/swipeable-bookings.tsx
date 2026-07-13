@@ -47,7 +47,7 @@ export function SwipeableBookings() {
   const renderBookingList = (list: typeof bookings, emptyMessage: string) => {
     if (list.length === 0) {
       return (
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-primary/10 text-center flex flex-col items-center justify-center mt-6">
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-primary/10 text-center flex flex-col items-center justify-center mt-2">
           <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
             <CalendarIcon className="w-8 h-8 text-primary/40" />
           </div>
@@ -58,7 +58,7 @@ export function SwipeableBookings() {
     }
 
     return (
-      <div className="space-y-4 mt-6">
+      <div className="space-y-4 mt-2">
         {list.map((booking) => {
           const primaryItem = booking.cartItems[0]?.item;
           if (!primaryItem) return null;
@@ -83,11 +83,11 @@ export function SwipeableBookings() {
                   
                   <div className="space-y-1.5">
                     <div className="flex items-center text-xs text-text-secondary">
-                      <CalendarIcon className="w-3.5 h-3.5 mr-2 text-[#C8A24A]" />
+                      <CalendarIcon className="w-3.5 h-3.5 mr-2 text-[#E5C37A]" />
                       <span>{booking.date}</span>
                     </div>
                     <div className="flex items-center text-xs text-text-secondary">
-                      <Clock className="w-3.5 h-3.5 mr-2 text-[#C8A24A]" />
+                      <Clock className="w-3.5 h-3.5 mr-2 text-[#E5C37A]" />
                       <span>{booking.time}</span>
                     </div>
                   </div>

@@ -248,19 +248,17 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
       <div className={`flex-1 flex flex-col h-full relative overflow-hidden min-h-0 ${step !== "success" ? "md:border-r md:border-primary/10" : ""}`}>
         {step !== "success" && (
           <>
-            <div className={`absolute top-0 w-full left-0 right-0 px-6 pt-6 pb-4 flex items-center justify-center z-40 ${step === "auth" ? "bg-[#ddbdae] md:bg-white" : "bg-[#faf6f3] md:bg-white"}`}>
-              {(!isIntegrated || step !== "services") && (
+            {(!isIntegrated || step !== "services") && (
+              <div className={`absolute top-0 w-full left-0 right-0 px-6 pt-6 pb-4 flex items-center justify-center z-40 ${step === "auth" ? "bg-[#E5C37A] md:bg-white" : "bg-[#faf6f3] md:bg-white"}`}>
                 <button 
                   onClick={handleBack} 
                   className={`absolute left-6 p-2 flex items-center justify-center rounded-full transition-colors ${step === "auth" ? "text-white md:text-text-secondary hover:bg-white/20 md:hover:bg-black/5" : "text-text-secondary hover:bg-black/5"}`}
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
-              )}
-              {!isIntegrated && (
                 <h1 className={`font-serif text-3xl font-medium text-center ${step === "auth" ? "text-white md:text-primary-dark" : "text-primary-dark"}`}>Book Session</h1>
-              )}
-            </div>
+              </div>
+            )}
             {/* Spacer to push content below fixed header */}
             {(!isIntegrated || step !== "services") && (
               <div className="h-[76px] w-full shrink-0 md:bg-white" />
@@ -291,8 +289,6 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
                       return null;
                     })}
                   </div>
-                  
-                  <h2 className="font-serif text-2xl text-primary-dark mb-4 mt-2">Your Selected Services</h2>
                   
                   {/* Grouped Items */}
                   <div className="space-y-6">
@@ -466,7 +462,7 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
         {step === "auth" && (
           <div className="flex-1 overflow-y-auto bg-[#fbf6f0] md:bg-white flex items-center justify-center py-12 md:py-0 min-h-0 scrollbar-hide" data-lenis-prevent>
             {/* Top Pink Banner (Mobile only) */}
-            <div className="md:hidden absolute top-[76px] left-0 right-0 h-[25%] bg-[#ddbdae] rounded-b-[24px] z-0"></div>
+            <div className="md:hidden absolute top-[76px] left-0 right-0 h-[25%] bg-[#E5C37A] rounded-b-[24px] z-0"></div>
 
             <div className="w-[calc(100%-2.5rem)] max-w-[420px] bg-white rounded-[2.5rem] shadow-xl relative z-10 p-8 pb-10 md:border md:border-primary/10">
               
@@ -484,7 +480,7 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter full name"
-                    className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
+                    className="w-full bg-transparent border border-[#E5C37A] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
                   />
                 </div>
                 
@@ -497,25 +493,25 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+974 1234 5678"
-                    className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
+                    className="w-full bg-transparent border border-[#E5C37A] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
                   />
                 </div>
                 
                 {/* Receive Updates Via */}
                 <div className="pt-2">
                   <label className="text-xs font-bold text-[#9a8276] uppercase mb-3 block text-center tracking-wider">Receive Updates Via</label>
-                  <div className="flex p-1 rounded-xl bg-transparent border border-[#ddbdae]">
+                  <div className="flex p-1 rounded-xl bg-transparent border border-[#E5C37A]">
                     <button 
                       type="button"
                       onClick={() => setChannel("WhatsApp")}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#E5C37A] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
                     >
                       WhatsApp
                     </button>
                     <button 
                       type="button"
                       onClick={() => setChannel("SMS")}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#E5C37A] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
                     >
                       SMS
                     </button>
@@ -524,7 +520,7 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
                 
                 {/* Verify & Confirm (Mobile Only) */}
                 <div className="pt-6 md:hidden">
-                  <button type="submit" className="w-full py-3.5 rounded-xl text-white font-medium shadow-md transition-all hover:opacity-90 bg-[#ddbdae]">
+                  <button type="submit" className="w-full py-3.5 rounded-xl text-white font-medium shadow-md transition-all hover:opacity-90 bg-[#E5C37A]">
                     Verify & Confirm
                   </button>
                 </div>
@@ -604,7 +600,7 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
                 <button 
                   type="submit"
                   form="auth-form"
-                  className="w-full bg-[#ddbdae] text-white py-4 rounded-xl font-medium text-lg flex items-center justify-center hover:opacity-90 transition-all shadow-md"
+                  className="w-full bg-[#E5C37A] text-white py-4 rounded-xl font-medium text-lg flex items-center justify-center hover:opacity-90 transition-all shadow-md"
                 >
                   Verify & Confirm <ChevronRight className="w-5 h-5 ml-2" />
                 </button>

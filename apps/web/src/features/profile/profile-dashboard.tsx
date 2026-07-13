@@ -195,7 +195,7 @@ export function ProfileDashboard() {
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
               <UserCircle2 className="w-10 h-10 text-primary" />
             </div>
-            <div className="absolute bottom-0 right-0 bg-[#C8A24A] text-white p-1 rounded-full border-2 border-white">
+            <div className="absolute bottom-0 right-0 bg-[#E5C37A] text-white p-1 rounded-full border-2 border-white">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>

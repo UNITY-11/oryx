@@ -98,7 +98,7 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
             </div>
             
             <div className="mt-4 flex items-start text-sm">
-              <MapPin className="w-4 h-4 text-[#C8A24A] mr-3 shrink-0 mt-0.5" />
+              <MapPin className="w-4 h-4 text-[#E5C37A] mr-3 shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-text-primary">ORYX Spa & Salon Main Branch</p>
                 <p className="text-text-secondary text-xs mt-0.5">West Bay, Doha, Qatar</p>

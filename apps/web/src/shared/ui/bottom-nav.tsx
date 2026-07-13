@@ -16,8 +16,8 @@ export function BottomNav() {
     { name: "Home", href: "/", icon: Home },
     { name: "Services", href: "/services", icon: Scissors },
     { name: "Favorites", href: "/favorites", icon: Heart, isCenter: true },
-    { name: "Booking", href: "/booking", icon: Calendar },
     { name: "Products", href: "/products", icon: Brush },
+    { name: "Booking", href: "/booking", icon: Calendar },
   ];
 
   return (

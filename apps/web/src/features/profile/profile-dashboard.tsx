@@ -16,15 +16,36 @@ export function ProfileDashboard() {
   }, []);
 
   const [isLoginMode, setIsLoginMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [age, setAge] = useState("");
   const [channel, setChannel] = useState<"SMS" | "WhatsApp">("WhatsApp");
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name && phone) {
-      setUser({ id: "u2", name, phone, channel });
+      setUser({ id: "u2", name, phone, channel, email, age });
       setIsLoginMode(false);
+    }
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user && name && phone) {
+      setUser({ ...user, name, phone, email, age });
+      setIsEditMode(false);
+    }
+  };
+
+  const openEditMode = () => {
+    if (user) {
+      setName(user.name);
+      setPhone(user.phone);
+      setEmail(user.email || "");
+      setAge(user.age || "");
+      setIsEditMode(true);
     }
   };
 
@@ -58,6 +79,24 @@ export function ProfileDashboard() {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Email ID (Optional)</label>
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Age (Optional)</label>
+                <input 
+                  type="number" 
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -108,7 +147,62 @@ export function ProfileDashboard() {
     );
   }
 
-
+  if (isEditMode) {
+    return (
+      <div className="flex-1 px-6 pt-12 pb-32 flex flex-col bg-[#faf6f3]">
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-primary/10 space-y-6">
+          <h3 className="font-serif text-2xl text-primary-dark text-center">Edit Profile</h3>
+          
+          <form onSubmit={handleEditSubmit} className="space-y-5">
+            <div>
+              <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Full Name</label>
+              <input 
+                type="text" 
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Mobile Number</label>
+              <input 
+                type="tel" 
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Email ID</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Age</label>
+              <input 
+                type="number" 
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-medium mt-6 shadow-md transition-opacity hover:opacity-90">
+              Save Changes
+            </button>
+            <button type="button" onClick={() => setIsEditMode(false)} className="w-full py-2 text-text-secondary text-sm font-medium mt-2 hover:text-primary">
+              Cancel
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#faf6f3] flex flex-col overflow-hidden">
@@ -126,6 +220,11 @@ export function ProfileDashboard() {
           <div className="flex-1">
             <h2 className="font-serif text-2xl font-medium text-primary-dark tracking-tight">{user.name}</h2>
             <p className="text-sm text-text-secondary mt-1">{user.phone}</p>
+            {(user.email || user.age) && (
+              <p className="text-xs text-text-secondary mt-0.5">
+                {user.email} {user.email && user.age && "•"} {user.age ? `${user.age} yrs` : ""}
+              </p>
+            )}
             <div className="inline-flex items-center mt-3 text-[10px] font-bold tracking-wider uppercase bg-primary/10 text-primary px-3 py-1.5 rounded-full">
               Verified via {user.channel}
             </div>
@@ -140,7 +239,7 @@ export function ProfileDashboard() {
         {/* Settings Actions */}
         <section>
           <div className="bg-white rounded-[24px] shadow-sm border border-primary/10 overflow-hidden">
-            <button className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+            <button onClick={openEditMode} className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-100 group">
               <div className="flex items-center">
                 <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mr-4 group-hover:bg-white transition-colors">
                   <Settings className="w-5 h-5 text-text-secondary" />

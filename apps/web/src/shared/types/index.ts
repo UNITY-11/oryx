@@ -25,6 +25,8 @@ export interface User {
   name: string;
   phone: string;
   channel: "SMS" | "WhatsApp";
+  email?: string;
+  age?: string;
 }
 
 export interface CartItem {

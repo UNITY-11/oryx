@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
 import { useCartStore, useUserStore } from "@/shared/store";
-import { ChevronRight, Plus, ClipboardList, Clock, Calendar as CalendarIcon, CheckCircle2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronRight, Plus, ClipboardList, Clock, Calendar as CalendarIcon, CheckCircle2, X, ChevronDown, ChevronUp, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CartItem, Item, ItemVariant } from "@/shared/types";
 
 function CartItemCard({ cartItem, setItemToDelete, removeItem, addItem }: { 
@@ -105,6 +106,7 @@ function CartItemCard({ cartItem, setItemToDelete, removeItem, addItem }: {
 }
 
 export function BookingFlow() {
+  const router = useRouter();
   const [step, setStep] = useState<"services" | "time" | "auth" | "success">("services");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   
@@ -118,7 +120,8 @@ export function BookingFlow() {
   const setUser = useUserStore((state) => state.setUser);
 
   // Time slot matrix state
-  const [selectedDate, setSelectedDate] = useState<string>("Today");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
   // OTP Auth state
@@ -128,15 +131,59 @@ export function BookingFlow() {
 
   const services = ALL_MOCK_ITEMS.filter(i => !i.isProduct);
 
-  const timeSlots = [
-    "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
-    "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
-    "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM",
-    "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM",
-  ];
-  
-  // Mock some as booked
-  const bookedSlots = ["11:30 AM", "02:00 PM", "05:30 PM", "06:00 PM"];
+  // Calendar Helpers
+  const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const today = new Date();
+  const isCurrentMonth = currentMonth.getFullYear() === today.getFullYear() && currentMonth.getMonth() === today.getMonth();
+
+  const daysInMonth = getDaysInMonth(currentMonth);
+  const firstDay = getFirstDayOfMonth(currentMonth);
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blanks = Array.from({ length: firstDay }, (_, i) => i);
+
+  // Time slots generator based on date
+  const generateTimeSlots = (date: Date | null) => {
+    if (!date) return [];
+    
+    const day = date.getDate();
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    
+    const allSlots = [
+      "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
+      "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
+      "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM",
+      "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM"
+    ];
+
+    if (isWeekend) {
+      return allSlots.filter((_, i) => i % 2 === 0);
+    } else if (day % 3 === 0) {
+      return allSlots.slice(0, 10);
+    } else if (day % 3 === 1) {
+      return allSlots.slice(10, 20);
+    } else {
+      return allSlots;
+    }
+  };
+
+  const generateBookedSlots = (date: Date | null, slots: string[]) => {
+    if (!date) return [];
+    const day = date.getDate();
+    return slots.filter((_, i) => (i + day) % 4 === 0);
+  };
+
+  const dynamicTimeSlots = generateTimeSlots(selectedDate);
+  const dynamicBookedSlots = generateBookedSlots(selectedDate, dynamicTimeSlots);
 
   const handleCheckout = () => {
     if (user) {
@@ -156,8 +203,29 @@ export function BookingFlow() {
     }
   };
 
+  const handleBack = () => {
+    if (step === "success") {
+      router.back();
+    } else if (step === "auth") {
+      setStep("time");
+    } else if (step === "time") {
+      setStep("services");
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full relative">
+      <div className="px-6 pt-6 pb-4 flex items-center">
+        <button 
+          onClick={handleBack} 
+          className="mr-4 p-2 bg-white rounded-full shadow-sm border border-primary/10 text-text-secondary hover:text-primary transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <h1 className="font-serif text-3xl font-medium text-primary-dark">Book Session</h1>
+      </div>
       
       {/* 1. CART SUMMARY */}
       {step === "services" && (
@@ -231,42 +299,117 @@ export function BookingFlow() {
 
       {/* 2. TIME SELECTION */}
       {step === "time" && (
-        <div className="flex-1 overflow-y-auto px-6 pb-32 space-y-6">
-          <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-            {["Today", "Tomorrow", "Wed, 14", "Thu, 15"].map(day => (
-              <button 
-                key={day} 
-                onClick={() => setSelectedDate(day)}
-                className={`flex-none px-6 py-2 rounded-full text-sm font-medium transition-colors ${selectedDate === day ? "bg-primary text-surface" : "bg-surface text-text-secondary border border-primary/20"}`}
-              >
-                {day}
-              </button>
-            ))}
-          </div>
+        <div className="flex-1 overflow-y-auto px-6 pb-32 space-y-8 mt-4">
+          
+          {/* Calendar Header */}
+          <div className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-primary/10">
+            <div className="flex justify-between items-center p-5 bg-primary/5 border-b border-primary/10">
+              <h3 className="font-serif text-lg text-primary-dark font-semibold capitalize">
+                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </h3>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={handlePrevMonth} 
+                  disabled={isCurrentMonth}
+                  className="p-2 rounded-full bg-white shadow-sm border border-primary/10 text-primary hover:bg-primary/5 disabled:opacity-40 disabled:hover:bg-white disabled:shadow-none transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={handleNextMonth} 
+                  className="p-2 rounded-full bg-white shadow-sm border border-primary/10 text-primary hover:bg-primary/5 transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-          <div>
-            <h3 className="font-serif text-lg mb-4 text-primary-dark">Select Time</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {timeSlots.map(time => {
-                const isBooked = bookedSlots.includes(time);
-                const isSelected = selectedTime === time;
+            <div className="p-5">
+              {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                <div key={day} className="text-center text-xs font-medium text-text-secondary py-1">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1">
+              {blanks.map(b => (
+                <div key={`blank-${b}`} className="h-10"></div>
+              ))}
+              
+              {days.map(d => {
+                const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
+                const todayMidnight = new Date();
+                todayMidnight.setHours(0, 0, 0, 0);
+                
+                const isPast = dateObj < todayMidnight;
+                const isSelected = selectedDate && dateObj.toDateString() === selectedDate.toDateString();
+                const isToday = dateObj.toDateString() === today.toDateString();
+
                 return (
                   <button
-                    key={time}
-                    disabled={isBooked}
-                    onClick={() => setSelectedTime(time)}
+                    key={d}
+                    disabled={isPast}
+                    onClick={() => {
+                      setSelectedDate(dateObj);
+                      setSelectedTime(null);
+                    }}
                     className={`
-                      py-2 rounded-soft text-sm font-medium border transition-colors
-                      ${isBooked ? "opacity-40 bg-gray-100 border-transparent text-gray-400" : 
-                        isSelected ? "bg-primary border-primary text-surface" : 
-                        "bg-surface border-primary/20 text-text-primary hover:border-primary"}
+                      h-10 w-full rounded-full flex items-center justify-center text-sm transition-all
+                      ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-primary/10"}
+                      ${isSelected ? "bg-primary text-surface font-medium hover:bg-primary shadow-md" : ""}
+                      ${isToday && !isSelected ? "border border-primary/30 text-primary font-medium" : ""}
+                      ${!isPast && !isSelected && !isToday ? "text-text-primary" : ""}
                     `}
                   >
-                    {time}
+                    {d}
                   </button>
                 );
               })}
             </div>
+          </div>
+        </div>
+
+          {/* Time Slots */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-serif text-lg text-primary-dark">Available Times</h3>
+              {selectedDate && (
+                <span className="text-sm font-medium text-text-secondary">
+                  {selectedDate.toLocaleString('default', { weekday: 'short', month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </div>
+            
+            {dynamicTimeSlots.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {dynamicTimeSlots.map(time => {
+                  const isBooked = dynamicBookedSlots.includes(time);
+                  const isSelected = selectedTime === time;
+                  return (
+                    <button
+                      key={time}
+                      disabled={isBooked}
+                      onClick={() => setSelectedTime(time)}
+                      className={`
+                        py-2.5 rounded-soft text-sm font-medium border transition-colors
+                        ${isBooked ? "opacity-40 bg-gray-100 border-transparent text-gray-400" : 
+                          isSelected ? "bg-primary border-primary text-surface shadow-md" : 
+                          "bg-surface border-primary/20 text-text-primary hover:border-primary hover:shadow-sm"}
+                      `}
+                    >
+                      {time}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-text-secondary text-sm">
+                Please select a date to see available times.
+              </div>
+            )}
           </div>
         </div>
       )}

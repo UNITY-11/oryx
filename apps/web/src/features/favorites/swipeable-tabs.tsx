@@ -52,7 +52,7 @@ export function SwipableFavorites() {
               <h3 className="font-medium text-sm text-text-primary line-clamp-1">{item.name}</h3>
               <p className="text-xs text-text-secondary line-clamp-2 mt-1">{item.description}</p>
             </div>
-            <span className="font-medium text-primary">${item.price}</span>
+            <span className="font-medium text-primary">QAR {item.price}</span>
           </div>
           <button className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full text-primary">
             <Heart className="w-4 h-4 fill-primary" />

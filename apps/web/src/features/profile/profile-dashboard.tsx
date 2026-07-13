@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUserStore, useBookingStore } from "@/shared/store";
-import { UserCircle2, Settings, LogOut, CheckCircle2, Calendar as CalendarIcon, ChevronRight, Clock } from "lucide-react";
+import { useUserStore } from "@/shared/store";
+import { UserCircle2, Settings, LogOut, CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export function ProfileDashboard() {
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
   const logout = useUserStore((state) => state.logout);
-  const bookings = useBookingStore((state) => state.bookings);
   
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -136,68 +135,7 @@ export function ProfileDashboard() {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-6 pt-6 pb-32 space-y-8">
-        {/* Bookings */}
-        <section>
-          <div className="flex justify-between items-end mb-5">
-            <h3 className="font-serif text-xl text-primary-dark flex items-center">
-              Session History
-            </h3>
-            <button className="text-xs font-medium text-primary hover:underline">View All</button>
-          </div>
-          
-          <div className="space-y-4">
-            {bookings.length > 0 ? (
-              bookings.map((booking) => {
-                const primaryItem = booking.cartItems[0]?.item;
-                if (!primaryItem) return null;
-                
-                return (
-                  <Link key={booking.id} href={`/session/${booking.id}`} className="block bg-white rounded-3xl p-4 shadow-sm border border-primary/20 relative overflow-hidden group hover:shadow-md transition-all active:scale-[0.98]">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-10 -mt-10 pointer-events-none" />
-                    <div className="flex space-x-4">
-                      <div className="w-20 h-24 rounded-2xl overflow-hidden shrink-0">
-                        <img src={primaryItem.imageUrl} alt={primaryItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      </div>
-                      <div className="flex-1 py-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="text-[10px] font-bold tracking-wider uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-md">{booking.status}</span>
-                            <ChevronRight className="w-4 h-4 text-primary/40 group-hover:text-primary transition-colors" />
-                          </div>
-                          <h4 className="font-serif text-[15px] text-primary-dark leading-tight line-clamp-1 mb-2 pr-2">
-                            {booking.cartItems.length > 1 ? `${primaryItem.name} + ${booking.cartItems.length - 1} more` : primaryItem.name}
-                          </h4>
-                        </div>
-                        
-                        <div className="space-y-1.5">
-                          <div className="flex items-center text-xs text-text-secondary">
-                            <CalendarIcon className="w-3.5 h-3.5 mr-2 text-[#C8A24A]" />
-                            <span>{booking.date}</span>
-                          </div>
-                          <div className="flex items-center text-xs text-text-secondary">
-                            <Clock className="w-3.5 h-3.5 mr-2 text-[#C8A24A]" />
-                            <span>{booking.time}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })
-            ) : (
-              <div className="bg-white rounded-3xl p-8 shadow-sm border border-primary/10 text-center flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
-                  <CalendarIcon className="w-8 h-8 text-primary/40" />
-                </div>
-                <h4 className="font-serif text-lg text-primary-dark mb-2">No sessions yet</h4>
-                <p className="text-sm text-text-secondary max-w-[200px] mb-6">You don't have any upcoming or past sessions.</p>
-                <Link href="/services" className="bg-primary text-white px-6 py-2.5 rounded-xl font-medium text-sm shadow-md hover:opacity-90 transition-opacity">
-                  Book a Session
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
+
 
         {/* Settings Actions */}
         <section>

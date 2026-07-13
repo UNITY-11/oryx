@@ -44,7 +44,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header & Search in a zero-height sticky wrapper to prevent layout shift */}
-      <div className="sticky top-0 z-40 h-0 overflow-visible w-full">
+      <div className="md:hidden sticky top-0 z-40 h-0 overflow-visible w-full">
         <div className="bg-[#f5e6de]/90 backdrop-blur-xl px-4 pt-3 pb-3 border-b border-[#d4a373]/20 shadow-sm rounded-b-[36px]">
           <div className="flex justify-center items-center mb-4 min-h-4xl">
             <img
@@ -74,35 +74,35 @@ export default function HomePage() {
       </div>
 
       {/* Static spacer to push content below the large header initially */}
-      <div className="pt-[190px]" />
+      <div className="pt-[190px] md:pt-0" />
 
 
-      <div className="px-6 pb-6 space-y-8 flex-1">
-        {/* Hero Carousel */}
-        {!searchQuery && (
-          <section className="mt-8">
-            <HeroCarousel />
-          </section>
-        )}
+      {/* Hero Carousel */}
+      {!searchQuery && (
+        <section className="px-6 md:px-0 mt-6 md:mt-0 pb-12 md:pb-24">
+          <HeroCarousel />
+        </section>
+      )}
 
+      <div className="px-6 md:px-8 lg:px-12 xl:px-16 pb-6 md:pb-24 space-y-12 md:space-y-24 flex-1 w-full max-w-screen-2xl mx-auto">
         {/* Categories Section */}
         {!searchQuery && (
           <section>
             <div className="flex justify-between items-end mb-4">
-              <h2 className="font-serif text-xl text-primary-dark">Categories</h2>
+              <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Categories</h2>
             </div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4 md:gap-8">
               {[
-                { name: "Massage", icon: <Flower2 className="w-6 h-6" /> },
-                { name: "Facial", icon: <Sparkles className="w-6 h-6" /> },
-                { name: "Nails", icon: <Scissors className="w-6 h-6" /> },
-                { name: "Therapy", icon: <Droplets className="w-6 h-6" /> },
+                { name: "Massage", icon: <Flower2 className="w-6 h-6 md:w-10 md:h-10" /> },
+                { name: "Facial", icon: <Sparkles className="w-6 h-6 md:w-10 md:h-10" /> },
+                { name: "Nails", icon: <Scissors className="w-6 h-6 md:w-10 md:h-10" /> },
+                { name: "Therapy", icon: <Droplets className="w-6 h-6 md:w-10 md:h-10" /> },
               ].map((cat, idx) => (
                 <div key={idx} className="flex flex-col items-center group cursor-pointer">
-                  <div className="w-14 h-14 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  <div className="w-14 h-14 md:w-24 md:h-24 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                     {cat.icon}
                   </div>
-                  <span className="text-[11px] font-medium text-text-secondary mt-2">{cat.name}</span>
+                  <span className="text-[11px] md:text-sm font-medium text-text-secondary mt-2 md:mt-3">{cat.name}</span>
                 </div>
               ))}
             </div>
@@ -112,9 +112,9 @@ export default function HomePage() {
         {/* Promotional Banner */}
         {!searchQuery && (
           <section>
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0 md:mx-0">
               {/* Card 1 */}
-              <div className="flex-none w-[92%] bg-primary/5 rounded-2xl relative overflow-hidden shadow-sm">
+              <div className="flex-none w-[92%] md:w-full bg-primary/5 rounded-2xl relative overflow-hidden shadow-sm">
 
                 {/* Edge Cutouts (Ticket holes) */}
                 <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#fcf4f0] rounded-full shadow-inner z-20" />
@@ -142,7 +142,7 @@ export default function HomePage() {
               </div>
 
               {/* Card 2 */}
-              <div className="flex-none w-[92%] bg-[#d4a373]/10 rounded-2xl relative overflow-hidden shadow-sm">
+              <div className="flex-none w-[92%] md:w-full bg-[#d4a373]/10 rounded-2xl relative overflow-hidden shadow-sm">
 
                 {/* Edge Cutouts (Ticket holes) */}
                 <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#fcf4f0] rounded-full shadow-inner z-20" />
@@ -168,6 +168,26 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Card 3 (Bridal Spa Day) */}
+              <div className="flex-none w-[92%] md:w-full bg-primary/10 rounded-2xl relative overflow-hidden shadow-sm">
+                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#fcf4f0] rounded-full shadow-inner z-20" />
+                <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#fcf4f0] rounded-full shadow-inner z-20" />
+                <div className="m-2 border-2 border-dashed border-primary/30 rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-32 h-32 bg-primary/20 rounded-full blur-2xl -ml-10 -mt-10" />
+                  <div className="relative z-10 flex-1 pr-3">
+                    <span className="text-[10px] font-bold text-primary tracking-widest uppercase mb-1 flex items-center gap-1.5">
+                      <Flower2 className="w-3.5 h-3.5" /> PACKAGE
+                    </span>
+                    <h3 className="font-serif text-lg text-primary-dark mb-1 leading-tight">Bridal Spa Day</h3>
+                  </div>
+                  <div className="relative z-10 w-px h-16 border-l-2 border-dashed border-primary/30 mx-2" />
+                  <div className="relative z-10 pl-2 text-center flex flex-col items-center justify-center">
+                    <p className="text-[9px] text-text-secondary uppercase tracking-wider mb-1 font-bold">Use Code</p>
+                    <strong className="text-primary-dark bg-[#fcf4f0] border border-primary/20 px-2.5 py-1 rounded-md text-sm shadow-sm inline-block font-mono tracking-wider">BRIDE30</strong>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -175,7 +195,7 @@ export default function HomePage() {
         {/* Search Results */}
         {searchQuery && (
           <section>
-            <h2 className="font-serif text-xl text-primary-dark mb-4">Search Results</h2>
+            <h2 className="font-serif text-xl md:text-3xl text-primary-dark mb-4">Search Results</h2>
             <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
               {filteredItems.map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-44 group block">
@@ -198,13 +218,13 @@ export default function HomePage() {
         {!searchQuery && (
           <section>
             <div className="flex justify-between items-end mb-4">
-              <h2 className="font-serif text-xl text-primary-dark">Featured Services</h2>
+              <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Featured Services</h2>
               <Link href="/services" className="text-sm text-primary font-medium">See All</Link>
             </div>
             <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
               {filteredItems.filter(item => !item.isProduct).map(item => (
-                <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-[44%] group block">
-                  <div className="relative h-56 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm transition-transform group-hover:scale-[1.02]">
+                <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-[44%] md:w-80 group block">
+                  <div className="relative h-56 md:h-96 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm">
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                     <h3 className="absolute bottom-4 left-4 right-4 text-center font-serif text-white font-medium text-lg leading-tight drop-shadow-md">
                       {item.name}
@@ -220,10 +240,10 @@ export default function HomePage() {
         {!searchQuery && (
           <section>
             <div className="flex justify-between items-end mb-4">
-              <h2 className="font-serif text-xl text-primary-dark">Shop Products</h2>
+              <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Shop Products</h2>
               <Link href="/products" className="text-sm text-primary font-medium">Show All</Link>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="group block">
                   <div className="relative aspect-square rounded-2xl overflow-hidden transition-transform group-hover:scale-[1.02] mb-2 bg-surface">
@@ -236,9 +256,7 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
-            <Link href="/products" className="mt-4 w-full block text-center py-3 rounded-2xl border border-gray-200 text-sm font-medium text-text-secondary hover:bg-gray-50 transition-colors">
-              View All Products
-            </Link>
+
           </section>
         )}
 
@@ -247,17 +265,17 @@ export default function HomePage() {
           <section className="mt-4 pt-8 border-t border-[#d4a373]/20 pb-4 flex flex-col items-center">
             <button
               onClick={() => setIsFooterOpen(!isFooterOpen)}
-              className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors mb-2 bg-[#fcf4f0] px-5 py-2.5 rounded-full shadow-sm border border-[#d4a373]/20"
+              className="md:hidden flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors mb-2 bg-[#fcf4f0] px-5 py-2.5 rounded-full shadow-sm border border-[#d4a373]/20"
             >
               {isFooterOpen ? "Hide Contact & Location" : "Show Contact & Location"}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${isFooterOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>
             </button>
 
-            {isFooterOpen && (
-              <div className="w-full animate-in fade-in slide-in-from-top-4 duration-300 mt-6">
+            <div className={`w-full animate-in fade-in slide-in-from-top-4 duration-300 mt-6 ${isFooterOpen ? 'block' : 'hidden md:block'}`}>
+              <div className="md:grid md:grid-cols-2 md:gap-12 md:items-center">
                 {/* Location & Map */}
-                <div className="mb-8">
-                  <h2 className="font-serif text-xl text-primary-dark mb-4">Visit Us</h2>
+                <div className="mb-8 md:mb-0">
+                  <h2 className="font-serif text-xl md:text-3xl text-primary-dark mb-4">Visit Us</h2>
                   <div className="bg-[#fcf4f0] rounded-2xl p-4 shadow-sm border border-[#d4a373]/20">
                     <div className="w-full h-40 bg-gray-100 rounded-xl overflow-hidden mb-4 relative shadow-inner">
                       {/* Google Maps iFrame Placeholder */}
@@ -287,7 +305,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Social & Links */}
-                <div className="flex flex-col items-center justify-center text-center space-y-6">
+                <div className="flex flex-col items-center md:items-end md:text-right justify-center space-y-6">
                   <div className="flex gap-4">
                     <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>
@@ -308,12 +326,12 @@ export default function HomePage() {
                     <Link href="/contact" className="hover:text-primary">Contact</Link>
                   </div>
 
-                  <p className="text-[10px] text-text-secondary/50">
+                  <p className="text-[10px] md:text-xs text-text-secondary/50 mt-4">
                     © {new Date().getFullYear()} ORYX Beauty Spa. All rights reserved.
                   </p>
                 </div>
               </div>
-            )}
+            </div>
           </section>
         )}
       </div>

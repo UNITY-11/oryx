@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
 import { useCartStore, useUserStore } from "@/shared/store";
 import { ChevronRight, Plus, ClipboardList, Clock, Calendar as CalendarIcon, CheckCircle2, X, ChevronDown, ChevronUp, ChevronLeft } from "lucide-react";
@@ -129,6 +129,11 @@ export function BookingFlow() {
   const [phone, setPhone] = useState("");
   const [channel, setChannel] = useState<"SMS" | "WhatsApp">("WhatsApp");
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const services = ALL_MOCK_ITEMS.filter(i => !i.isProduct);
 
   // Calendar Helpers
@@ -215,306 +220,378 @@ export function BookingFlow() {
     }
   };
 
+  if (!isMounted) return <div className="flex-1 bg-[#faf6f3] md:bg-transparent" />;
+
   return (
-    <div className="flex flex-col h-full relative bg-[#faf6f3]">
-      {step !== "success" && (
-        <>
-          <div className={`fixed top-0 w-full max-w-md mx-auto left-0 right-0 px-6 pt-6 pb-4 flex items-center justify-center z-40 ${step === "auth" ? "bg-[#ddbdae]" : "bg-[#faf6f3]"}`}>
-            <button 
-              onClick={handleBack} 
-              className={`absolute left-6 p-2 flex items-center justify-center rounded-full transition-colors ${step === "auth" ? "text-white hover:bg-white/20" : "text-text-secondary hover:bg-black/5"}`}
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <h1 className={`font-serif text-3xl font-medium text-center ${step === "auth" ? "text-white" : "text-primary-dark"}`}>Book Session</h1>
-          </div>
-          {/* Spacer to push content below fixed header */}
-          <div className="h-[76px] w-full shrink-0" />
-        </>
-      )}
+    <div className="flex flex-col md:flex-row h-full relative bg-[#faf6f3] md:bg-transparent overflow-hidden">
       
-      {/* 1. CART SUMMARY */}
-      {step === "services" && (
-        <div className="flex-1 overflow-y-auto pb-32">
-          {cartItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full px-6 text-center space-y-6 pt-20">
-              <ClipboardList className="w-16 h-16 text-primary/20" />
-              <div>
-                <h3 className="font-serif text-2xl text-primary-dark mb-2">Your booking is empty</h3>
-                <p className="text-text-secondary text-sm">Explore our services and add them to your booking.</p>
-              </div>
-              <Link href="/services" className="bg-primary text-surface px-8 py-3 rounded-full font-medium">
-                Explore Services
-              </Link>
+      {/* LEFT COLUMN - MAIN FLOW */}
+      <div className={`flex-1 flex flex-col h-full relative overflow-hidden min-h-0 ${step !== "success" ? "md:border-r md:border-primary/10" : ""}`}>
+        {step !== "success" && (
+          <>
+            <div className={`absolute top-0 w-full left-0 right-0 px-6 pt-6 pb-4 flex items-center justify-center z-40 ${step === "auth" ? "bg-[#ddbdae] md:bg-white" : "bg-[#faf6f3] md:bg-white"}`}>
+              <button 
+                onClick={handleBack} 
+                className={`absolute left-6 p-2 flex items-center justify-center rounded-full transition-colors ${step === "auth" ? "text-white md:text-text-secondary hover:bg-white/20 md:hover:bg-black/5" : "text-text-secondary hover:bg-black/5"}`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <h1 className={`font-serif text-3xl font-medium text-center ${step === "auth" ? "text-white md:text-primary-dark" : "text-primary-dark"}`}>Book Session</h1>
             </div>
-          ) : (
-            <div className="flex flex-col min-h-full">
-              {/* Tabs */}
-              <div className="px-6 mb-6">
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {Array.from(new Set(cartItems.map(i => i.item.category))).map((category, idx, arr) => {
-                    // For simplicity in this demo without adding more state, we just show all groups sequentially 
-                    // or we could build a tab state. Let's just render all selected categories as headers.
-                    return null;
-                  })}
+            {/* Spacer to push content below fixed header */}
+            <div className="h-[76px] w-full shrink-0 md:bg-white" />
+          </>
+        )}
+        
+        {/* 1. CART SUMMARY */}
+        {step === "services" && (
+          <div className="flex-1 overflow-y-auto pb-32 md:pb-8 md:bg-white min-h-0 scrollbar-hide" data-lenis-prevent>
+            {cartItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full px-6 text-center space-y-6 pt-20">
+                <ClipboardList className="w-16 h-16 text-primary/20" />
+                <div>
+                  <h3 className="font-serif text-2xl text-primary-dark mb-2">Your booking is empty</h3>
+                  <p className="text-text-secondary text-sm">Explore our services and add them to your booking.</p>
                 </div>
-                
-                <h2 className="font-serif text-2xl text-primary-dark mb-4 mt-2">Your Selected Services</h2>
-                
-                {/* Grouped Items */}
-                <div className="space-y-6">
-                  {Array.from(new Set(cartItems.map(i => i.item.category))).map(category => (
-                    <div key={category} className="space-y-3">
-                      <h3 className="font-medium text-lg text-primary border-b border-primary/10 pb-2">{category}</h3>
-                      {cartItems.filter(i => i.item.category === category).map(cartItem => (
-                        <CartItemCard 
-                          key={cartItem.id} 
-                          cartItem={cartItem} 
-                          setItemToDelete={setItemToDelete} 
-                          removeItem={removeItem}
-                          addItem={addItem}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Add more & Billing */}
-              <div className="mt-auto px-6 pt-4 pb-8 space-y-6">
-                
-                <Link 
-                  href="/services" 
-                  className="w-full py-3.5 rounded-xl border-2 border-primary/20 text-primary font-medium flex items-center justify-center transition-colors hover:bg-primary/5 bg-transparent"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add More Services
+                <Link href="/services" className="bg-primary text-surface px-8 py-3 rounded-full font-medium">
+                  Explore Services
                 </Link>
-
-                <div className="bg-primary/5 rounded-soft p-5 space-y-3">
-                  <h3 className="font-serif text-lg text-primary-dark mb-4">Billing Details</h3>
-                  <div className="flex justify-between text-sm text-text-secondary">
-                    <span>Subtotal</span>
-                    <span>QAR {total}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col min-h-full">
+                {/* Tabs */}
+                <div className="px-6 mb-6">
+                  <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {Array.from(new Set(cartItems.map(i => i.item.category))).map((category, idx, arr) => {
+                      return null;
+                    })}
                   </div>
-                  <div className="flex justify-between text-sm text-text-secondary">
-                    <span>Taxes & Fees</span>
-                    <span>QAR 0.00</span>
-                  </div>
-                  <div className="flex justify-between font-medium text-lg text-text-primary pt-3 border-t border-primary/10">
-                    <span>Total</span>
-                    <span>QAR {total}</span>
+                  
+                  <h2 className="font-serif text-2xl text-primary-dark mb-4 mt-2">Your Selected Services</h2>
+                  
+                  {/* Grouped Items */}
+                  <div className="space-y-6">
+                    {Array.from(new Set(cartItems.map(i => i.item.category))).map(category => (
+                      <div key={category} className="space-y-3">
+                        <h3 className="font-medium text-lg text-primary border-b border-primary/10 pb-2">{category}</h3>
+                        {cartItems.filter(i => i.item.category === category).map(cartItem => (
+                          <CartItemCard 
+                            key={cartItem.id} 
+                            cartItem={cartItem} 
+                            setItemToDelete={setItemToDelete} 
+                            removeItem={removeItem}
+                            addItem={addItem}
+                          />
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* 2. TIME SELECTION */}
-      {step === "time" && (
-        <div className="flex-1 overflow-y-auto px-6 pb-32 space-y-8 mt-4">
-          
-          {/* Calendar Header */}
-          <div className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-primary/10">
-            <div className="flex justify-between items-center p-5 bg-primary/5 border-b border-primary/10">
-              <h3 className="font-serif text-lg text-primary-dark font-semibold capitalize">
-                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-              </h3>
-              <div className="flex space-x-2">
-                <button 
-                  onClick={handlePrevMonth} 
-                  disabled={isCurrentMonth}
-                  className="p-2 rounded-full bg-white shadow-sm border border-primary/10 text-primary hover:bg-primary/5 disabled:opacity-40 disabled:hover:bg-white disabled:shadow-none transition-all"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={handleNextMonth} 
-                  className="p-2 rounded-full bg-white shadow-sm border border-primary/10 text-primary hover:bg-primary/5 transition-all"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-5">
-              {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                <div key={day} className="text-center text-xs font-medium text-text-secondary py-1">
-                  {day}
-                </div>
-              ))}
-            </div>
-            
-            <div className="grid grid-cols-7 gap-1">
-              {blanks.map(b => (
-                <div key={`blank-${b}`} className="h-10"></div>
-              ))}
-              
-              {days.map(d => {
-                const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
-                const todayMidnight = new Date();
-                todayMidnight.setHours(0, 0, 0, 0);
-                
-                const isPast = dateObj < todayMidnight;
-                const isSelected = selectedDate && dateObj.toDateString() === selectedDate.toDateString();
-                const isToday = dateObj.toDateString() === today.toDateString();
-
-                return (
-                  <button
-                    key={d}
-                    disabled={isPast}
-                    onClick={() => {
-                      setSelectedDate(dateObj);
-                      setSelectedTime(null);
-                    }}
-                    className={`
-                      h-10 w-full rounded-full flex items-center justify-center text-sm transition-all
-                      ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-primary/10"}
-                      ${isSelected ? "bg-primary text-surface font-medium hover:bg-primary shadow-md" : ""}
-                      ${isToday && !isSelected ? "border border-primary/30 text-primary font-medium" : ""}
-                      ${!isPast && !isSelected && !isToday ? "text-text-primary" : ""}
-                    `}
+                {/* Add more & Billing (Mobile Billing hidden on Desktop) */}
+                <div className="mt-auto px-6 pt-4 pb-8 space-y-6">
+                  
+                  <Link 
+                    href="/services" 
+                    className="w-full py-3.5 rounded-xl border-2 border-primary/20 text-primary font-medium flex items-center justify-center transition-colors hover:bg-primary/5 bg-transparent"
                   >
-                    {d}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add More Services
+                  </Link>
 
-          {/* Time Slots */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-lg text-primary-dark">Available Times</h3>
-              {selectedDate && (
-                <span className="text-sm font-medium text-text-secondary">
-                  {selectedDate.toLocaleString('default', { weekday: 'short', month: 'short', day: 'numeric' })}
-                </span>
-              )}
-            </div>
+                  <div className="md:hidden bg-primary/5 rounded-soft p-5 space-y-3">
+                    <h3 className="font-serif text-lg text-primary-dark mb-4">Billing Details</h3>
+                    <div className="flex justify-between text-sm text-text-secondary">
+                      <span>Subtotal</span>
+                      <span>QAR {total}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-text-secondary">
+                      <span>Taxes & Fees</span>
+                      <span>QAR 0.00</span>
+                    </div>
+                    <div className="flex justify-between font-medium text-lg text-text-primary pt-3 border-t border-primary/10">
+                      <span>Total</span>
+                      <span>QAR {total}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 2. TIME SELECTION */}
+        {step === "time" && (
+          <div className="flex-1 overflow-y-auto px-6 pb-32 md:pb-8 space-y-8 md:bg-white pt-4 min-h-0 scrollbar-hide" data-lenis-prevent>
             
-            {dynamicTimeSlots.length > 0 ? (
-              <div className="grid grid-cols-3 gap-3">
-                {dynamicTimeSlots.map(time => {
-                  const isBooked = dynamicBookedSlots.includes(time);
-                  const isSelected = selectedTime === time;
+            {/* Calendar Header */}
+            <div className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-primary/10">
+              <div className="flex justify-between items-center p-5 bg-primary/5 border-b border-primary/10">
+                <h3 className="font-serif text-lg text-primary-dark font-semibold capitalize">
+                  {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                </h3>
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={handlePrevMonth} 
+                    disabled={isCurrentMonth}
+                    className="p-2 rounded-full bg-white shadow-sm border border-primary/10 text-primary hover:bg-primary/5 disabled:opacity-40 disabled:hover:bg-white disabled:shadow-none transition-all"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={handleNextMonth} 
+                    className="p-2 rounded-full bg-white shadow-sm border border-primary/10 text-primary hover:bg-primary/5 transition-all"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-5">
+                {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                  <div key={day} className="text-center text-xs font-medium text-text-secondary py-1">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-7 gap-1">
+                {blanks.map(b => (
+                  <div key={`blank-${b}`} className="h-10"></div>
+                ))}
+                
+                {days.map(d => {
+                  const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
+                  const todayMidnight = new Date();
+                  todayMidnight.setHours(0, 0, 0, 0);
+                  
+                  const isPast = dateObj < todayMidnight;
+                  const isSelected = selectedDate && dateObj.toDateString() === selectedDate.toDateString();
+                  const isToday = dateObj.toDateString() === today.toDateString();
+
                   return (
                     <button
-                      key={time}
-                      disabled={isBooked}
-                      onClick={() => setSelectedTime(time)}
+                      key={d}
+                      disabled={isPast}
+                      onClick={() => {
+                        setSelectedDate(dateObj);
+                        setSelectedTime(null);
+                      }}
                       className={`
-                        py-2.5 rounded-soft text-sm font-medium border transition-colors
-                        ${isBooked ? "opacity-40 bg-gray-100 border-transparent text-gray-400" : 
-                          isSelected ? "bg-primary border-primary text-surface shadow-md" : 
-                          "bg-surface border-primary/20 text-text-primary hover:border-primary hover:shadow-sm"}
+                        h-10 w-full rounded-full flex items-center justify-center text-sm transition-all
+                        ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-primary/10"}
+                        ${isSelected ? "bg-primary text-surface font-medium hover:bg-primary shadow-md" : ""}
+                        ${isToday && !isSelected ? "border border-primary/30 text-primary font-medium" : ""}
+                        ${!isPast && !isSelected && !isToday ? "text-text-primary" : ""}
                       `}
                     >
-                      {time}
+                      {d}
                     </button>
                   );
                 })}
               </div>
-            ) : (
-              <div className="text-center py-8 text-text-secondary text-sm">
-                Please select a date to see available times.
-              </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* 3. AUTH / OTP */}
-      {step === "auth" && (
-        <div className="relative w-full h-[calc(100dvh-11rem)] bg-[#fbf6f0] flex items-center justify-center">
-          {/* Top Pink Banner */}
-          <div className="absolute top-0 left-0 right-0 h-[25%] bg-[#ddbdae] rounded-b-[24px] z-0"></div>
-
-          <div className="w-[calc(100%-2.5rem)] max-w-[420px] bg-white rounded-[2.5rem] shadow-xl relative z-10 p-8 pb-10">
-            
-            {/* Heading */}
-            <h3 className="font-serif text-2xl text-primary-dark text-center mb-6 mt-2">Your Details</h3>
-
-            <div className="space-y-6">
-              
-              {/* Full Name */}
-              <div>
-                <label className="text-xs font-bold text-[#9a8276] uppercase mb-1.5 block tracking-wider">Full Name</label>
-                <input 
-                  type="text" 
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter full name"
-                  className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
-                />
+            {/* Time Slots */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif text-lg text-primary-dark">Available Times</h3>
+                {selectedDate && (
+                  <span className="text-sm font-medium text-text-secondary">
+                    {selectedDate.toLocaleString('default', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                )}
               </div>
               
-              {/* Mobile Number */}
-              <div>
-                <label className="text-xs font-bold text-[#9a8276] uppercase mb-1.5 block tracking-wider">Mobile Number</label>
-                <input 
-                  type="tel" 
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+974 1234 5678"
-                  className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
-                />
-              </div>
+              {dynamicTimeSlots.length > 0 ? (
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {dynamicTimeSlots.map(time => {
+                    const isBooked = dynamicBookedSlots.includes(time);
+                    const isSelected = selectedTime === time;
+                    return (
+                      <button
+                        key={time}
+                        disabled={isBooked}
+                        onClick={() => setSelectedTime(time)}
+                        className={`
+                          py-2.5 rounded-soft text-sm font-medium border transition-colors
+                          ${isBooked ? "opacity-40 bg-gray-100 border-transparent text-gray-400" : 
+                            isSelected ? "bg-primary border-primary text-surface shadow-md" : 
+                            "bg-surface border-primary/20 text-text-primary hover:border-primary hover:shadow-sm"}
+                        `}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-text-secondary text-sm">
+                  Please select a date to see available times.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 3. AUTH / OTP */}
+        {step === "auth" && (
+          <div className="flex-1 overflow-y-auto bg-[#fbf6f0] md:bg-white flex items-center justify-center py-12 md:py-0 min-h-0 scrollbar-hide" data-lenis-prevent>
+            {/* Top Pink Banner (Mobile only) */}
+            <div className="md:hidden absolute top-[76px] left-0 right-0 h-[25%] bg-[#ddbdae] rounded-b-[24px] z-0"></div>
+
+            <div className="w-[calc(100%-2.5rem)] max-w-[420px] bg-white rounded-[2.5rem] shadow-xl relative z-10 p-8 pb-10 md:border md:border-primary/10">
               
-              {/* Receive Updates Via */}
-              <div className="pt-2">
-                <label className="text-xs font-bold text-[#9a8276] uppercase mb-3 block text-center tracking-wider">Receive Updates Via</label>
-                <div className="flex p-1 rounded-xl bg-transparent border border-[#ddbdae]">
-                  <button 
-                    type="button"
-                    onClick={() => setChannel("WhatsApp")}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
-                  >
-                    WhatsApp
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setChannel("SMS")}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
-                  >
-                    SMS
+              {/* Heading */}
+              <h3 className="font-serif text-2xl text-primary-dark text-center mb-6 mt-2">Your Details</h3>
+
+              <form id="auth-form" onSubmit={handleAuthSubmit} className="space-y-6">
+                
+                {/* Full Name */}
+                <div>
+                  <label className="text-xs font-bold text-[#9a8276] uppercase mb-1.5 block tracking-wider">Full Name</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter full name"
+                    className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
+                  />
+                </div>
+                
+                {/* Mobile Number */}
+                <div>
+                  <label className="text-xs font-bold text-[#9a8276] uppercase mb-1.5 block tracking-wider">Mobile Number</label>
+                  <input 
+                    type="tel" 
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+974 1234 5678"
+                    className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
+                  />
+                </div>
+                
+                {/* Receive Updates Via */}
+                <div className="pt-2">
+                  <label className="text-xs font-bold text-[#9a8276] uppercase mb-3 block text-center tracking-wider">Receive Updates Via</label>
+                  <div className="flex p-1 rounded-xl bg-transparent border border-[#ddbdae]">
+                    <button 
+                      type="button"
+                      onClick={() => setChannel("WhatsApp")}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
+                    >
+                      WhatsApp
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setChannel("SMS")}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
+                    >
+                      SMS
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Verify & Confirm (Mobile Only) */}
+                <div className="pt-6 md:hidden">
+                  <button type="submit" className="w-full py-3.5 rounded-xl text-white font-medium shadow-md transition-all hover:opacity-90 bg-[#ddbdae]">
+                    Verify & Confirm
                   </button>
                 </div>
-              </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 4. SUCCESS */}
+        {step === "success" && (
+          <div className="flex-1 px-6 flex flex-col items-center justify-center space-y-4 text-center bg-[#fcf4f0] md:bg-white h-full w-full">
+            <CheckCircle2 className="w-24 h-24 text-primary" />
+            <h2 className="font-serif text-3xl md:text-4xl text-primary-dark mt-4">Booking Confirmed!</h2>
+            <p className="text-text-secondary max-w-md mx-auto">Your appointment has been successfully scheduled. We have sent the details via {channel}.</p>
+            <button onClick={() => setStep("services")} className="mt-8 bg-primary text-surface px-8 py-3.5 rounded-xl font-medium shadow-md transition-all hover:bg-primary-dark">
+              Book Another Session
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT COLUMN - PERSISTENT DESKTOP ORDER SUMMARY */}
+      {step !== "success" && (
+        <div className="hidden md:flex w-[380px] lg:w-[420px] flex-col bg-gray-50/50 relative overflow-y-auto p-8 scrollbar-hide" data-lenis-prevent>
+          <div className="space-y-8 sticky top-0">
+            <div>
+              <h3 className="font-serif text-2xl text-primary-dark border-b border-primary/10 pb-4 mb-6">Order Summary</h3>
               
-              {/* Verify & Confirm */}
-              <div className="pt-6">
-                <button type="submit" className="w-full py-3.5 rounded-xl text-white font-medium shadow-md transition-all hover:opacity-90 bg-[#ddbdae]">
-                  Verify & Confirm
-                </button>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide" data-lenis-prevent>
+                {cartItems.map(item => (
+                  <div key={item.id} className="flex justify-between text-sm items-start">
+                    <div className="flex flex-col pr-4">
+                      <span className="font-medium text-text-primary leading-tight">{item.item.name}</span>
+                      {item.selectedVariant && <span className="text-text-secondary text-xs mt-1">{item.selectedVariant.name}</span>}
+                    </div>
+                    <span className="font-semibold text-primary shrink-0">QAR {item.totalPrice}</span>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 space-y-4 shadow-sm border border-primary/5">
+              <h4 className="font-serif text-lg text-primary-dark mb-2">Billing Details</h4>
+              <div className="flex justify-between text-sm text-text-secondary">
+                <span>Subtotal</span>
+                <span>QAR {total}</span>
+              </div>
+              <div className="flex justify-between text-sm text-text-secondary">
+                <span>Taxes & Fees</span>
+                <span>QAR 0.00</span>
+              </div>
+              <div className="flex justify-between font-medium text-lg text-text-primary pt-4 border-t border-primary/10">
+                <span>Total</span>
+                <span className="text-primary-dark font-bold">QAR {total}</span>
+              </div>
+            </div>
+
+            {/* Desktop Action Button */}
+            <div className="pt-2">
+              {step === "services" ? (
+                <button 
+                  onClick={() => setStep("time")}
+                  disabled={cartItems.length === 0}
+                  className="w-full bg-primary text-white py-4 rounded-xl font-medium text-lg flex items-center justify-center hover:bg-primary-dark transition-all shadow-md disabled:opacity-50"
+                >
+                  Proceed to Time <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
+              ) : step === "time" ? (
+                <button 
+                  disabled={!selectedTime}
+                  onClick={handleCheckout}
+                  className="w-full bg-primary text-white py-4 rounded-xl font-medium text-lg flex items-center justify-center hover:bg-primary-dark transition-all shadow-md disabled:opacity-50"
+                >
+                  Checkout <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
+              ) : step === "auth" ? (
+                <button 
+                  type="submit"
+                  form="auth-form"
+                  className="w-full bg-[#ddbdae] text-white py-4 rounded-xl font-medium text-lg flex items-center justify-center hover:opacity-90 transition-all shadow-md"
+                >
+                  Verify & Confirm <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
       )}
 
-      {/* 4. SUCCESS */}
-      {step === "success" && (
-        <div className="flex-1 px-6 flex flex-col items-center justify-center space-y-4 text-center">
-          <CheckCircle2 className="w-20 h-20 text-primary" />
-          <h2 className="font-serif text-3xl text-primary-dark">Booking Confirmed!</h2>
-          <p className="text-text-secondary">Your appointment has been successfully scheduled. We have sent the details via {channel}.</p>
-          <button onClick={() => setStep("services")} className="mt-8 bg-surface border border-primary text-primary px-8 py-3 rounded-soft font-medium">
-            Book Another
-          </button>
-        </div>
-      )}
-
-      {/* CART FLOATING ACTION (Only show if not success/auth and cart is not empty) */}
+      {/* CART FLOATING ACTION (Mobile Only) */}
       {cartItems.length > 0 && (step === "services" || step === "time") && (
-        <div className="fixed bottom-[100px] w-full max-w-md mx-auto left-0 right-0 px-6 z-40 animate-in slide-in-from-bottom-5">
+        <div className="md:hidden absolute bottom-[100px] w-full max-w-md mx-auto left-0 right-0 px-6 z-40 animate-in slide-in-from-bottom-5">
           <div className="bg-primary-dark rounded-soft p-4 shadow-spa text-surface flex items-center justify-between">
             <div className="flex flex-col">
               <span className="font-medium text-sm flex items-center"><ClipboardList className="w-4 h-4 mr-2" /> {cartItems.length} items</span>
@@ -542,7 +619,7 @@ export function BookingFlow() {
 
       {/* DELETE CONFIRMATION MODAL */}
       {itemToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6">
           <div className="bg-surface rounded-2xl p-6 w-full max-w-sm shadow-spa animate-in zoom-in-95">
             <h3 className="font-serif text-xl text-primary-dark mb-2">Remove Service</h3>
             <p className="text-text-secondary text-sm mb-6">Are you sure you want to remove this service from your booking?</p>

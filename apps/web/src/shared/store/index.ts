@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { Item, User, CartItem, ItemVariant } from "../types";
 
 // User Store
@@ -8,11 +9,18 @@ interface UserState {
   logout: () => void;
 }
 
-export const useUserStore = create<UserState>((set) => ({
-  user: null,
-  setUser: (user) => set({ user }),
-  logout: () => set({ user: null }),
-}));
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      user: null,
+      setUser: (user) => set({ user }),
+      logout: () => set({ user: null }),
+    }),
+    {
+      name: "user-storage",
+    }
+  )
+);
 
 // Cart Store
 interface CartState {
@@ -23,37 +31,44 @@ interface CartState {
   getTotal: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  addItem: (item, selectedVariant, selectedAddons = []) =>
-    set((state) => {
-      // Calculate total price for this configured item
-      let totalPrice = selectedVariant ? selectedVariant.price : item.price;
-      selectedAddons.forEach((addon) => { totalPrice += addon.price; });
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      addItem: (item, selectedVariant, selectedAddons = []) =>
+        set((state) => {
+          // Calculate total price for this configured item
+          let totalPrice = selectedVariant ? selectedVariant.price : item.price;
+          selectedAddons.forEach((addon) => { totalPrice += addon.price; });
 
-      // Create a unique hash for this configuration to group identical items
-      const addonIds = selectedAddons.map(a => a.id).sort().join('-');
-      const cartItemId = `${item.id}-${selectedVariant?.id || 'base'}-${addonIds}`;
+          // Create a unique hash for this configuration to group identical items
+          const addonIds = selectedAddons.map(a => a.id).sort().join('-');
+          const cartItemId = `${item.id}-${selectedVariant?.id || 'base'}-${addonIds}`;
 
-      const existing = state.items.find((i) => i.id === cartItemId);
-      if (existing) {
-        return {
-          items: state.items.map((i) =>
-            i.id === cartItemId ? { ...i, quantity: i.quantity + 1 } : i
-          ),
-        };
-      }
-      return { items: [...state.items, { id: cartItemId, item, quantity: 1, selectedVariant, selectedAddons, totalPrice }] };
+          const existing = state.items.find((i) => i.id === cartItemId);
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.id === cartItemId ? { ...i, quantity: i.quantity + 1 } : i
+              ),
+            };
+          }
+          return { items: [...state.items, { id: cartItemId, item, quantity: 1, selectedVariant, selectedAddons, totalPrice }] };
+        }),
+      removeItem: (cartItemId) =>
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== cartItemId),
+        })),
+      clearCart: () => set({ items: [] }),
+      getTotal: () => {
+        return get().items.reduce((total, i) => total + i.totalPrice * i.quantity, 0);
+      },
     }),
-  removeItem: (cartItemId) =>
-    set((state) => ({
-      items: state.items.filter((i) => i.id !== cartItemId),
-    })),
-  clearCart: () => set({ items: [] }),
-  getTotal: () => {
-    return get().items.reduce((total, i) => total + i.totalPrice * i.quantity, 0);
-  },
-}));
+    {
+      name: "cart-storage",
+    }
+  )
+);
 
 // Favorites Store
 interface FavoritesState {
@@ -62,17 +77,24 @@ interface FavoritesState {
   isFavorite: (itemId: string) => boolean;
 }
 
-export const useFavoritesStore = create<FavoritesState>((set, get) => ({
-  favorites: [],
-  toggleFavorite: (item) =>
-    set((state) => {
-      const exists = state.favorites.find((i) => i.id === item.id);
-      if (exists) {
-        return { favorites: state.favorites.filter((i) => i.id !== item.id) };
-      }
-      return { favorites: [...state.favorites, item] };
+export const useFavoritesStore = create<FavoritesState>()(
+  persist(
+    (set, get) => ({
+      favorites: [],
+      toggleFavorite: (item) =>
+        set((state) => {
+          const exists = state.favorites.find((i) => i.id === item.id);
+          if (exists) {
+            return { favorites: state.favorites.filter((i) => i.id !== item.id) };
+          }
+          return { favorites: [...state.favorites, item] };
+        }),
+      isFavorite: (itemId) => {
+        return get().favorites.some((i) => i.id === itemId);
+      },
     }),
-  isFavorite: (itemId) => {
-    return get().favorites.some((i) => i.id === itemId);
-  },
-}));
+    {
+      name: "favorites-storage",
+    }
+  )
+);

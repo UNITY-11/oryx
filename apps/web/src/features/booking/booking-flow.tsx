@@ -27,7 +27,7 @@ function CartItemCard({ cartItem, setItemToDelete, removeItem, addItem }: {
           </div>
           <div>
             <h4 className="font-medium text-text-primary text-[15px]">{cartItem.item.name}</h4>
-            <span className="font-semibold text-primary mt-1 block">${cartItem.totalPrice}</span>
+            <span className="font-semibold text-primary mt-1 block">QAR {cartItem.totalPrice}</span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -68,7 +68,7 @@ function CartItemCard({ cartItem, setItemToDelete, removeItem, addItem }: {
                   <div key={addon.id} className="flex items-center justify-between text-sm text-text-secondary bg-white p-2 rounded border border-gray-100">
                     <span>+ {addon.name}</span>
                     <div className="flex items-center space-x-3">
-                      <span className="font-medium">${addon.price}</span>
+                      <span className="font-medium">QAR {addon.price}</span>
                       <button 
                         onClick={() => {
                           const newAddons = cartItem.selectedAddons?.filter(a => a.id !== addon.id);
@@ -212,15 +212,15 @@ export function BookingFlow() {
                   <h3 className="font-serif text-lg text-primary-dark mb-4">Billing Details</h3>
                   <div className="flex justify-between text-sm text-text-secondary">
                     <span>Subtotal</span>
-                    <span>${total}</span>
+                    <span>QAR {total}</span>
                   </div>
                   <div className="flex justify-between text-sm text-text-secondary">
                     <span>Taxes & Fees</span>
-                    <span>$0.00</span>
+                    <span>QAR 0.00</span>
                   </div>
                   <div className="flex justify-between font-medium text-lg text-text-primary pt-3 border-t border-primary/10">
                     <span>Total</span>
-                    <span>${total}</span>
+                    <span>QAR {total}</span>
                   </div>
                 </div>
               </div>
@@ -342,7 +342,7 @@ export function BookingFlow() {
         <div className="absolute bottom-6 left-6 right-6 bg-primary-dark rounded-soft p-4 shadow-spa text-surface flex items-center justify-between z-10 animate-in slide-in-from-bottom-5">
           <div className="flex flex-col">
             <span className="font-medium text-sm flex items-center"><ClipboardList className="w-4 h-4 mr-2" /> {cartItems.length} items</span>
-            <span className="font-serif text-xl font-bold">${total}</span>
+            <span className="font-serif text-xl font-bold">QAR {total}</span>
           </div>
           {step === "services" ? (
             <button 

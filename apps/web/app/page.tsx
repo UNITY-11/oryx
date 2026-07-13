@@ -245,13 +245,17 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
-                <Link href={`/service/${item.id}`} key={item.id} className="group block">
-                  <div className="relative aspect-square rounded-2xl overflow-hidden transition-transform group-hover:scale-[1.02] mb-2 bg-surface">
+                <Link 
+                  href={`/service/${item.id}`} 
+                  key={item.id} 
+                  className="flex flex-col bg-surface rounded-2xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1"
+                >
+                  <div className="relative aspect-square">
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                   </div>
-                  <div className="flex flex-col px-1">
-                    <h3 className="font-medium text-sm text-text-primary leading-tight line-clamp-1">{item.name}</h3>
-                    <span className="font-semibold text-primary mt-1 text-[13px]">${item.price}</span>
+                  <div className="p-3 md:p-6 flex flex-col">
+                    <h3 className="font-serif text-text-primary font-medium text-sm md:text-xl leading-tight line-clamp-1">{item.name}</h3>
+                    <span className="font-sans font-semibold text-primary-dark mt-1.5 md:mt-3 text-sm md:text-xl">${item.price}</span>
                   </div>
                 </Link>
               ))}
@@ -262,7 +266,7 @@ export default function HomePage() {
 
         {/* Footer / Location Section */}
         {!searchQuery && (
-          <section className="mt-4 pt-8 border-t border-[#d4a373]/20 pb-4 flex flex-col items-center">
+          <section className="mt-4 p-8 md:p-12 bg-[#efe1d8] rounded-[32px] flex flex-col items-center w-full">
             <button
               onClick={() => setIsFooterOpen(!isFooterOpen)}
               className="md:hidden flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors mb-2 bg-[#fcf4f0] px-5 py-2.5 rounded-full shadow-sm border border-[#d4a373]/20"

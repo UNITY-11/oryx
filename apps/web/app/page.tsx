@@ -243,7 +243,7 @@ export default function HomePage() {
               <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Shop Products</h2>
               <Link href="/products" className="text-sm text-primary font-medium">Show All</Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-2 gap-y-6 md:gap-6">
               {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
                 <Link 
                   href={`/service/${item.id}`} 

@@ -75,7 +75,7 @@ export function SwipableFavorites() {
     }
 
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pt-6 pb-24 px-4 md:px-0 max-w-5xl mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 pt-6 pb-24 px-4 md:px-8 w-full">
         {items.map(item => {
           const favorite = isFavorite(item.id);
           
@@ -85,7 +85,7 @@ export function SwipableFavorites() {
               className="relative rounded-[24px] md:rounded-[32px] overflow-hidden bg-white shadow-sm border border-primary/10 group cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
               onClick={() => router.push(item.isProduct ? `/product/${item.id}` : `/session/${item.id}`)}
             >
-              <div className="h-40 md:h-56 w-full relative overflow-hidden">
+              <div className="h-56 md:h-80 w-full relative overflow-hidden">
                 <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 
                 {/* Floating Heart Button */}

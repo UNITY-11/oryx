@@ -216,16 +216,22 @@ export function BookingFlow() {
   };
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="px-6 pt-6 pb-4 flex items-center">
-        <button 
-          onClick={handleBack} 
-          className="mr-4 p-2 bg-white rounded-full shadow-sm border border-primary/10 text-text-secondary hover:text-primary transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="font-serif text-3xl font-medium text-primary-dark">Book Session</h1>
-      </div>
+    <div className="flex flex-col h-full relative bg-[#faf6f3]">
+      {step !== "success" && (
+        <>
+          <div className={`fixed top-0 w-full max-w-md mx-auto left-0 right-0 px-6 pt-6 pb-4 flex items-center justify-center z-40 ${step === "auth" ? "bg-[#ddbdae]" : "bg-[#faf6f3]"}`}>
+            <button 
+              onClick={handleBack} 
+              className={`absolute left-6 p-2 flex items-center justify-center rounded-full transition-colors ${step === "auth" ? "text-white hover:bg-white/20" : "text-text-secondary hover:bg-black/5"}`}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className={`font-serif text-3xl font-medium text-center ${step === "auth" ? "text-white" : "text-primary-dark"}`}>Book Session</h1>
+          </div>
+          {/* Spacer to push content below fixed header */}
+          <div className="h-[76px] w-full shrink-0" />
+        </>
+      )}
       
       {/* 1. CART SUMMARY */}
       {step === "services" && (
@@ -416,54 +422,71 @@ export function BookingFlow() {
 
       {/* 3. AUTH / OTP */}
       {step === "auth" && (
-        <div className="flex-1 overflow-y-auto px-6 pb-32 flex flex-col justify-center">
-          <div className="bg-surface p-6 rounded-soft shadow-spa space-y-6">
-            <h3 className="font-serif text-2xl text-primary-dark text-center">Your Details</h3>
-            <p className="text-sm text-text-secondary text-center">Please provide your details to confirm the booking.</p>
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
+        <div className="relative w-full h-[calc(100dvh-11rem)] bg-[#fbf6f0] flex items-center justify-center">
+          {/* Top Pink Banner */}
+          <div className="absolute top-0 left-0 right-0 h-[25%] bg-[#ddbdae] rounded-b-[24px] z-0"></div>
+
+          <div className="w-[calc(100%-2.5rem)] max-w-[420px] bg-white rounded-[2.5rem] shadow-xl relative z-10 p-8 pb-10">
+            
+            {/* Heading */}
+            <h3 className="font-serif text-2xl text-primary-dark text-center mb-6 mt-2">Your Details</h3>
+
+            <div className="space-y-6">
+              
+              {/* Full Name */}
               <div>
-                <label className="text-xs font-medium text-text-secondary uppercase">Full Name</label>
+                <label className="text-xs font-bold text-[#9a8276] uppercase mb-1.5 block tracking-wider">Full Name</label>
                 <input 
                   type="text" 
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full mt-1 bg-background border border-primary/20 rounded-soft px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Enter full name"
+                  className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
                 />
               </div>
+              
+              {/* Mobile Number */}
               <div>
-                <label className="text-xs font-medium text-text-secondary uppercase">Mobile Number</label>
+                <label className="text-xs font-bold text-[#9a8276] uppercase mb-1.5 block tracking-wider">Mobile Number</label>
                 <input 
                   type="tel" 
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full mt-1 bg-background border border-primary/20 rounded-soft px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="+974 1234 5678"
+                  className="w-full bg-transparent border border-[#ddbdae] rounded-xl focus:outline-none focus:ring-1 focus:ring-primary/50 text-text-primary px-4 py-3 text-sm placeholder:text-gray-300"
                 />
               </div>
-              <div>
-                <label className="text-xs font-medium text-text-secondary uppercase mb-2 block">Receive Updates Via</label>
-                <div className="flex space-x-2">
+              
+              {/* Receive Updates Via */}
+              <div className="pt-2">
+                <label className="text-xs font-bold text-[#9a8276] uppercase mb-3 block text-center tracking-wider">Receive Updates Via</label>
+                <div className="flex p-1 rounded-xl bg-transparent border border-[#ddbdae]">
                   <button 
                     type="button"
                     onClick={() => setChannel("WhatsApp")}
-                    className={`flex-1 py-2 rounded-soft text-sm font-medium border ${channel === "WhatsApp" ? "bg-primary text-surface border-primary" : "bg-transparent text-text-secondary border-primary/20"}`}
+                    className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
                   >
                     WhatsApp
                   </button>
                   <button 
                     type="button"
                     onClick={() => setChannel("SMS")}
-                    className={`flex-1 py-2 rounded-soft text-sm font-medium border ${channel === "SMS" ? "bg-primary text-surface border-primary" : "bg-transparent text-text-secondary border-primary/20"}`}
+                    className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#ddbdae] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
                   >
                     SMS
                   </button>
                 </div>
               </div>
-              <button type="submit" className="w-full py-3 rounded-soft bg-primary text-surface font-medium mt-4">
-                Verify & Confirm
-              </button>
-            </form>
+              
+              {/* Verify & Confirm */}
+              <div className="pt-6">
+                <button type="submit" className="w-full py-3.5 rounded-xl text-white font-medium shadow-md transition-all hover:opacity-90 bg-[#ddbdae]">
+                  Verify & Confirm
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -482,27 +505,29 @@ export function BookingFlow() {
 
       {/* CART FLOATING ACTION (Only show if not success/auth and cart is not empty) */}
       {cartItems.length > 0 && (step === "services" || step === "time") && (
-        <div className="absolute bottom-6 left-6 right-6 bg-primary-dark rounded-soft p-4 shadow-spa text-surface flex items-center justify-between z-10 animate-in slide-in-from-bottom-5">
-          <div className="flex flex-col">
-            <span className="font-medium text-sm flex items-center"><ClipboardList className="w-4 h-4 mr-2" /> {cartItems.length} items</span>
-            <span className="font-serif text-xl font-bold">QAR {total}</span>
+        <div className="fixed bottom-[100px] w-full max-w-md mx-auto left-0 right-0 px-6 z-40 animate-in slide-in-from-bottom-5">
+          <div className="bg-primary-dark rounded-soft p-4 shadow-spa text-surface flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="font-medium text-sm flex items-center"><ClipboardList className="w-4 h-4 mr-2" /> {cartItems.length} items</span>
+              <span className="font-serif text-xl font-bold">QAR {total}</span>
+            </div>
+            {step === "services" ? (
+              <button 
+                onClick={() => setStep("time")}
+                className="bg-primary text-surface px-6 py-2.5 rounded-full font-medium flex items-center text-sm hover:bg-primary-dark transition-colors border border-surface/20"
+              >
+                Book the services <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            ) : (
+              <button 
+                disabled={!selectedTime}
+                onClick={handleCheckout}
+                className="bg-primary text-surface px-6 py-2.5 rounded-full font-medium flex items-center text-sm hover:bg-primary-dark transition-colors border border-surface/20 disabled:opacity-50"
+              >
+                Checkout <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            )}
           </div>
-          {step === "services" ? (
-            <button 
-              onClick={() => setStep("time")}
-              className="bg-primary text-surface px-6 py-2.5 rounded-full font-medium flex items-center text-sm hover:bg-primary-dark transition-colors border border-surface/20"
-            >
-              Book the services <ChevronRight className="w-4 h-4 ml-1" />
-            </button>
-          ) : (
-            <button 
-              disabled={!selectedTime}
-              onClick={handleCheckout}
-              className="bg-primary text-surface px-6 py-2.5 rounded-full font-medium flex items-center text-sm hover:bg-primary-dark transition-colors border border-surface/20 disabled:opacity-50"
-            >
-              Checkout <ChevronRight className="w-4 h-4 ml-1" />
-            </button>
-          )}
         </div>
       )}
 

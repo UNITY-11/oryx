@@ -52,11 +52,11 @@ export function TopNav() {
       {/* Right side: Search, Favorites & Profile */}
       <div className="flex items-center justify-end space-x-4 flex-1">
         <div className="relative w-48 xl:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
           <input
             type="text"
             placeholder="Search treatments or products..."
-            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-shadow"
+            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder-primary focus:ring-2 focus:ring-primary outline-none transition-shadow"
           />
         </div>
         
@@ -64,7 +64,7 @@ export function TopNav() {
           <Link href="/favorites" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-text-secondary hover:text-primary transition-colors">
             <Heart className="w-5 h-5" />
           </Link>
-          <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-text-secondary hover:text-primary transition-colors">
+          <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary hover:text-primary-dark transition-colors">
             <User className="w-5 h-5" />
           </Link>
         </div>

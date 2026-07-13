@@ -35,9 +35,9 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
     <main 
       ref={wrapperRef}
       id="main-scroll-container" 
-      className="flex-1 overflow-y-auto pb-24 scrollbar-hide"
+      className="flex-1 overflow-y-auto pb-24 md:pb-0 scrollbar-hide flex flex-col"
     >
-      <div ref={contentRef}>
+      <div ref={contentRef} className="flex-1 flex flex-col min-h-0">
         {children}
       </div>
     </main>

@@ -56,7 +56,7 @@ export function SwipableFavorites() {
 
     if (items.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center h-[70vh] md:h-full px-6 text-center space-y-6 animate-in fade-in duration-500">
+        <div className="flex flex-col items-center justify-center px-6 text-center space-y-6 animate-in fade-in duration-500" style={{ minHeight: "calc(100vh - 300px)" }}>
           <div className="relative">
             <Heart className="w-20 h-20 text-[#E5C37A]/20" />
             <Heart className="w-20 h-20 text-[#E5C37A] absolute inset-0 animate-pulse opacity-50" />
@@ -127,46 +127,47 @@ export function SwipableFavorites() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex-1 flex flex-col w-full">
       {/* Tabs */}
-      <div className="flex w-full border-b border-primary/20 mt-2 px-6 relative shrink-0">
-        <button 
-          onClick={() => setActiveTab("services")}
-          className={`flex-1 pb-4 text-[15px] font-medium transition-colors ${activeTab === "services" ? "text-primary" : "text-text-secondary"}`}
-        >
-          Services
-        </button>
-        <button 
-          onClick={() => setActiveTab("products")}
-          className={`flex-1 pb-4 text-[15px] font-medium transition-colors ${activeTab === "products" ? "text-primary" : "text-text-secondary"}`}
-        >
-          Products
-        </button>
-        {/* Animated indicator */}
-        <div 
-          className="absolute bottom-0 h-0.5 bg-primary transition-transform duration-300 w-[calc(50%-1.5rem)]"
-          style={{ transform: activeTab === "products" ? "translateX(100%)" : "translateX(0%)" }}
-        />
+      <div className="w-full px-6 md:px-8 mt-4 shrink-0 relative">
+        <div className="flex w-full md:max-w-md relative z-10">
+          <button 
+            onClick={() => setActiveTab("services")}
+            className={`flex-1 pb-4 text-[15px] md:text-base font-medium transition-colors ${activeTab === "services" ? "text-[#E5C37A]" : "text-text-secondary"}`}
+            style={activeTab === "services" ? { borderBottom: "2px solid #E5C37A", color: "#E5C37A" } : { borderBottom: "2px solid transparent" }}
+          >
+            Services
+          </button>
+          <button 
+            onClick={() => setActiveTab("products")}
+            className={`flex-1 pb-4 text-[15px] md:text-base font-medium transition-colors ${activeTab === "products" ? "text-[#E5C37A]" : "text-text-secondary"}`}
+            style={activeTab === "products" ? { borderBottom: "2px solid #E5C37A", color: "#E5C37A" } : { borderBottom: "2px solid transparent" }}
+          >
+            Products
+          </button>
+        </div>
+        {/* Full width bottom border */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-[#9a8276] opacity-20 z-0" />
       </div>
 
       {/* Swipable Area */}
       <div 
-        className="flex-1 overflow-hidden relative bg-surface md:bg-transparent"
+        className="flex-1 overflow-hidden relative bg-transparent flex flex-col min-h-0"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <div 
-          className="flex w-[200%] h-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          className="flex-1 flex w-[200%] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] min-h-0"
           style={{ transform: activeTab === "products" ? "translateX(-50%)" : "translateX(0%)" }}
         >
           {/* Services Tab */}
-          <div className="w-1/2 h-full overflow-y-auto scrollbar-hide relative pb-20 md:pb-8">
+          <div className="w-1/2 flex-1 overflow-y-auto scrollbar-hide relative pb-20 md:pb-8 flex flex-col min-h-0">
             <ItemList items={services} />
           </div>
 
           {/* Products Tab */}
-          <div className="w-1/2 h-full overflow-y-auto scrollbar-hide relative pb-20 md:pb-8">
+          <div className="w-1/2 flex-1 overflow-y-auto scrollbar-hide relative pb-20 md:pb-8 flex flex-col min-h-0">
             <ItemList items={products} />
           </div>
         </div>

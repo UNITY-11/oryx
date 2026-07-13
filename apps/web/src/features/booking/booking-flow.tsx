@@ -262,7 +262,9 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
               )}
             </div>
             {/* Spacer to push content below fixed header */}
-            <div className="h-[76px] w-full shrink-0 md:bg-white" />
+            {(!isIntegrated || step !== "services") && (
+              <div className="h-[76px] w-full shrink-0 md:bg-white" />
+            )}
           </>
         )}
         

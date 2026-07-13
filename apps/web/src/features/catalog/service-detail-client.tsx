@@ -37,7 +37,6 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   const currentDuration = selectedVariant ? selectedVariant.duration : item.duration;
 
   const handleAdd = () => {
-    clearCart();
     addItem(item, selectedVariant, selectedAddons);
     router.push("/booking");
   };

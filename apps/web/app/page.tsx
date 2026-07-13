@@ -224,7 +224,7 @@ export default function HomePage() {
             <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
               {filteredItems.filter(item => !item.isProduct).map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-[44%] md:w-80 group block">
-                  <div className="relative h-56 md:h-96 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm border-2 border-[#C8A24A]">
+                  <div className="relative h-56 md:h-96 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm border-2 border-[#E5C37A]">
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                     <h3 className="absolute bottom-4 left-4 right-4 text-center font-serif text-white font-medium text-lg leading-tight drop-shadow-md">
                       {item.name}

@@ -26,7 +26,7 @@ export function ProfileDashboard() {
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name && phone) {
-      setUser({ id: "u2", name, phone, channel, email, age });
+      setUser({ id: "u2", name, phone, channel });
       setIsLoginMode(false);
     }
   };
@@ -79,24 +79,6 @@ export function ProfileDashboard() {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Email ID (Optional)</label>
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Age (Optional)</label>
-                <input 
-                  type="number" 
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>

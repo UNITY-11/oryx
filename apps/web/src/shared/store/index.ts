@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Item, User, CartItem, ItemVariant } from "../types";
+import { Item, User, CartItem, ItemVariant, Booking } from "../types";
 
 // User Store
 interface UserState {
@@ -95,6 +95,28 @@ export const useFavoritesStore = create<FavoritesState>()(
     }),
     {
       name: "favorites-storage",
+    }
+  )
+);
+
+// Booking Store
+interface BookingState {
+  bookings: Booking[];
+  addBooking: (booking: Booking) => void;
+  removeBooking: (id: string) => void;
+}
+
+export const useBookingStore = create<BookingState>()(
+  persist(
+    (set) => ({
+      bookings: [],
+      addBooking: (booking) =>
+        set((state) => ({ bookings: [booking, ...state.bookings] })),
+      removeBooking: (id) =>
+        set((state) => ({ bookings: state.bookings.filter((b) => b.id !== id) })),
+    }),
+    {
+      name: "booking-storage",
     }
   )
 );

@@ -535,9 +535,9 @@ export function BookingFlow({ isIntegrated = false }: { isIntegrated?: boolean }
             <CheckCircle2 className="w-24 h-24 text-primary" />
             <h2 className="font-serif text-3xl md:text-4xl text-primary-dark mt-4">Booking Confirmed!</h2>
             <p className="text-text-secondary max-w-md mx-auto">Your appointment has been successfully scheduled. We have sent the details via {channel}.</p>
-            <button onClick={() => setStep("services")} className="mt-8 bg-primary text-surface px-8 py-3.5 rounded-xl font-medium shadow-md transition-all hover:bg-primary-dark">
-              Book Another Session
-            </button>
+            <Link href="/" className="mt-8 bg-primary text-surface px-8 py-3.5 rounded-xl font-medium shadow-md transition-all hover:bg-primary-dark inline-block">
+              Return to Home
+            </Link>
           </div>
         )}
       </div>

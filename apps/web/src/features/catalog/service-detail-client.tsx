@@ -2,19 +2,25 @@
 
 import { Item, ItemVariant } from "@/shared/types";
 import { useCartStore } from "@/shared/store";
-import { ChevronLeft, Clock, ShoppingBag, Check } from "lucide-react";
+import { ChevronLeft, Clock, ClipboardList, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function ServiceDetailClient({ item }: { item: Item }) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
+  const clearCart = useCartStore((state) => state.clearCart);
+  const cartItems = useCartStore((state) => state.items);
+
+  const existingCartItem = cartItems.find(i => i.item.id === item.id);
 
   const [selectedVariant, setSelectedVariant] = useState<ItemVariant | undefined>(
-    item.variants && item.variants.length > 0 ? item.variants[0] : undefined
+    existingCartItem?.selectedVariant || (item.variants && item.variants.length > 0 ? item.variants[0] : undefined)
   );
 
-  const [selectedAddons, setSelectedAddons] = useState<ItemVariant[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<ItemVariant[]>(
+    existingCartItem?.selectedAddons || []
+  );
 
   const toggleAddon = (addon: ItemVariant) => {
     setSelectedAddons(prev =>
@@ -31,6 +37,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   const currentDuration = selectedVariant ? selectedVariant.duration : item.duration;
 
   const handleAdd = () => {
+    clearCart();
     addItem(item, selectedVariant, selectedAddons);
     router.push("/booking");
   };
@@ -146,7 +153,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           onClick={handleAdd}
           className="w-full bg-primary text-white py-4 rounded-full font-medium text-lg flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-[0.98]"
         >
-          <ShoppingBag className="w-5 h-5 mr-2" />
+          <ClipboardList className="w-5 h-5 mr-2" />
           Add to Booking
         </button>
       </div>

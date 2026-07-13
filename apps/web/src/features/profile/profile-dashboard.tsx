@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useUserStore } from "@/shared/store";
-import { UserCircle2, Settings, History, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useUserStore, useBookingStore } from "@/shared/store";
+import { UserCircle2, Settings, LogOut, CheckCircle2, Calendar as CalendarIcon, ChevronRight, Clock } from "lucide-react";
+import Link from "next/link";
 
 export function ProfileDashboard() {
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
   const logout = useUserStore((state) => state.logout);
+  const bookings = useBookingStore((state) => state.bookings);
+  
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [isLoginMode, setIsLoginMode] = useState(false);
   const [name, setName] = useState("");
@@ -22,58 +29,62 @@ export function ProfileDashboard() {
     }
   };
 
+  if (!isMounted) {
+    return <div className="flex-1 bg-[#faf6f3]" />;
+  }
+
   if (!user) {
     if (isLoginMode) {
       return (
-        <div className="flex-1 px-6 pt-12 pb-32 flex flex-col justify-center">
-          <div className="bg-white p-6 rounded-3xl shadow-spa space-y-6 border border-gray-100">
+        <div className="flex-1 px-6 pt-12 pb-32 flex flex-col justify-center bg-[#faf6f3]">
+          <div className="bg-white p-8 rounded-[32px] shadow-sm border border-primary/10 space-y-6">
             <h3 className="font-serif text-2xl text-primary-dark text-center">Login / Register</h3>
             <p className="text-sm text-text-secondary text-center">Enter your details to verify via OTP.</p>
             
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <form onSubmit={handleLoginSubmit} className="space-y-5">
               <div>
-                <label className="text-xs font-medium text-text-secondary uppercase">Full Name</label>
+                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Full Name</label>
                 <input 
                   type="text" 
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full mt-1 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-text-secondary uppercase">Mobile Number</label>
+                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-2 block">Mobile Number</label>
                 <input 
                   type="tel" 
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full mt-1 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-text-secondary uppercase mb-2 block">Receive OTP Via</label>
-                <div className="flex space-x-2">
+                <label className="text-xs font-bold text-[#9a8276] uppercase tracking-wider mb-3 block">Receive OTP Via</label>
+                <div className="flex p-1 bg-gray-50 rounded-xl border border-gray-100">
                   <button 
                     type="button"
                     onClick={() => setChannel("WhatsApp")}
-                    className={`flex-1 py-3 rounded-2xl text-sm font-medium border ${channel === "WhatsApp" ? "bg-primary text-white border-primary shadow-md" : "bg-transparent text-text-secondary border-gray-200"}`}
+                    className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-primary text-white shadow-sm" : "bg-transparent text-text-secondary"}`}
                   >
                     WhatsApp
                   </button>
                   <button 
                     type="button"
                     onClick={() => setChannel("SMS")}
-                    className={`flex-1 py-3 rounded-2xl text-sm font-medium border ${channel === "SMS" ? "bg-primary text-white border-primary shadow-md" : "bg-transparent text-text-secondary border-gray-200"}`}
+                    className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${channel === "SMS" ? "bg-primary text-white shadow-sm" : "bg-transparent text-text-secondary"}`}
                   >
                     SMS
                   </button>
                 </div>
               </div>
-              <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-medium mt-4 shadow-lg shadow-primary/30">
+              <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-medium mt-6 shadow-md transition-opacity hover:opacity-90">
                 Send OTP & Login
               </button>
-              <button type="button" onClick={() => setIsLoginMode(false)} className="w-full py-2 text-text-secondary text-sm font-medium mt-2">
+              <button type="button" onClick={() => setIsLoginMode(false)} className="w-full py-2 text-text-secondary text-sm font-medium mt-2 hover:text-primary">
                 Cancel
               </button>
             </form>
@@ -83,74 +94,138 @@ export function ProfileDashboard() {
     }
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center space-y-6 text-center px-6">
-        <UserCircle2 className="w-24 h-24 text-gray-200" />
-        <div>
-          <h2 className="font-serif text-2xl text-primary-dark">Welcome to ORYX</h2>
-          <p className="text-text-secondary text-sm mt-2 max-w-xs mx-auto">Log in to view your session history and manage your account.</p>
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6 text-center px-6 bg-[#faf6f3]">
+        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+          <UserCircle2 className="w-12 h-12 text-primary" />
         </div>
-        <button onClick={() => setIsLoginMode(true)} className="w-full py-4 rounded-2xl bg-primary text-white font-medium shadow-lg shadow-primary/30 max-w-xs">
+        <div>
+          <h2 className="font-serif text-3xl text-primary-dark">Welcome to ORYX</h2>
+          <p className="text-text-secondary text-sm mt-3 max-w-[260px] mx-auto leading-relaxed">Log in to view your session history and manage your account.</p>
+        </div>
+        <button onClick={() => setIsLoginMode(true)} className="w-full py-4 rounded-2xl bg-primary text-white font-medium shadow-md max-w-xs transition-opacity hover:opacity-90">
           Login or Register
         </button>
       </div>
     );
   }
 
+
+
   return (
-    <div className="flex-1 px-6 space-y-8 overflow-y-auto pb-32">
-      {/* Profile Header */}
-      <div className="flex items-center space-x-4 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <UserCircle2 className="w-10 h-10 text-primary" />
-        </div>
-        <div>
-          <h2 className="font-serif text-xl font-medium text-text-primary">{user.name}</h2>
-          <p className="text-sm text-text-secondary">{user.phone}</p>
-          <span className="inline-block mt-2 text-[10px] font-medium bg-green-100 text-green-700 px-2 py-1 rounded-full">
-            Verified via {user.channel}
-          </span>
+    <div className="flex-1 bg-[#faf6f3] flex flex-col overflow-hidden">
+      {/* Premium Header - Fixed */}
+      <div className="bg-white px-6 pt-12 pb-8 rounded-b-[40px] shadow-sm border-b border-primary/10 shrink-0 z-10">
+        <div className="flex items-center space-x-5">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+              <UserCircle2 className="w-10 h-10 text-primary" />
+            </div>
+            <div className="absolute bottom-0 right-0 bg-[#C8A24A] text-white p-1 rounded-full border-2 border-white">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <h2 className="font-serif text-2xl font-medium text-primary-dark tracking-tight">{user.name}</h2>
+            <p className="text-sm text-text-secondary mt-1">{user.phone}</p>
+            <div className="inline-flex items-center mt-3 text-[10px] font-bold tracking-wider uppercase bg-primary/10 text-primary px-3 py-1.5 rounded-full">
+              Verified via {user.channel}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bookings */}
-      <section>
-        <h3 className="font-serif text-lg text-primary-dark mb-4 flex items-center">
-          <History className="w-5 h-5 mr-2" /> Session History
-        </h3>
-        <div className="space-y-4">
-          <div className="bg-white p-4 rounded-2xl border-l-4 border-primary shadow-sm">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium text-sm text-text-primary">Signature ORYX Massage</h4>
-                <p className="text-xs text-text-secondary mt-1">Today, 02:00 PM</p>
-              </div>
-              <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">Upcoming</span>
-            </div>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto px-6 pt-6 pb-32 space-y-8">
+        {/* Bookings */}
+        <section>
+          <div className="flex justify-between items-end mb-5">
+            <h3 className="font-serif text-xl text-primary-dark flex items-center">
+              Session History
+            </h3>
+            <button className="text-xs font-medium text-primary hover:underline">View All</button>
           </div>
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 opacity-70">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium text-sm text-text-primary">Radiance Facial</h4>
-                <p className="text-xs text-text-secondary mt-1">Aug 14, 11:30 AM</p>
+          
+          <div className="space-y-4">
+            {bookings.length > 0 ? (
+              bookings.map((booking) => {
+                const primaryItem = booking.cartItems[0]?.item;
+                if (!primaryItem) return null;
+                
+                return (
+                  <Link key={booking.id} href={`/session/${booking.id}`} className="block bg-white rounded-3xl p-4 shadow-sm border border-primary/20 relative overflow-hidden group hover:shadow-md transition-all active:scale-[0.98]">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-10 -mt-10 pointer-events-none" />
+                    <div className="flex space-x-4">
+                      <div className="w-20 h-24 rounded-2xl overflow-hidden shrink-0">
+                        <img src={primaryItem.imageUrl} alt={primaryItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                      <div className="flex-1 py-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-[10px] font-bold tracking-wider uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-md">{booking.status}</span>
+                            <ChevronRight className="w-4 h-4 text-primary/40 group-hover:text-primary transition-colors" />
+                          </div>
+                          <h4 className="font-serif text-[15px] text-primary-dark leading-tight line-clamp-1 mb-2 pr-2">
+                            {booking.cartItems.length > 1 ? `${primaryItem.name} + ${booking.cartItems.length - 1} more` : primaryItem.name}
+                          </h4>
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                          <div className="flex items-center text-xs text-text-secondary">
+                            <CalendarIcon className="w-3.5 h-3.5 mr-2 text-[#C8A24A]" />
+                            <span>{booking.date}</span>
+                          </div>
+                          <div className="flex items-center text-xs text-text-secondary">
+                            <Clock className="w-3.5 h-3.5 mr-2 text-[#C8A24A]" />
+                            <span>{booking.time}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-primary/10 text-center flex flex-col items-center justify-center">
+                <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
+                  <CalendarIcon className="w-8 h-8 text-primary/40" />
+                </div>
+                <h4 className="font-serif text-lg text-primary-dark mb-2">No sessions yet</h4>
+                <p className="text-sm text-text-secondary max-w-[200px] mb-6">You don't have any upcoming or past sessions.</p>
+                <Link href="/services" className="bg-primary text-white px-6 py-2.5 rounded-xl font-medium text-sm shadow-md hover:opacity-90 transition-opacity">
+                  Book a Session
+                </Link>
               </div>
-              <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-md">Completed</span>
-            </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Settings Actions */}
-      <section className="space-y-3">
-        <button className="w-full flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-          <span className="flex items-center text-sm font-medium"><Settings className="w-5 h-5 mr-3 text-gray-400" /> Account Settings</span>
-        </button>
-        <button 
-          onClick={logout}
-          className="w-full flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-sm text-red-500 hover:bg-red-50 transition-colors"
-        >
-          <span className="flex items-center text-sm font-medium"><LogOut className="w-5 h-5 mr-3" /> Log Out</span>
-        </button>
-      </section>
+        {/* Settings Actions */}
+        <section>
+          <div className="bg-white rounded-[24px] shadow-sm border border-primary/10 overflow-hidden">
+            <button className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mr-4 group-hover:bg-white transition-colors">
+                  <Settings className="w-5 h-5 text-text-secondary" />
+                </div>
+                <span className="text-sm font-medium text-text-primary">Account Settings</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300" />
+            </button>
+
+            <button 
+              onClick={logout}
+              className="w-full flex items-center justify-between p-5 transition-colors hover:bg-primary/5 group"
+            >
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center mr-4 group-hover:bg-white transition-colors">
+                  <LogOut className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-primary">Log Out</span>
+              </div>
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

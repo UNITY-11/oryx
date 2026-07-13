@@ -29,10 +29,10 @@ export function TopNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors text-primary ${
                 isActive 
-                  ? 'border-primary bg-primary/5 text-primary' 
-                  : 'border-transparent text-text-secondary hover:border-primary/30 hover:text-primary hover:bg-gray-50'
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-transparent hover:border-primary/30 hover:bg-gray-50'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -61,8 +61,8 @@ export function TopNav() {
         </div>
         
         <div className="flex items-center space-x-2 shrink-0">
-          <Link href="/favorites" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-text-secondary hover:text-primary transition-colors">
-            <Heart className="w-5 h-5" />
+          <Link href="/favorites" className={`w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center transition-colors ${pathname === '/favorites' ? 'text-primary bg-primary/5 border-primary' : 'text-primary hover:text-primary-dark'}`}>
+            <Heart className={`w-5 h-5 ${pathname === '/favorites' ? 'fill-primary' : ''}`} />
           </Link>
           <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary hover:text-primary-dark transition-colors">
             <User className="w-5 h-5" />

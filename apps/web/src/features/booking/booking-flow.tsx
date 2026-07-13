@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
-import { useCartStore, useUserStore } from "@/shared/store";
+import { useCartStore, useUserStore, useBookingStore } from "@/shared/store";
 import { ChevronRight, Plus, ClipboardList, Clock, Calendar as CalendarIcon, CheckCircle2, X, ChevronDown, ChevronUp, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -118,6 +118,7 @@ export function BookingFlow() {
   const clearCart = useCartStore((state) => state.clearCart);
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
+  const addBooking = useBookingStore((state) => state.addBooking);
 
   // Time slot matrix state
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -192,6 +193,15 @@ export function BookingFlow() {
 
   const handleCheckout = () => {
     if (user) {
+      addBooking({
+        id: `b${Date.now()}`,
+        cartItems,
+        totalPrice: total,
+        date: selectedDate?.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        time: selectedTime || "",
+        status: "upcoming",
+        bookingRef: `#ORYX-${Math.floor(Math.random() * 90000) + 10000}`
+      });
       setStep("success");
       clearCart();
     } else {
@@ -203,6 +213,15 @@ export function BookingFlow() {
     e.preventDefault();
     if (name && phone) {
       setUser({ id: "u1", name, phone, channel });
+      addBooking({
+        id: `b${Date.now()}`,
+        cartItems,
+        totalPrice: total,
+        date: selectedDate?.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        time: selectedTime || "",
+        status: "upcoming",
+        bookingRef: `#ORYX-${Math.floor(Math.random() * 90000) + 10000}`
+      });
       setStep("success");
       clearCart();
     }

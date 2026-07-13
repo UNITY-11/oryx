@@ -91,7 +91,7 @@ export default function HomePage() {
             <div className="flex justify-between items-end mb-4">
               <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Categories</h2>
             </div>
-            <div className="flex flex-row justify-between w-full overflow-x-auto md:overflow-visible pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="flex flex-row gap-4 md:gap-0 justify-between w-full overflow-x-auto md:overflow-visible pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
               <style dangerouslySetInnerHTML={{ __html: `
                 @media (min-width: 768px) {
                   .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }

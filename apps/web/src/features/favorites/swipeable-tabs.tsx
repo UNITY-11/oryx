@@ -56,7 +56,7 @@ export function SwipableFavorites() {
 
     if (items.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center h-full px-6 text-center space-y-6 pt-24 animate-in fade-in duration-500">
+        <div className="flex flex-col items-center justify-center h-[70vh] md:h-full px-6 text-center space-y-6 animate-in fade-in duration-500">
           <div className="relative">
             <Heart className="w-20 h-20 text-[#E5C37A]/20" />
             <Heart className="w-20 h-20 text-[#E5C37A] absolute inset-0 animate-pulse opacity-50" />

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Item, User, CartItem } from "../types";
+import { Item, User, CartItem, ItemVariant } from "../types";
 
 // User Store
 interface UserState {

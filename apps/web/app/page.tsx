@@ -57,16 +57,16 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
               <input
                 type="text"
                 placeholder="Search treatments or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-full py-3.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary outline-none transition-shadow"
+                className="w-full bg-gray-50 border border-gray-100 rounded-full py-3.5 pl-12 pr-4 text-sm placeholder-primary focus:ring-2 focus:ring-primary outline-none transition-shadow"
               />
             </div>
-            <Link href="/profile" className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center flex-shrink-0 text-text-secondary hover:text-primary transition-colors">
+            <Link href="/profile" className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center flex-shrink-0 text-primary hover:text-primary-dark transition-colors">
               <User className="w-5 h-5" />
             </Link>
           </div>
@@ -79,12 +79,12 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="px-6 md:px-0 mt-6 md:mt-0 pb-12 md:pb-24">
+        <section className="px-4 md:px-0 mt-4 md:mt-0 pb-8 md:pb-24">
           <HeroCarousel />
         </section>
       )}
 
-      <div className="px-6 md:px-8 lg:px-12 xl:px-16 pb-6 md:pb-24 space-y-12 md:space-y-24 flex-1 w-full max-w-screen-2xl mx-auto">
+      <div className="px-4 md:px-8 lg:px-12 xl:px-16 pb-6 md:pb-24 space-y-8 md:space-y-24 flex-1 w-full max-w-screen-2xl mx-auto">
         {/* Categories Section */}
         {!searchQuery && (
           <section>
@@ -99,7 +99,7 @@ export default function HomePage() {
                 { name: "Therapy", icon: <Droplets className="w-6 h-6 md:w-10 md:h-10" /> },
               ].map((cat, idx) => (
                 <div key={idx} className="flex flex-col items-center group cursor-pointer">
-                  <div className="w-14 h-14 md:w-24 md:h-24 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  <div className="w-14 h-14 md:w-24 md:h-24 bg-gray-50 border border-primary rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                     {cat.icon}
                   </div>
                   <span className="text-[11px] md:text-sm font-medium text-text-secondary mt-2 md:mt-3">{cat.name}</span>
@@ -224,7 +224,7 @@ export default function HomePage() {
             <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6">
               {filteredItems.filter(item => !item.isProduct).map(item => (
                 <Link href={`/service/${item.id}`} key={item.id} className="flex-none w-[44%] md:w-80 group block">
-                  <div className="relative h-56 md:h-96 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm">
+                  <div className="relative h-56 md:h-96 w-full rounded-t-full rounded-b-2xl overflow-hidden shadow-sm border-2 border-[#C8A24A]">
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                     <h3 className="absolute bottom-4 left-4 right-4 text-center font-serif text-white font-medium text-lg leading-tight drop-shadow-md">
                       {item.name}
@@ -243,7 +243,7 @@ export default function HomePage() {
               <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Shop Products</h2>
               <Link href="/products" className="text-sm text-primary font-medium">Show All</Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
               {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
                 <Link 
                   href={`/service/${item.id}`} 

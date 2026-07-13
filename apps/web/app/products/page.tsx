@@ -27,7 +27,7 @@ export default function ProductsPage() {
               />
             </div>
             <div className="p-3 md:p-6 flex flex-col">
-              <h3 className="font-serif text-text-primary font-medium text-sm md:text-xl leading-tight line-clamp-2">{item.name}</h3>
+              <h3 className="font-serif text-text-primary font-medium text-sm md:text-xl leading-tight line-clamp-1">{item.name}</h3>
               <span className="font-sans font-semibold text-primary-dark mt-1.5 md:mt-3 text-sm md:text-xl">${item.price}</span>
             </div>
           </Link>

@@ -1,11 +1,52 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, ImageIcon, Plus, Trash2, Save, Clock, Users } from "lucide-react";
+import { ArrowLeft, Upload, ImageIcon, Plus, Trash2, Save, Clock, Users, ChevronDown, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ServiceCategory, PricingTier, Addon } from "../../../src/features/services/mock-data";
 
 const CATEGORIES: ServiceCategory[] = ["Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package"];
+
+/* ── Custom Category Dropdown ── */
+function CategoryDropdown({
+  value,
+  onChange,
+}: {
+  value: ServiceCategory;
+  onChange: (v: ServiceCategory) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-primary/20 bg-transparent hover:border-primary focus:outline-none focus:border-primary text-primary-dark text-sm transition-colors"
+      >
+        <span>{value}</span>
+        <ChevronDown className={`w-4 h-4 text-primary/60 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-primary/10 rounded-2xl shadow-xl z-20 overflow-hidden">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => { onChange(cat); setOpen(false); }}
+                className={`w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-primary/5 transition-colors ${cat === value ? "text-primary font-medium" : "text-primary-dark"}`}
+              >
+                <span>{cat}</span>
+                {cat === value && <Check className="w-4 h-4 text-primary" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface NewServiceState {
   name: string;
@@ -210,13 +251,7 @@ export default function NewServicePage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Category</label>
-                  <select
-                    value={service.category}
-                    onChange={(e) => update("category", e.target.value as ServiceCategory)}
-                    className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm appearance-none"
-                  >
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <CategoryDropdown value={service.category} onChange={(v) => update("category", v)} />
                 </div>
               </div>
 

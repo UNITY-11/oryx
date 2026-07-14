@@ -34,7 +34,26 @@ export default function NotificationsPage() {
 
     setNotifications(prev => prev.map(n => {
       if (n.id === id && n.bookingData) {
-        return { ...n, bookingData: { ...n.bookingData, status: "Confirmed" } };
+        return { 
+          ...n, 
+          title: "Booking Confirmed",
+          message: `Confirmed ${n.bookingData.serviceName} for ${n.bookingData.customerName}.`,
+          bookingData: { ...n.bookingData, status: "Confirmed" } 
+        };
+      }
+      return n;
+    }));
+  };
+
+  const declineBooking = (id: string) => {
+    setNotifications(prev => prev.map(n => {
+      if (n.id === id && n.bookingData) {
+        return { 
+          ...n, 
+          title: "Booking Declined",
+          message: `Declined ${n.bookingData.serviceName} for ${n.bookingData.customerName}.`,
+          bookingData: { ...n.bookingData, status: "Cancelled" } 
+        };
       }
       return n;
     }));
@@ -263,7 +282,10 @@ export default function NotificationsPage() {
                         >
                           Confirm Booking
                         </button>
-                        <button className="px-6 py-3 bg-white text-primary border border-primary/30 rounded-2xl text-sm font-semibold hover:bg-primary/5 transition-colors">
+                        <button 
+                          onClick={() => declineBooking(selectedNotif.id)}
+                          className="px-6 py-3 bg-white text-primary border border-primary/30 rounded-2xl text-sm font-semibold hover:bg-primary/5 transition-colors"
+                        >
                           Decline
                         </button>
                       </div>

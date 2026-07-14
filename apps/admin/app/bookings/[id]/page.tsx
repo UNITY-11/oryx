@@ -130,16 +130,21 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
     setBooking(prev => {
       const newServices = [...prev.services];
-      const service = newServices[activeServiceIndex];
+      const service = { ...newServices[activeServiceIndex] };
       const hasAddon = service.addons.includes(addonName);
       
       if (hasAddon) {
         service.addons = service.addons.filter(a => a !== addonName);
-        return { ...prev, services: newServices, amount: prev.amount - addonPrice };
       } else {
         service.addons = [...service.addons, addonName];
-        return { ...prev, services: newServices, amount: prev.amount + addonPrice };
       }
+      
+      newServices[activeServiceIndex] = service;
+      return { 
+        ...prev, 
+        services: newServices, 
+        amount: prev.amount + (hasAddon ? -addonPrice : addonPrice)
+      };
     });
   };
 

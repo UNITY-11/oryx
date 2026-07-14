@@ -15,7 +15,10 @@ export function TopHeader() {
       case '/products': return 'Products Inventory';
       case '/customers': return 'Customers Directory';
       case '/settings': return 'Admin Settings';
-      default: return 'Admin Portal';
+      case '/notifications': return 'Notifications';
+      default:
+        if (pathname.startsWith('/services/')) return 'Service Details';
+        return 'Admin Portal';
     }
   };
 
@@ -47,6 +50,16 @@ export function TopHeader() {
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Walk-in</span>
+              </Link>
+            )}
+
+            {pathname === '/services' && (
+              <Link
+                href="/services?action=add"
+                className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity flex items-center space-x-2 whitespace-nowrap text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Service</span>
               </Link>
             )}
           </div>

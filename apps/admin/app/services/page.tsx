@@ -1,41 +1,18 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState } from "react";
 import { Search, ImageIcon, Star } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 import { MOCK_SERVICES, Service, ServiceCategory } from "../../src/features/services/mock-data";
-import { AddServiceModal } from "../../src/features/services/add-service-modal";
 
 const CATEGORY_FILTERS: Array<ServiceCategory | "All"> = [
   "All", "Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package",
 ];
 
-function ServicesContent() {
-  const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function ServicesPage() {
+  const [services] = useState<Service[]>(MOCK_SERVICES);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<ServiceCategory | "All">("All");
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (searchParams.get("action") === "add") {
-      setIsModalOpen(true);
-    } else {
-      setIsModalOpen(false);
-    }
-  }, [searchParams]);
-
-  const handleAddService = (newService: Service) => {
-    setServices([newService, ...services]);
-    router.push("/services");
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    router.push("/services");
-  };
 
   const filtered = services
     .filter((s) => categoryFilter === "All" || s.category === categoryFilter)
@@ -88,9 +65,10 @@ function ServicesContent() {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-              {/* Add Service Card */}
-              <button
-                onClick={() => setIsModalOpen(true)}
+
+              {/* Add Service Card — navigates to /services/new */}
+              <Link
+                href="/services/new"
                 className="group flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-primary/50 hover:text-primary"
                 style={{ aspectRatio: "3/4" }}
               >
@@ -98,9 +76,9 @@ function ServicesContent() {
                   <span className="text-2xl font-light leading-none">+</span>
                 </div>
                 <span className="text-sm font-medium text-center px-4">Add Service</span>
-              </button>
+              </Link>
 
-              {/* Service Cards — image only, no labels or price */}
+              {/* Service Cards — image only */}
               {filtered.map((service) => (
                 <Link
                   key={service.id}
@@ -108,7 +86,6 @@ function ServicesContent() {
                   className="group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all bg-gradient-to-br from-primary/10 to-primary/5"
                   style={{ aspectRatio: "3/4" }}
                 >
-                  {/* Full-bleed image */}
                   {service.image ? (
                     <img
                       src={service.image}
@@ -121,12 +98,12 @@ function ServicesContent() {
                     </div>
                   )}
 
-                  {/* Name appears only on hover at bottom */}
+                  {/* Name on hover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                     <p className="text-white text-sm font-semibold leading-tight">{service.name}</p>
                   </div>
 
-                  {/* Inactive dim overlay */}
+                  {/* Inactive dim */}
                   {service.status === "Inactive" && (
                     <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]" />
                   )}
@@ -146,20 +123,6 @@ function ServicesContent() {
           <span className="ml-auto">{filtered.length} shown</span>
         </div>
       </div>
-
-      <AddServiceModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onAddService={handleAddService}
-      />
     </div>
-  );
-}
-
-export default function ServicesPage() {
-  return (
-    <Suspense fallback={<div className="p-8">Loading...</div>}>
-      <ServicesContent />
-    </Suspense>
   );
 }

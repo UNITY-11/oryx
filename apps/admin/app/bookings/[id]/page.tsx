@@ -83,8 +83,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       
       if (existingIndex >= 0) {
         // Remove service and its addons
-        const removedService = prev.services[existingIndex];
-        const basePrice = serviceObj.pricingTiers?.[0]?.price || serviceObj.price || 0;
+        const removedService = prev.services[existingIndex]!;
+        const basePrice = serviceObj.pricingTiers?.[0]?.price || 0;
         const addonsPrice = removedService.addons.reduce((sum, aName) => {
           const a = serviceObj.addons.find(ad => ad.name === aName);
           return sum + (a?.price || 0);
@@ -108,7 +108,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         };
       } else {
         // Add service
-        const basePrice = serviceObj.pricingTiers?.[0]?.price || serviceObj.price || 0;
+        const basePrice = serviceObj.pricingTiers?.[0]?.price || 0;
         const newServices = [...prev.services, { name: serviceObj.name, addons: [] }];
         
         return {
@@ -130,13 +130,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
     setBooking(prev => {
       const newServices = [...prev.services];
-      const service = { ...newServices[activeServiceIndex] };
-      const hasAddon = service.addons.includes(addonName);
+      const service: BookingService = { ...newServices[activeServiceIndex]! };
+      const hasAddon = service.addons?.includes(addonName) ?? false;
       
       if (hasAddon) {
-        service.addons = service.addons.filter(a => a !== addonName);
+        service.addons = (service.addons || []).filter(a => a !== addonName);
       } else {
-        service.addons = [...service.addons, addonName];
+        service.addons = [...(service.addons || []), addonName];
       }
       
       newServices[activeServiceIndex] = service;
@@ -320,7 +320,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   ) : (
                     booking.services.map((svc, idx) => {
                       const matchedObj = REAL_SERVICES.find(r => r.name === svc.name);
-                      const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
+                      const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
                       return (
                         <div key={idx} className="bg-[#fcf4f0] rounded-2xl p-5 border border-primary/10">
                           <div className="flex justify-between items-start mb-2">
@@ -510,7 +510,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   ) : (
                     booking.services.map((svc, idx) => {
                       const matchedObj = REAL_SERVICES.find(r => r.name === svc.name);
-                      const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
+                      const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
                       const isActive = activeServiceIndex === idx;
 
                       return (
@@ -627,7 +627,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <tbody className="divide-y divide-primary/10 text-sm">
                   {booking.services.map((svc, idx) => {
                     const matchedObj = REAL_SERVICES.find(r => r.name === svc.name);
-                    const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
+                    const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
                     
                     return (
                       <Fragment key={idx}>

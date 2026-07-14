@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Users, ShoppingBag, Briefcase, Settings } from "lucide-react";
+import { Home, Calendar, Users, ShoppingBag, Briefcase, Settings, UserCircle2, Bell } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -13,6 +13,7 @@ export function Sidebar() {
     { name: "Services", href: "/services", icon: Briefcase },
     { name: "Products", href: "/products", icon: ShoppingBag },
     { name: "Customers", href: "/customers", icon: Users },
+    { name: "Notifications", href: "/notifications", icon: Bell },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
@@ -45,6 +46,18 @@ export function Sidebar() {
               </Link>
             );
           })}
+        </div>
+
+        <div className="p-4 border-t border-primary/10 shrink-0">
+          <div className="flex items-center space-x-3 p-3 bg-primary/5 rounded-2xl">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 shrink-0">
+              <UserCircle2 className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-sm font-semibold text-primary-dark truncate">Admin User</span>
+              <span className="text-xs text-text-secondary truncate">Manager</span>
+            </div>
+          </div>
         </div>
       </aside>
     </div>

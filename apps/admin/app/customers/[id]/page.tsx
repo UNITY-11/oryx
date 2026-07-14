@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, use } from "react";
-import { ArrowLeft, Upload, Save, UserCircle2, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, Upload, Save, UserCircle2, ChevronDown, Check, Phone, Mail, MessageSquare, Calendar, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MOCK_CUSTOMERS, Customer, CustomerTier } from "../../../src/features/customers/mock-data";
 
@@ -97,6 +97,17 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
     setTimeout(() => setSaved(false), 2500);
   };
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  // Mock sessions data for the UI
+  const sessions = [
+    { id: "ses-1", date: "2026-07-10", service: "Signature Massage", staff: "Maria", status: "Completed", price: 450 },
+    { id: "ses-2", date: "2026-06-25", service: "Hydrating Facial", staff: "Sarah", status: "Completed", price: 300 },
+    { id: "ses-3", date: "2026-07-20", service: "Deep Tissue Massage", staff: "Maria", status: "Upcoming", price: 500 },
+  ];
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -153,13 +164,27 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                   </>
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-primary/40 group-hover:text-primary transition-colors">
-                    <UserCircle2 className="w-12 h-12" />
-                    <span className="text-[10px] font-medium uppercase tracking-wider">Upload</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                    <span className="text-4xl font-serif">{getInitials(customer.name)}</span>
+                    <div className="absolute inset-0 bg-primary-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center flex-col gap-2">
+                      <Upload className="w-6 h-6 text-white" />
+                    </div>
                   </div>
                 )}
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              
+              <div className="flex gap-2 w-full mt-2 justify-center">
+                <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Call">
+                  <Phone className="w-4 h-4" />
+                </button>
+                <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Message">
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+                <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Email">
+                  <Mail className="w-4 h-4" />
+                </button>
+              </div>
               
               <div className="text-center w-full mt-2 space-y-1">
                 <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Total Spent</p>
@@ -203,6 +228,43 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     onChange={(e) => update("phone", e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
                   />
+                </div>
+              </div>
+
+              {/* Sessions History */}
+              <div className="mt-10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-primary-dark uppercase tracking-wider">Sessions History</h3>
+                  <button className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-full transition-colors">
+                    <Plus className="w-3 h-3" />
+                    Add Session
+                  </button>
+                </div>
+                
+                <div className="rounded-2xl border border-primary/10 overflow-hidden">
+                  <div className="grid grid-cols-[100px_1fr_100px_100px_80px] bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-5 py-3 border-b border-primary/10">
+                    <span>Date</span>
+                    <span>Service</span>
+                    <span>Staff</span>
+                    <span>Status</span>
+                    <span className="text-right">Price</span>
+                  </div>
+                  <div className="divide-y divide-primary/5 bg-white">
+                    {sessions.map((session) => (
+                      <div key={session.id} className="grid grid-cols-[100px_1fr_100px_100px_80px] items-center px-5 py-3 text-sm hover:bg-primary/5 transition-colors">
+                        <span className="text-text-secondary">{session.date}</span>
+                        <span className="font-medium text-primary-dark">{session.service}</span>
+                        <span className="text-text-secondary">{session.staff}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border inline-block text-center self-start w-fit
+                          ${session.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' : 
+                            'bg-amber-50 text-amber-600 border-amber-200'}
+                        `}>
+                          {session.status}
+                        </span>
+                        <span className="text-right font-medium text-primary-dark">QAR {session.price}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 

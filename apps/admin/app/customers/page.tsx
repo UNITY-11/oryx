@@ -82,11 +82,11 @@ export default function CustomersPage() {
                     href={`/customers/${customer.id}`}
                     className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_100px_100px] gap-4 items-center px-6 py-4 hover:bg-primary/5 transition-colors group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary font-serif">
                       {customer.avatar ? (
                         <img src={customer.avatar} alt={customer.name} className="w-full h-full rounded-full object-cover" />
                       ) : (
-                        <UserCircle2 className="w-6 h-6 text-primary" />
+                        <span>{customer.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</span>
                       )}
                     </div>
                     

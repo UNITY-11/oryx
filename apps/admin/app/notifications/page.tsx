@@ -201,7 +201,7 @@ export default function NotificationsPage() {
                       <a href={`sms:${selectedNotif.bookingData.customerPhone}`} className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Message">
                         <MessageSquare className="w-4 h-4" />
                       </a>
-                      <a href={`https://wa.me/${selectedNotif.bookingData.customerPhone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex-1 p-3 bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="WhatsApp">
+                      <a href={`https://wa.me/${selectedNotif.bookingData.customerPhone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="WhatsApp">
                         <MessageCircle className="w-4 h-4" />
                       </a>
                       <a href={`mailto:${selectedNotif.bookingData.customerName.replace(/\s+/g, '.').toLowerCase()}@example.com`} className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Email">

@@ -21,7 +21,7 @@ export function Sidebar() {
 
   return (
     <div className="hidden md:flex p-4 pr-0">
-      <aside className="flex flex-col w-64 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl h-full overflow-y-auto scrollbar-hide z-40 shrink-0 shadow-sm">
+      <aside className="flex flex-col w-64 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl h-full overflow-hidden z-40 shrink-0 shadow-sm">
         <div className="p-8 flex flex-col items-center justify-center border-b border-primary/10 shrink-0">
           <Link href="/">
             <img src="/images/oryx-logo.png" alt="ORYX Admin Logo" className="h-16 w-auto object-contain brightness-75 contrast-125" />
@@ -29,7 +29,7 @@ export function Sidebar() {
           <p className="text-[10px] tracking-widest text-text-secondary mt-2 uppercase font-medium">Admin Portal</p>
         </div>
 
-        <div className="flex-1 px-4 py-6 space-y-2">
+        <div className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-hide">
           {navItems.map((item) => {
             const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             const Icon = item.icon;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Heart, Calendar, Scissors, Brush, User } from "lucide-react";
+import { Home, Search, Calendar, Scissors, Brush, User } from "lucide-react";
 
 export function TopNav() {
   const pathname = usePathname();
@@ -61,9 +61,7 @@ export function TopNav() {
         </div>
         
         <div className="flex items-center space-x-2 shrink-0">
-          <Link href="/favorites" className={`w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center transition-colors ${pathname === '/favorites' ? 'text-primary bg-primary/5 border-primary' : 'text-primary hover:text-primary-dark'}`}>
-            <Heart className={`w-5 h-5 ${pathname === '/favorites' ? 'fill-primary' : ''}`} />
-          </Link>
+
           <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary hover:text-primary-dark transition-colors">
             <User className="w-5 h-5" />
           </Link>

@@ -1,8 +1,8 @@
 "use client";
 
 import { Item, ItemVariant } from "@/shared/types";
-import { useCartStore, useFavoritesStore } from "@/shared/store";
-import { ChevronLeft, ChevronDown, Clock, ClipboardList, Check, Heart } from "lucide-react";
+import { useCartStore } from "@/shared/store";
+import { ChevronLeft, ChevronDown, Clock, ClipboardList, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -11,7 +11,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   const addItem = useCartStore((state) => state.addItem);
   const clearCart = useCartStore((state) => state.clearCart);
   const cartItems = useCartStore((state) => state.items);
-  const { toggleFavorite, isFavorite } = useFavoritesStore();
+
 
   const existingCartItem = cartItems.find(i => i.item.id === item.id);
 
@@ -57,12 +57,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
             <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
-          <button
-            onClick={() => toggleFavorite(item)}
-            className="absolute top-6 right-6 md:top-8 md:right-8 bg-white/20 p-2.5 md:p-3 rounded-full backdrop-blur-md text-white hover:bg-white/30 transition-colors z-10"
-          >
-            <Heart className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isFavorite(item.id) ? "fill-[#E5C37A] text-[#E5C37A]" : "text-white"}`} />
-          </button>
+
 
           <div className="absolute bottom-10 md:bottom-auto md:top-1/2 md:-translate-y-1/2 left-6 right-6 md:left-12 md:right-12">
             <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl font-medium text-white mb-2 md:mb-6 leading-tight">{item.name}</h1>

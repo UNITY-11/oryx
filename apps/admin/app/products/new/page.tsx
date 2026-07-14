@@ -185,24 +185,6 @@ export default function NewProductPage() {
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                 <p className="text-[10px] text-text-secondary mt-2 text-center">Click to choose from gallery</p>
               </div>
-
-              {/* Stock */}
-              <div className="bg-primary/5 rounded-2xl p-4 space-y-3">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary">Stock</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min={0}
-                    value={product.stock}
-                    onChange={(e) => update("stock", Math.max(0, Number(e.target.value)))}
-                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark font-semibold text-lg text-center"
-                  />
-                  <Package className={`w-5 h-5 shrink-0 ${stockColor}`} />
-                </div>
-                <p className={`text-xs font-medium text-center ${stockColor}`}>
-                  {product.stock === 0 ? "Out of Stock" : product.stock <= 10 ? `Low Stock — ${product.stock} left` : `${product.stock} in stock`}
-                </p>
-              </div>
             </div>
 
             {/* RIGHT — Details */}
@@ -235,6 +217,24 @@ export default function NewProductPage() {
                   placeholder="Describe the product..."
                   className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm resize-none placeholder:text-primary/30"
                 />
+              </div>
+
+              {/* Stock */}
+              <div className="bg-primary/5 rounded-2xl p-4 space-y-3">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary">Stock</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    value={product.stock}
+                    onChange={(e) => update("stock", Math.max(0, Number(e.target.value)))}
+                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark font-semibold text-lg text-center"
+                  />
+                  <Package className={`w-5 h-5 shrink-0 ${stockColor}`} />
+                </div>
+                <p className={`text-xs font-medium text-center ${stockColor}`}>
+                  {product.stock === 0 ? "Out of Stock" : product.stock <= 10 ? `Low Stock — ${product.stock} left` : `${product.stock} in stock`}
+                </p>
               </div>
 
             </div>

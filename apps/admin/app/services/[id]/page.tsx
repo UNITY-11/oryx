@@ -21,7 +21,7 @@ function CategoryDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-primary/20 bg-transparent hover:border-primary focus:outline-none focus:border-primary text-primary-dark text-sm transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-primary/40 bg-transparent hover:border-primary focus:outline-none focus:border-primary text-primary-dark text-sm transition-colors"
       >
         <span>{value}</span>
         <ChevronDown className={`w-4 h-4 text-primary/60 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -213,7 +213,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   <input
                     value={service.name}
                     onChange={(e) => update("name", e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark font-medium text-base"
+                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark font-medium text-base"
                   />
                 </div>
                 <div>
@@ -230,7 +230,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   onChange={(e) => update("description", e.target.value)}
                   rows={5}
                   placeholder="Describe the service experience..."
-                  className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm resize-none placeholder:text-primary/30"
+                  className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm resize-none placeholder:text-primary/30"
                 />
               </div>
 
@@ -248,9 +248,9 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   {service.pricingTiers.map((tier, i) => (
                     <div key={tier.id} className={`grid grid-cols-[1fr_130px_130px_44px] items-center gap-2 px-4 py-3 ${i > 0 ? "border-t border-primary/5" : ""}`}>
-                      <input value={tier.label} onChange={(e) => updateTier(tier.id, "label", e.target.value)} placeholder="e.g. 60 min" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
-                      <input type="number" value={tier.price || ""} onChange={(e) => updateTier(tier.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
-                      <input type="number" value={tier.duration || ""} onChange={(e) => updateTier(tier.id, "duration", Number(e.target.value))} placeholder="60" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
+                      <input value={tier.label} onChange={(e) => updateTier(tier.id, "label", e.target.value)} placeholder="e.g. 60 min" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
+                      <input type="number" value={tier.price || ""} onChange={(e) => updateTier(tier.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
+                      <input type="number" value={tier.duration || ""} onChange={(e) => updateTier(tier.id, "duration", Number(e.target.value))} placeholder="60" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
                       <button onClick={() => removeTier(tier.id)} disabled={service.pricingTiers.length === 1} className="text-red-400 hover:text-red-600 transition-colors flex justify-center disabled:opacity-20">
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -268,7 +268,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </button>
                 </div>
                 {service.addons.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-primary/20 p-6 text-center text-text-secondary text-sm">
+                  <div className="rounded-2xl border border-dashed border-primary/40 p-6 text-center text-text-secondary text-sm">
                     No add-ons yet. Click "Add Addon" to create one.
                   </div>
                 ) : (
@@ -278,9 +278,9 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                     {service.addons.map((addon, i) => (
                       <div key={addon.id} className={`grid grid-cols-[1fr_130px_130px_44px] items-center gap-2 px-4 py-3 ${i > 0 ? "border-t border-primary/5" : ""}`}>
-                        <input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} placeholder="Addon name" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
-                        <input type="number" value={addon.price || ""} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
-                        <input type="number" value={addon.duration || ""} onChange={(e) => updateAddon(addon.id, "duration", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
+                        <input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} placeholder="Addon name" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
+                        <input type="number" value={addon.price || ""} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
+                        <input type="number" value={addon.duration || ""} onChange={(e) => updateAddon(addon.id, "duration", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
                         <button onClick={() => removeAddon(addon.id)} className="text-red-400 hover:text-red-600 flex justify-center">
                           <Trash2 className="w-4 h-4" />
                         </button>

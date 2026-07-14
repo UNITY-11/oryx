@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export function TopHeader() {
   const pathname = usePathname();
-  
+
   const getPageTitle = () => {
     switch (pathname) {
       case '/': return 'Dashboard Overview';
@@ -20,7 +20,7 @@ export function TopHeader() {
   };
 
   return (
-    <div className="px-4 md:px-8 pt-4 md:pt-8 pb-4">
+    <div className="px-4 md:px-8 pt-4 pb-4">
       <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
         <div className="flex items-center space-x-4 flex-1">
           <button className="md:hidden p-2 -ml-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
@@ -39,9 +39,9 @@ export function TopHeader() {
                 Download Report
               </button>
             )}
-            
+
             {pathname === '/bookings' && (
-              <Link 
+              <Link
                 href="/bookings?action=add"
                 className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity flex items-center space-x-2 whitespace-nowrap text-sm"
               >

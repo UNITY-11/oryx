@@ -315,7 +315,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     <div className="p-8 text-center text-text-secondary text-sm">No sessions found for this customer.</div>
                   ) : (
                     sessions.map((session) => (
-                      <div key={session.id} className="grid grid-cols-[120px_1fr_150px_120px_100px] items-center px-6 py-4 text-sm hover:bg-primary/5 transition-colors">
+                      <div key={session.id} onClick={() => router.push(`/bookings/${session.id}`)} className="grid grid-cols-[120px_1fr_150px_120px_100px] items-center px-6 py-4 text-sm hover:bg-primary/5 transition-colors cursor-pointer">
                         <span className="text-text-secondary font-medium">{session.date}</span>
                         <span className="font-semibold text-primary-dark">{session.service}</span>
                         <span className="text-text-secondary">{session.staff}</span>

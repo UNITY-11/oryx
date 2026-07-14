@@ -138,7 +138,7 @@ function BookingsContent() {
                 </tr>
               ) : (
                 filteredAndSortedBookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-primary/5 transition-colors group">
+                  <tr key={booking.id} onClick={() => router.push(`/bookings/${booking.id}`)} className="hover:bg-primary/5 transition-colors group cursor-pointer">
                     <td className="py-5 font-mono text-xs text-text-secondary pl-6 md:pl-8">{booking.id}</td>
                     <td className="py-5">
                       <p className="font-medium text-primary-dark">{booking.customerName}</p>

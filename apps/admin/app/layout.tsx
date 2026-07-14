@@ -39,14 +39,14 @@ export default function RootLayout({
       <body suppressHydrationWarning className="min-h-screen bg-[#fcf4f0] text-text-primary antialiased overflow-x-hidden">
         {/* Admin App Layout Wrapper */}
         <div className="mx-auto flex h-[100dvh] w-full max-w-[1920px] bg-[#fcf4f0] shadow-2xl relative overflow-hidden">
-          
+
           <Sidebar />
 
-          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-red-500">
             <TopHeader />
-            
+
             {/* Main Scrollable Content */}
-            <main id="admin-main-container" className="flex-1 w-full h-full relative overflow-y-auto scrollbar-hide px-4 md:px-8 pb-4 md:pb-8 pt-0">
+            <main id="admin-main-container" className="flex-1 flex flex-col w-full h-full relative overflow-hidden px-4 md:px-8 pb-4 md:pb-8 pt-0">
               {children}
             </main>
           </div>

@@ -11,18 +11,8 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-3xl font-medium text-primary-dark">Dashboard Overview</h1>
-          <p className="text-text-secondary mt-1">Welcome back. Here's what's happening at ORYX today.</p>
-        </div>
-        <button className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap w-max">
-          Download Report
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="flex flex-col h-full space-y-6 md:space-y-8 pb-4 md:pb-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
         {stats.map((stat, i) => {
           const Icon = stat.icon;
           const isPositive = stat.change.startsWith('+');
@@ -44,18 +34,20 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm p-6 md:p-8">
-        <h2 className="font-serif text-2xl font-medium text-primary-dark mb-6">Recent Bookings</h2>
+      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="p-6 md:p-8 border-b border-primary/10 shrink-0">
+          <h2 className="font-serif text-2xl font-medium text-primary-dark m-0">Recent Bookings</h2>
+        </div>
         
-        <div className="overflow-x-auto scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
-          <table className="w-full min-w-[600px] text-left">
-            <thead>
+        <div className="overflow-auto scrollbar-hide flex-1">
+          <table className="w-full min-w-[600px] text-left border-collapse">
+            <thead className="sticky top-0 bg-[#fcf4f0] z-10">
               <tr className="border-b border-primary/10 text-xs uppercase tracking-wider text-text-secondary">
-                <th className="pb-4 font-medium">Customer</th>
-                <th className="pb-4 font-medium">Service</th>
-                <th className="pb-4 font-medium">Date & Time</th>
-                <th className="pb-4 font-medium">Status</th>
-                <th className="pb-4 font-medium text-right">Amount</th>
+                <th className="py-4 font-medium pl-6 md:pl-8">Customer</th>
+                <th className="py-4 font-medium">Service</th>
+                <th className="py-4 font-medium">Date & Time</th>
+                <th className="py-4 font-medium">Status</th>
+                <th className="py-4 font-medium text-right pr-6 md:pr-8">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/5">
@@ -65,7 +57,7 @@ export default function AdminDashboard() {
                 { name: "Jessica R.", service: "Hot Stone Therapy", date: "Tomorrow, 10:00 AM", status: "Confirmed", amount: "QAR 150" },
               ].map((booking, i) => (
                 <tr key={i} className="hover:bg-primary/5 transition-colors group">
-                  <td className="py-4 font-medium text-primary-dark">{booking.name}</td>
+                  <td className="py-4 font-medium text-primary-dark pl-6 md:pl-8">{booking.name}</td>
                   <td className="py-4 text-text-secondary">{booking.service}</td>
                   <td className="py-4 text-text-secondary">{booking.date}</td>
                   <td className="py-4">
@@ -75,7 +67,7 @@ export default function AdminDashboard() {
                       {booking.status}
                     </span>
                   </td>
-                  <td className="py-4 text-right font-medium text-primary-dark">{booking.amount}</td>
+                  <td className="py-4 text-right font-medium text-primary-dark pr-6 md:pr-8">{booking.amount}</td>
                 </tr>
               ))}
             </tbody>

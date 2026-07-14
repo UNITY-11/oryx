@@ -75,17 +75,17 @@ export function SwipableFavorites() {
     }
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 pt-6 pb-24 px-4 md:px-8 w-full">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6 pt-3 md:pt-6 pb-20 md:pb-24 px-2 md:px-8 w-full">
         {items.map(item => {
           const favorite = isFavorite(item.id);
           
           return (
             <div 
               key={item.id} 
-              className="relative rounded-[24px] md:rounded-[32px] overflow-hidden bg-white shadow-sm border border-primary/10 group cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
+              className="relative rounded-3xl md:rounded-[32px] overflow-hidden bg-white shadow-sm border border-primary/10 group cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
               onClick={() => router.push(item.isProduct ? `/product/${item.id}` : `/session/${item.id}`)}
             >
-              <div className="h-56 md:h-80 w-full relative overflow-hidden">
+              <div className="aspect-square w-full relative overflow-hidden">
                 <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 
                 {/* Floating Heart Button */}
@@ -94,7 +94,7 @@ export function SwipableFavorites() {
                     e.stopPropagation();
                     toggleFavorite(item);
                   }}
-                  className={`absolute top-3 right-3 md:top-4 md:right-4 p-2 md:p-2.5 rounded-full backdrop-blur-md transition-all z-10 shadow-sm
+                  className={`absolute top-2 right-2 md:top-4 md:right-4 p-2 md:p-2.5 rounded-full backdrop-blur-md transition-all z-10 shadow-sm
                     ${favorite ? 'bg-white text-[#E5C37A]' : 'bg-black/20 text-white hover:bg-white/30'}
                   `}
                 >
@@ -103,12 +103,12 @@ export function SwipableFavorites() {
               </div>
                 
               {/* Content Below Image */}
-              <div className="p-4 flex flex-col justify-between">
+              <div className="p-2 md:p-4 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-serif text-[13px] md:text-lg text-primary-dark leading-snug truncate">{item.name}</h3>
+                  <h3 className="font-serif text-[12px] md:text-lg text-primary-dark leading-snug line-clamp-1">{item.name}</h3>
                 </div>
-                <div className="mt-2 md:mt-3">
-                  <p className="text-[#E5C37A] font-bold text-sm md:text-base">QAR {item.price}</p>
+                <div className="mt-1 md:mt-3">
+                  <p className="text-[#E5C37A] font-bold text-xs md:text-base">QAR {item.price}</p>
                 </div>
               </div>
             </div>

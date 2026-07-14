@@ -1,14 +1,26 @@
 export type NotificationType = "Booking" | "Stock" | "System";
 export type NotificationStatus = "Unread" | "Read";
 
+export interface BookingPayload {
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  serviceName: string;
+  date: string;
+  time: string;
+  staffName: string;
+  status: "Pending" | "Confirmed" | "Cancelled";
+}
+
 export interface Notification {
   id: string;
   type: NotificationType;
   title: string;
   message: string;
-  timestamp: string; // ISO or relative
+  timestamp: string;
   status: NotificationStatus;
   actionUrl?: string;
+  bookingData?: BookingPayload;
 }
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
@@ -19,7 +31,16 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     message: "Sarah Jenkins requested a 60 min Signature Massage for tomorrow at 2:00 PM.",
     timestamp: "Just now",
     status: "Unread",
-    actionUrl: "/bookings",
+    bookingData: {
+      customerId: "cust-1",
+      customerName: "Sarah Jenkins",
+      customerPhone: "+974 5555 1234",
+      serviceName: "Signature Massage (60 min)",
+      date: "Tomorrow, 15 July 2026",
+      time: "2:00 PM",
+      staffName: "Emma",
+      status: "Pending",
+    }
   },
   {
     id: "notif-2",
@@ -32,21 +53,30 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
   },
   {
     id: "notif-3",
+    type: "Booking",
+    title: "New Booking Request",
+    message: "Michael Chen requested a Deep Tissue Massage with Hot Stones.",
+    timestamp: "4 hours ago",
+    status: "Unread",
+    bookingData: {
+      customerId: "cust-2",
+      customerName: "Michael Chen",
+      customerPhone: "+974 5555 9876",
+      serviceName: "Deep Tissue Massage (90 min) + Hot Stones",
+      date: "Friday, 17 July 2026",
+      time: "10:30 AM",
+      staffName: "David",
+      status: "Pending",
+    }
+  },
+  {
+    id: "notif-4",
     type: "Stock",
     title: "Out of Stock",
     message: "Collagen Booster Serum is completely out of stock. Please reorder.",
     timestamp: "5 hours ago",
     status: "Read",
     actionUrl: "/products",
-  },
-  {
-    id: "notif-4",
-    type: "Booking",
-    title: "Booking Cancelled",
-    message: "Emma Wilson cancelled her Hydrating Facial appointment scheduled for 10:30 AM.",
-    timestamp: "1 day ago",
-    status: "Read",
-    actionUrl: "/bookings",
   },
   {
     id: "notif-5",

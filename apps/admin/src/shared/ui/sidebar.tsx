@@ -18,7 +18,7 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="hidden md:flex p-4 pr-2">
+    <div className="hidden md:flex p-4 pr-0">
       <aside className="flex flex-col w-64 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl h-full overflow-y-auto scrollbar-hide z-40 shrink-0 shadow-sm">
         <div className="p-8 flex flex-col items-center justify-center border-b border-primary/10 shrink-0">
           <Link href="/">
@@ -35,11 +35,10 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-2xl transition-colors ${
-                  isActive 
-                    ? "bg-primary text-white shadow-sm" 
-                    : "text-text-secondary hover:bg-primary/5 hover:text-primary-dark"
-                }`}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-2xl transition-colors ${isActive
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-text-secondary hover:bg-primary/5 hover:text-primary-dark"
+                  }`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 <span className="font-medium text-sm">{item.name}</span>

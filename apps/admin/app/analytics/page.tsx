@@ -25,7 +25,8 @@ import {
   ArrowDownRight,
   Clock,
   Star,
-  Menu
+  Menu,
+  CreditCard
 } from "lucide-react";
 import { 
   MOCK_REVENUE_DATA, 

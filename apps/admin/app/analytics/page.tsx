@@ -41,9 +41,9 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d");
 
   return (
-    <div className="flex flex-col h-full bg-[#fcf4f0] space-y-6 pt-4 overflow-y-auto scrollbar-hide pb-10">
+    <div className="flex flex-col h-full bg-[#fcf4f0] pt-4 overflow-hidden">
       {/* Header Bar */}
-      <div className="shrink-0">
+      <div className="shrink-0 pb-6">
         <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
           <div className="flex items-center space-x-4 flex-1">
             <button className="md:hidden p-2 -ml-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
@@ -79,8 +79,10 @@ export default function AnalyticsPage() {
         </header>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 shrink-0">
+      {/* Scrollable Content Wrapper */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6 pb-10">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 shrink-0">
         {/* Total Revenue */}
         <div className="bg-white rounded-[32px] p-8 border border-primary/10 shadow-sm flex flex-col justify-between hover:border-primary/30 transition-colors">
           <div className="flex justify-between items-start mb-6">
@@ -315,6 +317,8 @@ export default function AnalyticsPage() {
               </div>
             ))}
           </div>
+        </div>
+
         </div>
 
       </div>

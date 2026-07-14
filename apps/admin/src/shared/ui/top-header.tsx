@@ -18,6 +18,7 @@ export function TopHeader() {
       case '/notifications': return 'Notifications';
       default:
         if (pathname.startsWith('/services/')) return 'Service Details';
+        if (pathname.startsWith('/products/')) return 'Product Details';
         return 'Admin Portal';
     }
   };
@@ -60,6 +61,16 @@ export function TopHeader() {
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Service</span>
+              </Link>
+            )}
+
+            {pathname === '/products' && (
+              <Link
+                href="/products/new"
+                className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity flex items-center space-x-2 whitespace-nowrap text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Product</span>
               </Link>
             )}
           </div>

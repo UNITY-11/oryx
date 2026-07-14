@@ -61,11 +61,11 @@ export default function CalendarPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Confirmed': return 'bg-green-100 border-green-300 text-green-800';
-      case 'Pending': return 'bg-yellow-100 border-yellow-300 text-yellow-800';
-      case 'Completed': return 'bg-blue-100 border-blue-300 text-blue-800';
-      case 'Cancelled': return 'bg-red-100 border-red-300 text-red-800';
-      default: return 'bg-gray-100 border-gray-300 text-gray-800';
+      case 'Confirmed': return 'bg-primary/20 border-primary text-primary-dark shadow-sm';
+      case 'Pending': return 'bg-primary/5 border-primary/40 text-primary-dark border-dashed';
+      case 'Completed': return 'bg-primary border-primary-dark text-white';
+      case 'Cancelled': return 'bg-white border-primary/20 text-text-secondary opacity-70';
+      default: return 'bg-white border-primary/20 text-primary-dark';
     }
   };
 

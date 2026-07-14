@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { use, useState, useMemo, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Save, Printer, MessageCircle, FileText, Calendar, Clock, User, 
@@ -211,7 +211,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </button>
             <button
               onClick={handleWhatsAppBill}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium bg-[#25D366] text-white hover:bg-[#20b858] transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium bg-primary text-white hover:opacity-90 transition-colors shadow-sm"
             >
               <MessageCircle className="w-4 h-4" />
               Send via WhatsApp
@@ -630,7 +630,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
                     
                     return (
-                      <div key={idx} className="contents">
+                      <Fragment key={idx}>
                         <tr>
                           <td className="py-4 font-bold text-primary-dark">
                             {svc.name}
@@ -652,7 +652,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                             </tr>
                           )
                         })}
-                      </div>
+                      </Fragment>
                     )
                   })}
                 </tbody>

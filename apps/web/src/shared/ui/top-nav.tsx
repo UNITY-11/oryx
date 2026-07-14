@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, Calendar, Scissors, Brush, User } from "lucide-react";
+import { useUserStore } from "@/shared/store";
 
 export function TopNav() {
   const pathname = usePathname();
+  const user = useUserStore((state) => state.user);
 
   const leftNavItems = [
     { name: "Home", href: "/", icon: Home },
@@ -63,7 +65,11 @@ export function TopNav() {
         <div className="flex items-center space-x-2 shrink-0">
 
           <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-primary hover:text-primary-dark transition-colors">
-            <User className="w-5 h-5" />
+            {user ? (
+              <span className="font-semibold text-lg">{user.name.charAt(0).toUpperCase()}</span>
+            ) : (
+              <User className="w-5 h-5" />
+            )}
           </Link>
         </div>
       </div>

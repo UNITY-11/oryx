@@ -193,7 +193,7 @@ export function ProfileDashboard() {
         <div className="flex items-center space-x-5">
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
-              <UserCircle2 className="w-10 h-10 text-primary" />
+              <span className="font-semibold text-4xl text-primary">{user.name.charAt(0).toUpperCase()}</span>
             </div>
             <div className="absolute bottom-0 right-0 bg-[#E5C37A] text-white p-1 rounded-full border-2 border-white">
               <CheckCircle2 className="w-4 h-4" />

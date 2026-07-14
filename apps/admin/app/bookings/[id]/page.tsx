@@ -55,7 +55,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleStartSession = () => {
-    update("status", "Confirmed");
+    update("status", "Started");
   };
 
   const toggleService = (serviceId: string) => {
@@ -206,6 +206,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
                   booking.status === "Confirmed"  ? "bg-primary/20 border-primary text-primary-dark" :
                   booking.status === "Pending"    ? "bg-primary/5 border-primary/40 text-primary-dark border-dashed" :
+                  booking.status === "Started"    ? "bg-blue-500 border-blue-600 text-white" :
                   booking.status === "Completed"  ? "bg-primary border-primary-dark text-white" :
                                                     "bg-white border-primary/20 text-text-secondary opacity-70"
                 }`}>
@@ -341,8 +342,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                         onChange={(e) => update("status", e.target.value as BookingStatus)}
                         className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark font-medium text-sm"
                       >
-                        <option value="Pending">Pending</option>
+                      <option value="Pending">Pending</option>
                         <option value="Confirmed">Confirmed</option>
+                        <option value="Started">Started</option>
                         <option value="Completed">Completed</option>
                         <option value="Cancelled">Cancelled</option>
                       </select>

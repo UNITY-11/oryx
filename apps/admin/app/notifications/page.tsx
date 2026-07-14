@@ -7,10 +7,10 @@ import Link from "next/link";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [filter, setFilter] = useState<NotificationType | "All">("All");
+  const [filter, setFilter] = useState<NotificationType | "All" | "Starred">("All");
   const [selectedId, setSelectedId] = useState<string | null>(notifications[0]?.id || null);
 
-  const filtered = notifications.filter((n) => filter === "All" || n.type === filter);
+  const filtered = notifications.filter((n) => filter === "All" || (filter === "Starred" ? n.isStarred : n.type === filter));
   const unreadCount = notifications.filter(n => n.status === "Unread").length;
   
   const selectedNotif = notifications.find(n => n.id === selectedId) || null;
@@ -41,7 +41,6 @@ export default function NotificationsPage() {
     switch (type) {
       case "Booking": return <Calendar className="w-5 h-5" />;
       case "Stock": return <Package className="w-5 h-5" />;
-      case "System": return <Info className="w-5 h-5" />;
       default: return <Bell className="w-5 h-5" />;
     }
   };
@@ -68,10 +67,10 @@ export default function NotificationsPage() {
           
           {/* Filters */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            {["All", "Booking", "Stock", "System"].map((type) => (
+            {["All", "Starred", "Booking", "Stock"].map((type) => (
               <button
                 key={type}
-                onClick={() => setFilter(type as NotificationType | "All")}
+                onClick={() => setFilter(type as NotificationType | "All" | "Starred")}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
                   filter === type
                     ? "bg-primary text-white shadow-md shadow-primary/20"

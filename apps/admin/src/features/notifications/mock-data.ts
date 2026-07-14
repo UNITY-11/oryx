@@ -1,4 +1,4 @@
-export type NotificationType = "Booking" | "Stock" | "System";
+export type NotificationType = "Booking" | "Stock";
 export type NotificationStatus = "Unread" | "Read";
 
 export interface BookingPayload {
@@ -89,14 +89,4 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     message: "Collagen Booster Serum is completely out of stock. Please reorder.",
     timestamp: "5 hours ago",
     status: "Read",
-    actionUrl: "/products",
-  },
-  {
-    id: "notif-5",
-    type: "System",
-    title: "System Maintenance",
-    message: "Scheduled maintenance will occur on Sunday at 2:00 AM.",
-    timestamp: "2 days ago",
-    status: "Read",
-  },
 ];

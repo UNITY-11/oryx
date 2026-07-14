@@ -7,7 +7,7 @@ import Link from "next/link";
 export function TopHeader() {
   const pathname = usePathname();
 
-  if (pathname === '/calendar' || pathname === '/analytics') {
+  if (pathname === '/calendar' || pathname === '/analytics' || pathname.startsWith('/bookings/')) {
     return null;
   }
 

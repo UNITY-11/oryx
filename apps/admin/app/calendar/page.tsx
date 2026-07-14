@@ -17,10 +17,29 @@ export default function CalendarPage() {
   const formattedDate = currentDate.toISOString().split('T')[0];
   
   // Filter bookings for the selected date, excluding cancelled ones
-  // Sort them by time so they stack sequentially
-  const todaysBookings = MOCK_BOOKINGS
+  // Sort them by time so they can be processed left-to-right
+  const rawBookings = MOCK_BOOKINGS
     .filter(b => b.date === formattedDate && b.status !== 'Cancelled')
     .sort((a, b) => a.time.localeCompare(b.time));
+
+  // Calculate lanes to pack bookings efficiently towards the top
+  const laneEndTimes: number[] = [];
+  const todaysBookings = rawBookings.map(booking => {
+    const [h, m] = booking.time.split(':').map(Number);
+    const startMinutes = h * 60 + m;
+    const endMinutes = startMinutes + 60; // Assume 60 mins duration
+
+    // Find first available lane (where previous booking ended before this starts)
+    let laneIndex = laneEndTimes.findIndex(endTime => endTime <= startMinutes);
+    if (laneIndex === -1) {
+      laneIndex = laneEndTimes.length; // create new lane
+      laneEndTimes.push(endMinutes);
+    } else {
+      laneEndTimes[laneIndex] = endMinutes; // update existing lane
+    }
+
+    return { ...booking, laneIndex };
+  });
 
   const goToPreviousDay = () => {
     const prev = new Date(currentDate);
@@ -116,11 +135,10 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Horizontal Timeline View */}
       <div className="bg-white flex-1 overflow-auto rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative">
         <div 
           className="relative min-h-[400px]"
-          style={{ width: `${(END_HOUR - START_HOUR + 1) * HOUR_WIDTH}px`, height: `${Math.max(400, todaysBookings.length * ROW_HEIGHT + 64)}px` }}
+          style={{ width: `${(END_HOUR - START_HOUR + 1) * HOUR_WIDTH}px`, height: `${Math.max(400, Math.max(1, laneEndTimes.length) * ROW_HEIGHT + 64)}px` }}
         >
           
           {/* Top Time Header (Sticky) */}
@@ -161,12 +179,12 @@ export default function CalendarPage() {
 
           {/* Bookings Area */}
           <div className="absolute inset-0 top-12">
-            {todaysBookings.map((booking, index) => (
+            {todaysBookings.map((booking) => (
               <div
                 key={booking.id}
                 onClick={() => router.push(`/bookings/${booking.id}`)}
                 className={`absolute rounded-xl border p-3 cursor-pointer transition-all hover:brightness-95 hover:shadow-md flex flex-col justify-between ${getStatusColor(booking.status)}`}
-                style={getBookingStyle(booking.time, index)}
+                style={getBookingStyle(booking.time, booking.laneIndex)}
               >
                 <div className="flex items-start justify-between">
                   <div className="truncate pr-2">

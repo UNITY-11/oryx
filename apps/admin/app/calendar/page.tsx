@@ -167,6 +167,17 @@ export default function CalendarPage() {
             ))}
           </div>
 
+          {/* Horizontal Grid Lines */}
+          <div className="absolute inset-0 top-12 pointer-events-none">
+            {Array.from({ length: Math.max(4, laneEndTimes.length) }).map((_, i) => (
+              <div 
+                key={`h-grid-${i}`} 
+                className="w-full border-t border-primary/5 border-dashed absolute"
+                style={{ top: `${(i + 1) * ROW_HEIGHT}px` }}
+              />
+            ))}
+          </div>
+
           {/* Current Time Indicator (Mocked for 2:15 PM) */}
           {formattedDate === "2026-07-14" && (
             <div 

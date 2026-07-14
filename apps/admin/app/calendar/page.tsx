@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MOCK_BOOKINGS } from "../../src/features/bookings/mock-data";
@@ -13,8 +13,30 @@ const ROW_HEIGHT = 90; // px per booking row
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date("2026-07-14T00:00:00"));
   const router = useRouter();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const formattedDate = currentDate.toISOString().split('T')[0];
+
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    
+    // Since we mock the current time as 2:15 PM (14:15) for the 14th of July
+    if (formattedDate === "2026-07-14") {
+      const currentH = 14;
+      const currentM = 15;
+      const scrollPosition = ((currentH - START_HOUR) + (currentM / 60)) * HOUR_WIDTH;
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      
+      // Scroll to perfectly center the current time
+      scrollContainerRef.current.scrollTo({
+        left: Math.max(0, scrollPosition - containerWidth / 2),
+        behavior: 'smooth'
+      });
+    } else {
+      // For other days, scroll back to the start (8 AM)
+      scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [formattedDate]);
   
   // Filter bookings for the selected date, excluding cancelled ones
   // Sort them by time so they can be processed left-to-right
@@ -135,7 +157,10 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="bg-white flex-1 overflow-auto scrollbar-hide rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative">
+      <div 
+        ref={scrollContainerRef}
+        className="bg-white flex-1 overflow-auto scrollbar-hide rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative"
+      >
         <div 
           className="relative min-h-[400px]"
           style={{ width: `${(END_HOUR - START_HOUR + 1) * HOUR_WIDTH}px`, height: `${Math.max(400, Math.max(1, laneEndTimes.length) * ROW_HEIGHT + 64)}px` }}

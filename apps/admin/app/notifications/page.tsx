@@ -26,6 +26,11 @@ export default function NotificationsPage() {
   const confirmBooking = (id: string) => {
     setNotifications(prev => prev.map(n => {
       if (n.id === id && n.bookingData) {
+        const bd = n.bookingData;
+        const msg = `Hello ${bd.customerName.split(' ')[0]},\n\nYour booking for ${bd.serviceName} has been confirmed!\n\n📅 Date: ${bd.date}\n⏰ Time: ${bd.time}\n⏳ Duration: ${bd.duration}\n\nWe look forward to welcoming you.\n\nBest regards,\nOryx Spa`;
+        const waUrl = `https://wa.me/${bd.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, "_blank");
+        
         return { ...n, bookingData: { ...n.bookingData, status: "Confirmed" } };
       }
       return n;
@@ -222,7 +227,7 @@ export default function NotificationsPage() {
                       <div className="pb-4 border-b border-primary/10">
                         <div className="flex justify-between items-start mb-1">
                           <p className="text-base font-semibold text-primary-dark">{selectedNotif.bookingData.serviceName}</p>
-                          <span className="text-base font-bold text-primary-dark ml-2">${selectedNotif.bookingData.price}</span>
+                          <span className="text-base font-bold text-primary-dark ml-2">{selectedNotif.bookingData.price} QAR</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
                           <span className="bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">{selectedNotif.bookingData.duration}</span>
@@ -242,10 +247,6 @@ export default function NotificationsPage() {
                         <div className="flex items-center gap-2 text-text-secondary text-sm">
                           <Clock className="w-4 h-4 shrink-0 text-primary/60" />
                           <span>{selectedNotif.bookingData.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-text-secondary text-sm col-span-2">
-                          <User className="w-4 h-4 shrink-0 text-primary/60" />
-                          <span>Staff: {selectedNotif.bookingData.staffName}</span>
                         </div>
                       </div>
                     </div>

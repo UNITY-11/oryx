@@ -24,13 +24,16 @@ export default function NotificationsPage() {
   };
 
   const confirmBooking = (id: string) => {
+    const notif = notifications.find(n => n.id === id);
+    if (notif && notif.bookingData) {
+      const bd = notif.bookingData;
+      const msg = `Hello ${bd.customerName.split(' ')[0]},\n\nYour booking for ${bd.serviceName} has been confirmed!\n\n📅 Date: ${bd.date}\n⏰ Time: ${bd.time}\n⏳ Duration: ${bd.duration}\n\nWe look forward to welcoming you.\n\nBest regards,\nOryx Spa`;
+      const waUrl = `https://wa.me/${bd.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, "_blank");
+    }
+
     setNotifications(prev => prev.map(n => {
       if (n.id === id && n.bookingData) {
-        const bd = n.bookingData;
-        const msg = `Hello ${bd.customerName.split(' ')[0]},\n\nYour booking for ${bd.serviceName} has been confirmed!\n\n📅 Date: ${bd.date}\n⏰ Time: ${bd.time}\n⏳ Duration: ${bd.duration}\n\nWe look forward to welcoming you.\n\nBest regards,\nOryx Spa`;
-        const waUrl = `https://wa.me/${bd.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
-        window.open(waUrl, "_blank");
-        
         return { ...n, bookingData: { ...n.bookingData, status: "Confirmed" } };
       }
       return n;

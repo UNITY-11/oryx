@@ -12,7 +12,7 @@ export default function ProductsPage() {
         <p className="mt-2 md:mt-4 text-text-secondary text-sm md:text-lg">Discover our premium spa products.</p>
       </div>
 
-      <div className="px-6 md:px-12 lg:px-16 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 pb-6 mt-4 md:mt-12">
+      <div className="px-6 md:px-12 lg:px-16 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 pb-6 mt-4 md:mt-12">
         {products.map((item) => (
           <Link 
             key={item.id}
@@ -28,7 +28,6 @@ export default function ProductsPage() {
             </div>
             <div className="p-3 md:p-6 flex flex-col">
               <h3 className="font-serif text-text-primary font-medium text-sm md:text-xl leading-tight line-clamp-1">{item.name}</h3>
-              <span className="font-sans font-semibold text-primary-dark mt-1.5 md:mt-3 text-sm md:text-xl">${item.price}</span>
             </div>
           </Link>
         ))}

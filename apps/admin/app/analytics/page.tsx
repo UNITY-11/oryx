@@ -26,8 +26,9 @@ import {
 import { 
   MOCK_REVENUE_DATA, 
   MOCK_CATEGORY_DATA, 
-  OVERVIEW_STATS 
-} from "../../../src/features/analytics/mock-data";
+  OVERVIEW_STATS,
+  ServiceCategoryStats 
+} from "@/features/analytics/mock-data";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d");
@@ -200,7 +201,7 @@ export default function AnalyticsPage() {
                   dataKey="value"
                   stroke="none"
                 >
-                  {MOCK_CATEGORY_DATA.map((entry, index) => (
+                  {MOCK_CATEGORY_DATA.map((entry: ServiceCategoryStats, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
@@ -218,7 +219,7 @@ export default function AnalyticsPage() {
           </div>
           {/* Custom Legend */}
           <div className="mt-4 space-y-3">
-            {MOCK_CATEGORY_DATA.map((category, index) => (
+            {MOCK_CATEGORY_DATA.map((category: ServiceCategoryStats, index: number) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.fill }} />

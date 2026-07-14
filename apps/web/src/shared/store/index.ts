@@ -70,34 +70,7 @@ export const useCartStore = create<CartState>()(
   )
 );
 
-// Favorites Store
-interface FavoritesState {
-  favorites: Item[];
-  toggleFavorite: (item: Item) => void;
-  isFavorite: (itemId: string) => boolean;
-}
 
-export const useFavoritesStore = create<FavoritesState>()(
-  persist(
-    (set, get) => ({
-      favorites: [],
-      toggleFavorite: (item) =>
-        set((state) => {
-          const exists = state.favorites.find((i) => i.id === item.id);
-          if (exists) {
-            return { favorites: state.favorites.filter((i) => i.id !== item.id) };
-          }
-          return { favorites: [...state.favorites, item] };
-        }),
-      isFavorite: (itemId) => {
-        return get().favorites.some((i) => i.id === itemId);
-      },
-    }),
-    {
-      name: "favorites-storage",
-    }
-  )
-);
 
 // Booking Store
 interface BookingState {

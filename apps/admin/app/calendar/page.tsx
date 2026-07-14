@@ -16,8 +16,8 @@ export default function CalendarPage() {
 
   const formattedDate = currentDate.toISOString().split('T')[0];
   
-  // Filter bookings for the selected date
-  const todaysBookings = MOCK_BOOKINGS.filter(b => b.date === formattedDate);
+  // Filter bookings for the selected date, excluding cancelled ones
+  const todaysBookings = MOCK_BOOKINGS.filter(b => b.date === formattedDate && b.status !== 'Cancelled');
 
   const goToPreviousDay = () => {
     const prev = new Date(currentDate);

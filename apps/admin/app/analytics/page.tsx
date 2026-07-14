@@ -18,12 +18,14 @@ import {
 import { 
   TrendingUp, 
   Users, 
-  CreditCard, 
+  Calendar, 
+  DollarSign, 
   Award, 
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  Star
+  Star,
+  Menu
 } from "lucide-react";
 import { 
   MOCK_REVENUE_DATA, 
@@ -39,32 +41,41 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex flex-col h-full bg-[#fcf4f0] space-y-6 pt-4 overflow-y-auto scrollbar-hide pb-10">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-        <div>
-          <h1 className="text-3xl font-serif text-primary-dark">Analytics & Insights</h1>
-          <p className="text-text-secondary text-sm mt-1">Comprehensive view of your spa's performance and growth.</p>
-        </div>
-        <div className="flex bg-white rounded-full p-1 border border-primary/10 shadow-sm self-start">
-          <button 
-            className={`px-5 py-2 text-xs font-semibold rounded-full transition-all ${timeRange === '7d' ? 'bg-primary text-white shadow-md' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
-            onClick={() => setTimeRange('7d')}
-          >
-            7 Days
-          </button>
-          <button 
-            className={`px-5 py-2 text-xs font-semibold rounded-full transition-all ${timeRange === '30d' ? 'bg-primary text-white shadow-md' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
-            onClick={() => setTimeRange('30d')}
-          >
-            30 Days
-          </button>
-          <button 
-            className={`px-5 py-2 text-xs font-semibold rounded-full transition-all ${timeRange === '1y' ? 'bg-primary text-white shadow-md' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
-            onClick={() => setTimeRange('1y')}
-          >
-            1 Year
-          </button>
-        </div>
+      {/* Header Bar */}
+      <div className="shrink-0">
+        <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
+          <div className="flex items-center space-x-4 flex-1">
+            <button className="md:hidden p-2 -ml-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="hidden md:flex">
+              <h1 className="font-serif text-2xl font-medium text-primary-dark">Analytics & Insights</h1>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 shrink-0">
+            <div className="flex bg-[#fcf4f0] rounded-xl p-1 border border-primary/10">
+              <button 
+                className={`px-5 py-2 text-xs font-semibold rounded-lg transition-all ${timeRange === '7d' ? 'bg-white text-primary-dark shadow-sm' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
+                onClick={() => setTimeRange('7d')}
+              >
+                7 Days
+              </button>
+              <button 
+                className={`px-5 py-2 text-xs font-semibold rounded-lg transition-all ${timeRange === '30d' ? 'bg-white text-primary-dark shadow-sm' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
+                onClick={() => setTimeRange('30d')}
+              >
+                30 Days
+              </button>
+              <button 
+                className={`px-5 py-2 text-xs font-semibold rounded-lg transition-all ${timeRange === '1y' ? 'bg-white text-primary-dark shadow-sm' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
+                onClick={() => setTimeRange('1y')}
+              >
+                1 Year
+              </button>
+            </div>
+          </div>
+        </header>
       </div>
 
       {/* Overview Cards */}

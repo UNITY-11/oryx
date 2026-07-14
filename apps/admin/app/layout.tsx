@@ -42,7 +42,7 @@ export default function RootLayout({
 
           <Sidebar />
 
-          <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-red-500">
+          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
             <TopHeader />
 
             {/* Main Scrollable Content */}

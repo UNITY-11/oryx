@@ -79,20 +79,24 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="px-4 md:px-0 mt-4 md:mt-0 pb-8 md:pb-24">
+        <section className="px-3 md:px-0 mt-4 md:mt-0 pb-8 md:pb-24">
           <HeroCarousel />
         </section>
       )}
 
-      <div className="px-4 md:px-8 lg:px-12 xl:px-16 pb-6 md:pb-24 space-y-8 md:space-y-24 flex-1 w-full max-w-screen-2xl mx-auto">
+      <div className="px-3 md:px-8 lg:px-12 xl:px-16 pb-6 md:pb-24 space-y-8 md:space-y-24 flex-1 w-full max-w-screen-2xl mx-auto">
         {/* Categories Section */}
         {!searchQuery && (
           <section>
             <div className="flex justify-between items-end mb-4">
               <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Categories</h2>
             </div>
-            <div className="flex flex-row gap-4 md:gap-0 justify-between w-full overflow-x-auto md:overflow-visible pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-              <style dangerouslySetInnerHTML={{ __html: `
+            <div className="flex flex-row justify-between w-full overflow-x-auto md:overflow-visible pb-4 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 cat-container">
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                @media (max-width: 767px) {
+                  .cat-container { gap: 28px !important; }
+                }
                 @media (min-width: 768px) {
                   .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }
                   .cat-icon { width: clamp(40px, 4vw, 55px) !important; height: clamp(40px, 4vw, 55px) !important; }
@@ -128,7 +132,7 @@ export default function HomePage() {
         {/* Promotional Banner */}
         {!searchQuery && (
           <section>
-            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0 md:mx-0">
+            <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide -mx-3 px-3 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0 md:mx-0">
               {/* Card 1 */}
               <div className="flex-none w-[92%] md:w-full bg-primary/5 rounded-2xl relative overflow-hidden shadow-sm">
 
@@ -261,9 +265,9 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-2 gap-y-6 md:gap-6">
               {filteredItems.filter(item => item.isProduct).slice(0, 6).map(item => (
-                <Link 
-                  href={`/service/${item.id}`} 
-                  key={item.id} 
+                <Link
+                  href={`/service/${item.id}`}
+                  key={item.id}
                   className="flex flex-col bg-surface rounded-2xl overflow-hidden shadow-sm transition-transform hover:-translate-y-1"
                 >
                   <div className="relative aspect-square">

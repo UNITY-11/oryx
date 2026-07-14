@@ -222,25 +222,15 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
 
-              {/* Short Description */}
+              {/* Description */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Short Description</label>
-                <input
-                  value={service.shortDescription}
-                  onChange={(e) => update("shortDescription", e.target.value)}
-                  placeholder="One-line summary"
-                  className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
-                />
-              </div>
-
-              {/* Full Description */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Full Description</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Description</label>
                 <textarea
                   value={service.description}
                   onChange={(e) => update("description", e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm resize-none"
+                  rows={5}
+                  placeholder="Describe the service experience..."
+                  className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm resize-none placeholder:text-primary/30"
                 />
               </div>
 
@@ -253,14 +243,14 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </button>
                 </div>
                 <div className="rounded-2xl border border-primary/10 overflow-hidden">
-                  <div className="grid grid-cols-[1fr_120px_120px_40px] bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-4 py-2.5 border-b border-primary/10">
+                  <div className="grid grid-cols-[1fr_130px_130px_44px] bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-4 py-3 border-b border-primary/10">
                     <span>Label</span><span>Price (QAR)</span><span>Duration (min)</span><span />
                   </div>
                   {service.pricingTiers.map((tier, i) => (
-                    <div key={tier.id} className={`grid grid-cols-[1fr_120px_120px_40px] items-center px-4 py-2 ${i > 0 ? "border-t border-primary/5" : ""}`}>
-                      <input value={tier.label} onChange={(e) => updateTier(tier.id, "label", e.target.value)} placeholder="e.g. 60 min" className="bg-transparent focus:outline-none text-primary-dark text-sm py-1.5" />
-                      <input type="number" value={tier.price || ""} onChange={(e) => updateTier(tier.id, "price", Number(e.target.value))} className="bg-transparent focus:outline-none text-primary-dark text-sm py-1.5 font-medium" />
-                      <input type="number" value={tier.duration || ""} onChange={(e) => updateTier(tier.id, "duration", Number(e.target.value))} className="bg-transparent focus:outline-none text-primary-dark text-sm py-1.5" />
+                    <div key={tier.id} className={`grid grid-cols-[1fr_130px_130px_44px] items-center gap-2 px-4 py-3 ${i > 0 ? "border-t border-primary/5" : ""}`}>
+                      <input value={tier.label} onChange={(e) => updateTier(tier.id, "label", e.target.value)} placeholder="e.g. 60 min" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
+                      <input type="number" value={tier.price || ""} onChange={(e) => updateTier(tier.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
+                      <input type="number" value={tier.duration || ""} onChange={(e) => updateTier(tier.id, "duration", Number(e.target.value))} placeholder="60" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
                       <button onClick={() => removeTier(tier.id)} disabled={service.pricingTiers.length === 1} className="text-red-400 hover:text-red-600 transition-colors flex justify-center disabled:opacity-20">
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -283,14 +273,14 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-primary/10 overflow-hidden">
-                    <div className="grid grid-cols-[1fr_120px_120px_40px] bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-4 py-2.5 border-b border-primary/10">
+                    <div className="grid grid-cols-[1fr_130px_130px_44px] bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-4 py-3 border-b border-primary/10">
                       <span>Name</span><span>Price (QAR)</span><span>+Mins</span><span />
                     </div>
                     {service.addons.map((addon, i) => (
-                      <div key={addon.id} className={`grid grid-cols-[1fr_120px_120px_40px] items-center px-4 py-2 ${i > 0 ? "border-t border-primary/5" : ""}`}>
-                        <input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} placeholder="Addon name" className="bg-transparent focus:outline-none text-primary-dark text-sm py-1.5" />
-                        <input type="number" value={addon.price || ""} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} className="bg-transparent focus:outline-none text-primary-dark text-sm py-1.5 font-medium" />
-                        <input type="number" value={addon.duration || ""} onChange={(e) => updateAddon(addon.id, "duration", Number(e.target.value))} className="bg-transparent focus:outline-none text-primary-dark text-sm py-1.5" />
+                      <div key={addon.id} className={`grid grid-cols-[1fr_130px_130px_44px] items-center gap-2 px-4 py-3 ${i > 0 ? "border-t border-primary/5" : ""}`}>
+                        <input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} placeholder="Addon name" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
+                        <input type="number" value={addon.price || ""} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
+                        <input type="number" value={addon.duration || ""} onChange={(e) => updateAddon(addon.id, "duration", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
                         <button onClick={() => removeAddon(addon.id)} className="text-red-400 hover:text-red-600 flex justify-center">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -300,21 +290,6 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                 )}
               </div>
 
-              {/* Tags */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Tags</label>
-                <input
-                  value={service.tags.join(", ")}
-                  onChange={(e) => update("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
-                  placeholder="Comma-separated tags"
-                  className="w-full px-4 py-3 rounded-2xl border border-primary/20 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {service.tags.map((tag) => (
-                    <span key={tag} className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">{tag}</span>
-                  ))}
-                </div>
-              </div>
 
             </div>
           </div>

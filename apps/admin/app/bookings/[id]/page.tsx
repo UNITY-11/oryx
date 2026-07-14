@@ -4,8 +4,7 @@ import { use, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Save, Calendar, Clock, User,
-  CheckCircle2, ChevronRight, Check, Edit3, Play,
-  Menu, X
+  CheckCircle2, ChevronRight, Check, Edit3, Play, X
 } from "lucide-react";
 import { MOCK_BOOKINGS, Booking, BookingStatus, BookingService } from "../../../src/features/bookings/mock-data";
 import { MOCK_SERVICES as REAL_SERVICES } from "../../../src/features/services/mock-data";
@@ -122,25 +121,21 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="shrink-0 pb-4">
+      <div className="shrink-0 pt-4 pb-4">
         <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 z-30">
-          {/* Left: back + title */}
-          <div className="flex items-center space-x-4 flex-1">
-            <button className="md:hidden p-2 -ml-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
-              <Menu className="w-6 h-6" />
-            </button>
+          {/* Left: back arrow + title */}
+          <div className="flex items-center gap-4 flex-1">
             <button
               onClick={() => {
                 if (isEditing) { setIsEditing(false); setBooking(savedBooking); }
                 else router.back();
               }}
-              className="flex items-center gap-2 text-text-secondary hover:text-primary-dark transition-colors text-sm font-medium group"
+              className="w-10 h-10 rounded-2xl bg-[#fcf4f0] border border-primary/10 flex items-center justify-center text-primary hover:bg-primary/10 hover:-translate-x-0.5 transition-all shrink-0"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="hidden md:inline">{isEditing ? "Cancel Edit" : "Back to Bookings"}</span>
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="hidden md:flex flex-col ml-2">
-              <h1 className="font-serif text-2xl font-medium text-primary-dark">
+            <div className="flex flex-col">
+              <h1 className="font-serif text-2xl font-medium text-primary-dark leading-tight">
                 {booking.customerName}
               </h1>
               <p className="text-xs text-text-secondary font-mono uppercase tracking-wider">{booking.id}</p>
@@ -152,7 +147,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             {!isCompleted && !isEditing && canStart && (
               <button
                 onClick={handleStartSession}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm"
               >
                 <Play className="w-4 h-4 fill-white" />
                 Start Session

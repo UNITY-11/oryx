@@ -53,8 +53,8 @@ export function ServiceDetailClient({ item }: { item: Item }) {
         </button>
 
         <h1 className="font-serif text-3xl md:text-5xl font-medium text-primary-dark mb-8 mt-12 md:mt-0 max-w-4xl">{item.name}</h1>
-        
-        <div className="w-full max-w-2xl aspect-square rounded-[40px] overflow-hidden mb-12 shadow-sm border border-primary/10">
+
+        <div className="w-full max-w-2xl aspect-[3/4] rounded-[40px] overflow-hidden mb-12 shadow-sm border border-primary/10">
            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
         </div>
 

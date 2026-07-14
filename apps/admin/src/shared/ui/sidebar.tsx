@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Users, ShoppingBag, Briefcase, Settings, UserCircle2, Bell } from "lucide-react";
+import { Home, Calendar, Users, ShoppingBag, Briefcase, Settings, UserCircle2, Bell, ClipboardCheck } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: Home },
-    { name: "Bookings", href: "/bookings", icon: Calendar },
+    { name: "Calendar", href: "/calendar", icon: Calendar },
+    { name: "Bookings", href: "/bookings", icon: ClipboardCheck },
     { name: "Services", href: "/services", icon: Briefcase },
     { name: "Products", href: "/products", icon: ShoppingBag },
     { name: "Customers", href: "/customers", icon: Users },

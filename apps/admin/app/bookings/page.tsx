@@ -22,7 +22,7 @@ function BookingsContent() {
   // Filter & Sort State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">("All");
-  const [sortField, setSortField] = useState<"date" | "amount" | "customerName">("date");
+  const [sortField, setSortField] = useState<"id" | "date" | "amount" | "customerName">("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Handlers
@@ -57,6 +57,8 @@ function BookingsContent() {
         comparison = a.amount - b.amount;
       } else if (sortField === "customerName") {
         comparison = a.customerName.localeCompare(b.customerName);
+      } else if (sortField === "id") {
+        comparison = a.id.localeCompare(b.id);
       }
       return sortOrder === "asc" ? comparison : -comparison;
     });
@@ -106,7 +108,12 @@ function BookingsContent() {
           <table className="w-full min-w-[900px] text-left border-collapse">
             <thead className="sticky top-0 bg-[#fcf4f0] z-10">
               <tr className="border-b border-primary/10 text-xs uppercase tracking-wider text-text-secondary">
-                <th className="py-4 font-medium pl-6 md:pl-8">ID</th>
+                <th className="py-4 font-medium pl-6 md:pl-8 cursor-pointer group" onClick={() => toggleSort('id')}>
+                  <div className="flex items-center">
+                    ID
+                    <ArrowUpDown className={`w-3 h-3 ml-1 transition-opacity ${sortField === 'id' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+                  </div>
+                </th>
                 <th className="py-4 font-medium cursor-pointer group" onClick={() => toggleSort('customerName')}>
                   <div className="flex items-center">
                     Customer

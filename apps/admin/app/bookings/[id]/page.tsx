@@ -206,7 +206,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
                   booking.status === "Confirmed"  ? "bg-primary/20 border-primary text-primary-dark" :
                   booking.status === "Pending"    ? "bg-primary/5 border-primary/40 text-primary-dark border-dashed" :
-                  booking.status === "Started"    ? "bg-blue-500 border-blue-600 text-white" :
+                  booking.status === "Started"    ? "bg-primary-dark border-primary-dark text-white" :
                   booking.status === "Completed"  ? "bg-primary border-primary-dark text-white" :
                                                     "bg-white border-primary/20 text-text-secondary opacity-70"
                 }`}>

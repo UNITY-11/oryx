@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Users, ShoppingBag, Briefcase, Settings, UserCircle2, Bell, ClipboardCheck, BarChart2 } from "lucide-react";
+import { Home, Calendar, Users, ShoppingBag, Briefcase, Settings, UserCircle2, Bell, ClipboardCheck, BarChart2, Receipt } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -11,6 +11,7 @@ export function Sidebar() {
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Bookings", href: "/bookings", icon: ClipboardCheck },
+    { name: "Billing", href: "/billing", icon: Receipt },
     { name: "Services", href: "/services", icon: Briefcase },
     { name: "Products", href: "/products", icon: ShoppingBag },
     { name: "Customers", href: "/customers", icon: Users },

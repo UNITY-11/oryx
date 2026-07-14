@@ -111,10 +111,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         const basePrice = serviceObj.pricingTiers?.[0]?.price || serviceObj.price || 0;
         const newServices = [...prev.services, { name: serviceObj.name, addons: [] }];
         
-        // Make it active to configure addons
-        setActiveServiceIndex(newServices.length - 1);
-        setPosState('addons');
-
         return {
           ...prev,
           services: newServices,

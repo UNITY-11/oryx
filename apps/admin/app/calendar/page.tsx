@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MOCK_BOOKINGS } from "../../src/features/bookings/mock-data";
 
@@ -130,47 +130,52 @@ export default function CalendarPage() {
     <div className="flex flex-col h-full overflow-hidden">
       
       {/* Header Bar */}
-      <div className="bg-white rounded-t-[32px] border-b border-primary/10 shadow-sm flex items-center justify-between px-8 py-5 shrink-0 z-20">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 text-primary">
-            <CalendarIcon className="w-6 h-6" />
+      <div className="pt-4 pb-4 shrink-0">
+        <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
+          <div className="flex items-center space-x-4 flex-1">
+            <button className="md:hidden p-2 -ml-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="hidden md:flex flex-col">
+              <h1 className="font-serif text-2xl font-medium text-primary-dark">
+                {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </h1>
+              <div className="flex items-center gap-3 text-sm text-text-secondary mt-0.5 font-medium">
+                <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {realTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="w-1 h-1 rounded-full bg-primary/30"></span>
+                <span className="flex items-center gap-1.5"><User className="w-4 h-4" /> {todaysBookings.length} Sessions Today</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-serif text-primary-dark">Schedule</h1>
-            <p className="text-sm text-text-secondary">Timeline overview of appointments</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-[#fcf4f0] rounded-xl p-1 border border-primary/10">
-            <button 
-              onClick={goToPreviousDay}
-              className="p-2 hover:bg-white rounded-lg transition-colors text-primary-dark hover:shadow-sm"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={goToToday}
-              className="px-4 py-2 hover:bg-white rounded-lg transition-colors font-semibold text-sm text-primary-dark"
-            >
-              Today
-            </button>
-            <button 
-              onClick={goToNextDay}
-              className="p-2 hover:bg-white rounded-lg transition-colors text-primary-dark hover:shadow-sm"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="flex items-center space-x-3 shrink-0">
+            <div className="flex items-center bg-[#fcf4f0] rounded-xl p-1 border border-primary/10">
+              <button 
+                onClick={goToPreviousDay}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-primary-dark hover:shadow-sm"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={goToToday}
+                className="px-4 py-2 hover:bg-white rounded-lg transition-colors font-semibold text-sm text-primary-dark"
+              >
+                Today
+              </button>
+              <button 
+                onClick={goToNextDay}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-primary-dark hover:shadow-sm"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="text-lg font-bold text-primary-dark w-48 text-right">
-            {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </div>
-        </div>
+        </header>
       </div>
 
       <div 
         ref={scrollContainerRef}
-        className="bg-white flex-1 overflow-auto scrollbar-hide rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative"
+        className="bg-white flex-1 overflow-auto scrollbar-hide rounded-[32px] border border-primary/10 shadow-sm relative"
       >
         <div 
           className="relative min-h-[400px]"

@@ -7,6 +7,10 @@ import Link from "next/link";
 export function TopHeader() {
   const pathname = usePathname();
 
+  if (pathname === '/calendar') {
+    return null;
+  }
+
   const getPageTitle = () => {
     switch (pathname) {
       case '/': return 'Dashboard Overview';

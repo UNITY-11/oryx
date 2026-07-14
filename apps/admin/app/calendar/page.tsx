@@ -11,19 +11,26 @@ const HOUR_WIDTH = 240; // px per hour to give horizontal space
 const ROW_HEIGHT = 90; // px per booking row
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date("2026-07-14T00:00:00"));
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [realTime, setRealTime] = useState(new Date());
   const router = useRouter();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const formattedDate = currentDate.toISOString().split('T')[0];
+  const todayStr = realTime.toISOString().split('T')[0];
+  const isToday = formattedDate === todayStr;
+
+  useEffect(() => {
+    const timer = setInterval(() => setRealTime(new Date()), 60000); // update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!scrollContainerRef.current) return;
     
-    // Since we mock the current time as 2:15 PM (14:15) for the 14th of July
-    if (formattedDate === "2026-07-14") {
-      const currentH = 14;
-      const currentM = 15;
+    if (isToday) {
+      const currentH = realTime.getHours();
+      const currentM = realTime.getMinutes();
       const scrollPosition = ((currentH - START_HOUR) + (currentM / 60)) * HOUR_WIDTH;
       const containerWidth = scrollContainerRef.current.clientWidth;
       
@@ -36,7 +43,7 @@ export default function CalendarPage() {
       // For other days, scroll back to the start (8 AM)
       scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
     }
-  }, [formattedDate]);
+  }, [formattedDate, isToday]); // Intentional: Only run scroll effect when switching dates, not every minute
   
   // Filter bookings for the selected date, excluding cancelled ones
   // Sort them by time so they can be processed left-to-right
@@ -76,7 +83,7 @@ export default function CalendarPage() {
   };
 
   const goToToday = () => {
-    setCurrentDate(new Date("2026-07-14T00:00:00"));
+    setCurrentDate(new Date());
   };
 
   // Generate hour slots
@@ -203,11 +210,11 @@ export default function CalendarPage() {
             ))}
           </div>
 
-          {/* Current Time Indicator (Mocked for 2:15 PM) */}
-          {formattedDate === "2026-07-14" && (
+          {/* Current Time Indicator */}
+          {isToday && (
             <div 
               className="absolute top-12 bottom-0 border-l-2 border-red-400 z-10 pointer-events-none"
-              style={{ left: `${((14 - START_HOUR) + (15 / 60)) * HOUR_WIDTH}px` }}
+              style={{ left: `${((realTime.getHours() - START_HOUR) + (realTime.getMinutes() / 60)) * HOUR_WIDTH}px` }}
             >
               <div className="absolute -left-1.5 -top-1 w-3 h-3 rounded-full bg-red-400" />
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, use } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { ArrowLeft, Upload, ImageIcon, Plus, X, Save, Clock, Users, ChevronDown, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MOCK_SERVICES, Service, ServiceCategory, PricingTier, Addon } from "../../../src/features/services/mock-data";
@@ -16,8 +16,24 @@ function CategoryDropdown({
   onChange: (v: ServiceCategory) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const handleScroll = () => setOpen(false);
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -27,22 +43,20 @@ function CategoryDropdown({
         <ChevronDown className={`w-4 h-4 text-primary/60 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-primary/10 rounded-2xl shadow-xl z-20 overflow-hidden">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => { onChange(cat); setOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-primary/5 transition-colors ${cat === value ? "text-primary font-medium" : "text-primary-dark"}`}
-              >
-                <span>{cat}</span>
-                {cat === value && <Check className="w-4 h-4 text-primary" />}
-              </button>
-            ))}
-          </div>
-        </>
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-primary/10 rounded-2xl shadow-xl z-20 overflow-hidden">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(cat); setOpen(false); }}
+              className={`w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-primary/5 transition-colors ${cat === value ? "text-primary font-medium" : "text-primary-dark"}`}
+            >
+              <span>{cat}</span>
+              {cat === value && <Check className="w-4 h-4 text-primary" />}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );

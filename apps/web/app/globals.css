@@ -3,10 +3,10 @@
 @theme {
   --color-background: #e2c2b3;
   --color-surface: #fdfaf9;
-  --color-primary: #eabda7;
-  --color-primary-dark: #8b5a33;
+  --color-primary: #EBBAA0;
+  --color-primary-dark: #9c6b2f;
   --color-secondary: #d4a373;
-  --color-text-primary: #4a3018;
+  --color-text-primary: #b88866;
   --color-text-secondary: #8a6c57;
   
   --font-sans: var(--font-inter), sans-serif;

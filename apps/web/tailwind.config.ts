@@ -19,6 +19,7 @@ const config: Config = {
           primary: "var(--color-text-primary)",
           secondary: "var(--color-text-secondary)",
         },
+        favorite: "#EBBaa0",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],

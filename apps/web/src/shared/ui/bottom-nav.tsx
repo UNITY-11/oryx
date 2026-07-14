@@ -4,12 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, Phone, Calendar, Scissors, Brush } from "lucide-react";
 
+import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
+
 export function BottomNav() {
   const pathname = usePathname();
 
-  // Hide on detail pages
+  // Hide on detail pages, EXCEPT for products
   if (pathname.startsWith("/service/")) {
-    return null;
+    const id = pathname.split("/")[2];
+    const item = ALL_MOCK_ITEMS.find((i) => i.id === id);
+    if (!item?.isProduct) {
+      return null;
+    }
   }
 
   const navItems = [

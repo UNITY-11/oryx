@@ -232,7 +232,10 @@ export default function CalendarPage() {
                 <div className="flex items-start justify-between">
                   <div className="truncate pr-2">
                     <div className="font-bold text-sm truncate">{booking.customerName}</div>
-                    <div className="text-xs font-medium opacity-80 truncate">{booking.service}</div>
+                    <div className="text-xs font-medium opacity-80 truncate">
+                      {booking.services[0]?.name || "Custom Session"}
+                      {booking.services.length > 1 && ` (+${booking.services.length - 1} more)`}
+                    </div>
                   </div>
                   <span className="shrink-0 px-2 py-0.5 rounded-md bg-white/50 text-[10px] font-bold uppercase tracking-wider">
                     {booking.status}

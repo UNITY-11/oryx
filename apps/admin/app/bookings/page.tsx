@@ -152,10 +152,15 @@ function BookingsContent() {
                       <p className="text-sm text-text-secondary mt-0.5">{booking.phone}</p>
                     </td>
                     <td className="py-5">
-                      <p className="font-medium text-text-primary">{booking.service}</p>
-                      {booking.addons.length > 0 && (
+                      <p className="font-medium text-text-primary">{booking.services[0]?.name || "Custom Session"}</p>
+                      {booking.services.length > 1 && (
+                        <p className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">
+                          + {booking.services.length - 1} more service{booking.services.length > 2 ? 's' : ''}
+                        </p>
+                      )}
+                      {booking.services[0]?.addons.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
-                          {booking.addons.map((addon, idx) => (
+                          {booking.services[0].addons.map((addon, idx) => (
                             <span key={idx} className="inline-block px-2 py-0.5 bg-gray-100 text-text-secondary text-[10px] uppercase tracking-wider rounded-md">
                               + {addon}
                             </span>

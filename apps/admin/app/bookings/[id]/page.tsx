@@ -4,9 +4,9 @@ import { use, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Save, Printer, MessageCircle, FileText, Calendar, Clock, User, 
-  CheckCircle2, ChevronRight, Check, X, Clock8, Edit3 
+  CheckCircle2, ChevronRight, Check, X, Clock8, Edit3, Trash2
 } from "lucide-react";
-import { MOCK_BOOKINGS, Booking, BookingStatus } from "../../../src/features/bookings/mock-data";
+import { MOCK_BOOKINGS, Booking, BookingStatus, BookingService } from "../../../src/features/bookings/mock-data";
 import { MOCK_SERVICES as REAL_SERVICES } from "../../../src/features/services/mock-data";
 
 type PageMode = 'view' | 'edit-services' | 'checkout';
@@ -21,8 +21,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     id,
     customerName: "Unknown Customer",
     phone: "+974 0000 0000",
-    service: "Unknown Service",
-    addons: [] as string[],
+    services: [] as BookingService[],
     date: new Date().toISOString().split('T')[0] || new Date().toISOString().substring(0, 10),
     time: "10:00",
     status: "Pending" as BookingStatus,
@@ -31,16 +30,17 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   const [booking, setBooking] = useState<Booking>(original);
   const [pageMode, setPageMode] = useState<PageMode>('view');
+  
+  // POS State
   const [posState, setPosState] = useState<PosState>('services');
+  const [activeServiceIndex, setActiveServiceIndex] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
 
-  // Find the currently selected service from REAL_SERVICES based on name matching
+  // The service currently being configured for addons
+  const activeService = activeServiceIndex !== null ? booking.services[activeServiceIndex] : null;
   const currentServiceObject = useMemo(() => {
-    return REAL_SERVICES.find(s => s.name === booking.service);
-  }, [booking.service]);
-
-  // Find base price of the service (default to first tier or amount minus addons)
-  const basePrice = currentServiceObject?.pricingTiers[0]?.price ?? booking.amount;
+    return activeService ? REAL_SERVICES.find(s => s.name === activeService.name) : null;
+  }, [activeService]);
 
   const update = <K extends keyof Booking>(key: K, value: Booking[K]) =>
     setBooking((prev) => ({ ...prev, [key]: value }));
@@ -55,13 +55,18 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleWhatsAppBill = () => {
+    let servicesText = "";
+    booking.services.forEach(s => {
+      servicesText += `- ${s.name}\n`;
+      s.addons.forEach(a => { servicesText += `  + ${a}\n`; });
+    });
+
     const billText = `*Oryx Spa - Invoice*\n\n` +
       `Invoice #: ${booking.id}\n` +
       `Date: ${booking.date}\n` +
       `Customer: ${booking.customerName}\n\n` +
       `*Services:*\n` +
-      `- ${booking.service}\n` +
-      booking.addons.map(a => `  + ${a}\n`).join("") +
+      servicesText +
       `\n*Total:* QAR ${booking.amount}\n\n` +
       `Thank you for visiting Oryx Spa! We look forward to seeing you again.`;
     
@@ -69,36 +74,76 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     window.open(waUrl, "_blank");
   };
 
-  const selectService = (serviceId: string) => {
-    const service = REAL_SERVICES.find(s => s.id === serviceId);
-    if (!service) return;
+  const toggleService = (serviceId: string) => {
+    const serviceObj = REAL_SERVICES.find(s => s.id === serviceId);
+    if (!serviceObj) return;
 
-    setBooking(prev => ({
-      ...prev,
-      service: service.name,
-      addons: [],
-      amount: service.pricingTiers[0]?.price || 0 // reset to base price
-    }));
+    setBooking(prev => {
+      const existingIndex = prev.services.findIndex(s => s.name === serviceObj.name);
+      
+      if (existingIndex >= 0) {
+        // Remove service and its addons
+        const removedService = prev.services[existingIndex];
+        const basePrice = serviceObj.pricingTiers?.[0]?.price || serviceObj.price || 0;
+        const addonsPrice = removedService.addons.reduce((sum, aName) => {
+          const a = serviceObj.addons.find(ad => ad.name === aName);
+          return sum + (a?.price || 0);
+        }, 0);
+
+        const newServices = [...prev.services];
+        newServices.splice(existingIndex, 1);
+
+        // Adjust active index if needed
+        if (activeServiceIndex === existingIndex) {
+          setPosState('services');
+          setActiveServiceIndex(null);
+        } else if (activeServiceIndex !== null && activeServiceIndex > existingIndex) {
+          setActiveServiceIndex(activeServiceIndex - 1);
+        }
+
+        return {
+          ...prev,
+          services: newServices,
+          amount: prev.amount - basePrice - addonsPrice
+        };
+      } else {
+        // Add service
+        const basePrice = serviceObj.pricingTiers?.[0]?.price || serviceObj.price || 0;
+        const newServices = [...prev.services, { name: serviceObj.name, addons: [] }];
+        
+        // Make it active to configure addons
+        setActiveServiceIndex(newServices.length - 1);
+        setPosState('addons');
+
+        return {
+          ...prev,
+          services: newServices,
+          amount: prev.amount + basePrice
+        };
+      }
+    });
+  };
+
+  const configureAddonsFor = (index: number) => {
+    setActiveServiceIndex(index);
     setPosState('addons');
   };
 
   const toggleAddon = (addonName: string, addonPrice: number) => {
+    if (activeServiceIndex === null) return;
+
     setBooking(prev => {
-      const hasAddon = prev.addons.includes(addonName);
-      let newAddons;
-      let newAmount;
+      const newServices = [...prev.services];
+      const service = newServices[activeServiceIndex];
+      const hasAddon = service.addons.includes(addonName);
+      
       if (hasAddon) {
-        newAddons = prev.addons.filter(a => a !== addonName);
-        newAmount = prev.amount - addonPrice;
+        service.addons = service.addons.filter(a => a !== addonName);
+        return { ...prev, services: newServices, amount: prev.amount - addonPrice };
       } else {
-        newAddons = [...prev.addons, addonName];
-        newAmount = prev.amount + addonPrice;
+        service.addons = [...service.addons, addonName];
+        return { ...prev, services: newServices, amount: prev.amount + addonPrice };
       }
-      return {
-        ...prev,
-        addons: newAddons,
-        amount: newAmount
-      };
     });
   };
 
@@ -266,30 +311,44 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </button>
                 </div>
 
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-lg font-semibold text-primary-dark">{booking.service}</span>
-                  <span className="text-lg font-semibold text-primary-dark">
-                    QAR {basePrice}
-                  </span>
-                </div>
-                
-                {booking.addons.length > 0 ? (
-                  <div className="space-y-3 mt-4 pt-4 border-t border-primary/5">
-                    {booking.addons.map((addon, idx) => {
-                      const matchedAddon = currentServiceObject?.addons.find(a => a.name === addon);
+                <div className="space-y-6">
+                  {booking.services.length === 0 ? (
+                    <div className="text-center py-8 text-text-secondary italic bg-[#fcf4f0] rounded-2xl border border-primary/5">
+                      No services selected.
+                    </div>
+                  ) : (
+                    booking.services.map((svc, idx) => {
+                      const matchedObj = REAL_SERVICES.find(r => r.name === svc.name);
+                      const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
                       return (
-                        <div key={idx} className="flex justify-between items-center text-sm">
-                          <span className="text-text-secondary flex items-center gap-2">
-                            <ChevronRight className="w-4 h-4 text-primary/40" /> {addon}
-                          </span>
-                          <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
+                        <div key={idx} className="bg-[#fcf4f0] rounded-2xl p-5 border border-primary/10">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-lg font-semibold text-primary-dark">{svc.name}</span>
+                            <span className="text-lg font-semibold text-primary-dark">
+                              QAR {baseP}
+                            </span>
+                          </div>
+                          
+                          {svc.addons.length > 0 && (
+                            <div className="space-y-2 mt-3 pt-3 border-t border-primary/10">
+                              {svc.addons.map((addon, aIdx) => {
+                                const matchedAddon = matchedObj?.addons.find(a => a.name === addon);
+                                return (
+                                  <div key={aIdx} className="flex justify-between items-center text-sm">
+                                    <span className="text-text-secondary flex items-center gap-2">
+                                      <ChevronRight className="w-4 h-4 text-primary/40" /> {addon}
+                                    </span>
+                                    <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-sm text-text-secondary italic mt-4">No add-ons selected.</div>
-                )}
+                      )
+                    })
+                  )}
+                </div>
 
                 <div className="mt-8 pt-6 border-t border-primary/10 flex justify-between items-center">
                   <span className="text-lg font-bold text-text-secondary">Total Amount</span>
@@ -308,71 +367,69 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         {pageMode === 'edit-services' && (
           <div className="flex h-full w-full gap-4">
             
-            {/* LEFT PANE: Interactive Catalog (Swapped based on user request) */}
+            {/* LEFT PANE: Interactive Catalog */}
             <div className="flex-1 bg-white rounded-[32px] border border-primary/10 shadow-sm overflow-y-auto scrollbar-hide p-6 md:p-10 relative">
               
               {posState === 'services' && (
                 <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                   <div className="mb-8">
                     <h2 className="text-2xl font-serif text-primary-dark mb-2">Service Catalog</h2>
-                    <p className="text-text-secondary text-sm">Select a primary service to build the session.</p>
+                    <p className="text-text-secondary text-sm">Select services to build the session.</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {REAL_SERVICES.map((service) => (
-                      <div 
-                        key={service.id}
-                        onClick={() => selectService(service.id)}
-                        className={`rounded-2xl border transition-all cursor-pointer group hover:shadow-lg overflow-hidden flex flex-col ${
-                          booking.service === service.name 
-                            ? "border-primary ring-2 ring-primary bg-primary/5"
-                            : "border-primary/10 hover:border-primary/40 bg-white"
-                        }`}
-                      >
-                        <div className="relative h-40 bg-primary/10 overflow-hidden shrink-0">
-                          {service.image ? (
-                            <img src={service.image} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-primary/40 bg-primary/5">
-                              <span className="font-serif text-lg opacity-50">Oryx Spa</span>
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {REAL_SERVICES.map((service) => {
+                      const isSelected = booking.services.some(s => s.name === service.name);
+                      return (
+                        <div 
+                          key={service.id}
+                          onClick={() => toggleService(service.id)}
+                          className={`rounded-2xl border transition-all cursor-pointer group flex flex-row items-center overflow-hidden h-28 ${
+                            isSelected 
+                              ? "border-primary ring-2 ring-primary bg-primary/5"
+                              : "border-primary/10 hover:border-primary/40 bg-white hover:shadow-md"
+                          }`}
+                        >
+                          {/* Image side */}
+                          <div className="w-28 h-full bg-primary/10 shrink-0 relative overflow-hidden">
+                            {service.image ? (
+                              <img src={service.image} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center text-primary/40 bg-primary/5">
+                                <span className="font-serif text-sm opacity-50">Oryx</span>
+                              </div>
+                            )}
+                            {/* Selection Checkmark Overlay */}
+                            <div className={`absolute inset-0 bg-primary/40 flex items-center justify-center backdrop-blur-[1px] transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`}>
+                              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-primary shadow-sm">
+                                <CheckCircle2 className="w-5 h-5" />
+                              </div>
                             </div>
-                          )}
-                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm">
-                            {service.category}
                           </div>
-                          
-                          {/* Selection Checkmark Overlay */}
-                          <div className={`absolute inset-0 bg-primary/20 flex items-center justify-center backdrop-blur-[2px] transition-opacity ${booking.service === service.name ? 'opacity-100' : 'opacity-0'}`}>
-                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg">
-                              <CheckCircle2 className="w-6 h-6" />
-                            </div>
-                          </div>
-                        </div>
 
-                        <div className="p-5 flex-1 flex flex-col">
-                          <h3 className="font-semibold text-lg text-primary-dark mb-2">{service.name}</h3>
-                          <div className="flex items-center gap-4 text-xs font-medium text-text-secondary mt-auto">
-                            <span className="flex items-center gap-1">
-                              <Clock8 className="w-4 h-4 text-primary/60" />
-                              {service.pricingTiers[0]?.duration || 60} min
-                            </span>
-                            <span className="text-primary-dark font-bold text-base ml-auto">
-                              QAR {service.pricingTiers[0]?.price || 0}
-                            </span>
+                          {/* Content side */}
+                          <div className="p-4 flex-1 flex flex-col justify-center">
+                            <div className="inline-block bg-primary/10 px-2 py-0.5 rounded text-[10px] font-bold text-primary mb-1 w-max">
+                              {service.category || 'Service'}
+                            </div>
+                            <h3 className="font-bold text-base text-primary-dark leading-tight">{service.name}</h3>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
 
-              {posState === 'addons' && currentServiceObject && (
+              {posState === 'addons' && currentServiceObject && activeService && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                   <button 
-                    onClick={() => setPosState('services')}
+                    onClick={() => {
+                      setPosState('services');
+                      setActiveServiceIndex(null);
+                    }}
                     className="flex items-center gap-2 text-sm font-semibold text-primary mb-8 hover:opacity-80 transition-opacity"
                   >
-                    <ArrowLeft className="w-4 h-4" /> Back to Services
+                    <ArrowLeft className="w-4 h-4" /> Back to Catalog
                   </button>
                   
                   <div className="mb-8 pb-8 border-b border-primary/10 flex items-center gap-6">
@@ -394,7 +451,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   {currentServiceObject.addons.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                       {currentServiceObject.addons.map((addon) => {
-                        const isSelected = booking.addons.includes(addon.name);
+                        const isSelected = activeService.addons.includes(addon.name);
                         return (
                           <div 
                             key={addon.id}
@@ -435,46 +492,74 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* RIGHT PANE: Shopping Cart (Summary) */}
-            <div className="w-full lg:w-[350px] xl:w-[400px] bg-white rounded-[32px] border border-primary/10 flex flex-col shrink-0 overflow-y-auto scrollbar-hide shadow-sm">
+            <div className="w-full lg:w-[350px] xl:w-[400px] bg-white rounded-[32px] border border-primary/10 flex flex-col shrink-0 overflow-y-auto scrollbar-hide shadow-sm relative">
               <div className="p-6 space-y-6 flex flex-col h-full">
                 
                 <div>
                   <h1 className="text-2xl font-serif text-primary-dark mb-1">Session Cart</h1>
-                  <p className="text-text-secondary text-xs">Configure the services for this booking.</p>
+                  <p className="text-text-secondary text-xs">Services added to this booking.</p>
                 </div>
 
                 {/* Cart Items */}
-                <div className="flex-1">
-                  <div className="bg-[#fcf4f0] border border-primary/10 rounded-2xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-primary-dark">{booking.service}</span>
-                      <span className="font-semibold text-primary-dark">
-                        QAR {basePrice}
-                      </span>
+                <div className="flex-1 space-y-4">
+                  {booking.services.length === 0 ? (
+                    <div className="text-center py-8 text-text-secondary text-sm italic border border-primary/10 border-dashed rounded-2xl bg-[#fcf4f0]/50">
+                      Cart is empty
                     </div>
-                    
-                    {booking.addons.length > 0 ? (
-                      <div className="space-y-2 mt-3 pt-3 border-t border-primary/10">
-                        {booking.addons.map((addon, idx) => {
-                          const matchedAddon = currentServiceObject?.addons.find(a => a.name === addon);
-                          return (
-                            <div key={idx} className="flex justify-between items-center text-sm">
-                              <span className="text-text-secondary flex items-center gap-2">
-                                <ChevronRight className="w-3 h-3 text-primary/40" /> {addon}
-                              </span>
-                              <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
+                  ) : (
+                    booking.services.map((svc, idx) => {
+                      const matchedObj = REAL_SERVICES.find(r => r.name === svc.name);
+                      const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
+                      const isActive = activeServiceIndex === idx;
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className={`bg-[#fcf4f0] border rounded-2xl p-4 transition-all ${isActive ? 'border-primary ring-1 ring-primary shadow-sm' : 'border-primary/10 hover:border-primary/30'}`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-semibold text-primary-dark text-sm pr-2">{svc.name}</span>
+                            <span className="font-semibold text-primary-dark text-sm shrink-0">
+                              QAR {baseP}
+                            </span>
+                          </div>
+                          
+                          {svc.addons.length > 0 ? (
+                            <div className="space-y-1.5 mt-2 pt-2 border-t border-primary/10">
+                              {svc.addons.map((addon, aIdx) => {
+                                const matchedAddon = matchedObj?.addons.find(a => a.name === addon);
+                                return (
+                                  <div key={aIdx} className="flex justify-between items-center text-xs">
+                                    <span className="text-text-secondary flex items-center gap-1.5">
+                                      <ChevronRight className="w-3 h-3 text-primary/40" /> {addon}
+                                    </span>
+                                    <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-text-secondary italic mt-2">No add-ons selected.</div>
-                    )}
-                  </div>
+                          ) : (
+                            <div className="text-[10px] text-text-secondary italic mt-1">No add-ons</div>
+                          )}
+
+                          <div className="mt-4 pt-3 border-t border-primary/10 flex justify-end gap-2">
+                            <button 
+                              onClick={() => configureAddonsFor(idx)}
+                              className={`text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-colors ${
+                                isActive ? 'bg-primary text-white' : 'bg-white border border-primary/20 text-primary hover:bg-primary/5'
+                              }`}
+                            >
+                              {isActive ? 'Configuring' : 'Edit Add-ons'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
 
                 {/* Totals */}
-                <div className="bg-primary-dark text-white rounded-2xl p-6 shadow-md mt-auto">
+                <div className="bg-primary-dark text-white rounded-2xl p-6 shadow-md mt-auto shrink-0">
                   <div className="flex justify-between items-center mb-2 opacity-80 text-sm">
                     <span>Subtotal</span>
                     <span>QAR {booking.amount}</span>
@@ -539,25 +624,34 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-primary/10 text-sm">
-                  <tr>
-                    <td className="py-4 font-medium text-primary-dark">
-                      {booking.service}
-                    </td>
-                    <td className="py-4 text-right font-medium text-primary-dark">
-                      QAR {basePrice}
-                    </td>
-                  </tr>
-                  {booking.addons.map((addon, idx) => {
-                    const matchedAddon = currentServiceObject?.addons.find(a => a.name === addon);
+                  {booking.services.map((svc, idx) => {
+                    const matchedObj = REAL_SERVICES.find(r => r.name === svc.name);
+                    const baseP = matchedObj?.pricingTiers?.[0]?.price || matchedObj?.price || 0;
+                    
                     return (
-                      <tr key={idx}>
-                        <td className="py-4 text-text-secondary pl-4 flex items-center gap-2">
-                          <CheckCircle2 className="w-3 h-3 text-primary/60" /> {addon}
-                        </td>
-                        <td className="py-4 text-right text-text-secondary">
-                          QAR {matchedAddon ? matchedAddon.price : 0}
-                        </td>
-                      </tr>
+                      <div key={idx} className="contents">
+                        <tr>
+                          <td className="py-4 font-bold text-primary-dark">
+                            {svc.name}
+                          </td>
+                          <td className="py-4 text-right font-bold text-primary-dark">
+                            QAR {baseP}
+                          </td>
+                        </tr>
+                        {svc.addons.map((addon, aIdx) => {
+                          const matchedAddon = matchedObj?.addons.find(a => a.name === addon);
+                          return (
+                            <tr key={`${idx}-${aIdx}`}>
+                              <td className="py-3 text-text-secondary pl-4 flex items-center gap-2">
+                                <CheckCircle2 className="w-3 h-3 text-primary/60" /> {addon}
+                              </td>
+                              <td className="py-3 text-right text-text-secondary">
+                                QAR {matchedAddon ? matchedAddon.price : 0}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </div>
                     )
                   })}
                 </tbody>

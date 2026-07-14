@@ -1,11 +1,15 @@
 export type BookingStatus = 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled';
 
+export interface BookingService {
+  name: string;
+  addons: string[];
+}
+
 export interface Booking {
   id: string;
   customerName: string;
   phone: string;
-  service: string;
-  addons: string[];
+  services: BookingService[];
   date: string;
   time: string;
   status: BookingStatus;
@@ -17,8 +21,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1029",
     customerName: "Sarah Al M.",
     phone: "+974 5555 1234",
-    service: "Signature ORYX Massage",
-    addons: ["Hot Stones"],
+    services: [
+      { name: "Signature ORYX Massage", addons: ["Hot Stones"] }
+    ],
     date: "2026-07-14",
     time: "14:30",
     status: "Confirmed",
@@ -28,8 +33,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1030",
     customerName: "Fatima K.",
     phone: "+974 5555 5678",
-    service: "Radiance Facial",
-    addons: ["LED Light Therapy"],
+    services: [
+      { name: "Radiance Facial", addons: ["LED Light Therapy"] }
+    ],
     date: "2026-07-14",
     time: "16:00",
     status: "Pending",
@@ -39,8 +45,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1031",
     customerName: "Jessica R.",
     phone: "+974 5555 9012",
-    service: "Deep Tissue Therapy",
-    addons: [],
+    services: [
+      { name: "Deep Tissue Therapy", addons: [] }
+    ],
     date: "2026-07-15",
     time: "10:00",
     status: "Confirmed",
@@ -50,8 +57,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1032",
     customerName: "Aisha B.",
     phone: "+974 5555 3456",
-    service: "Signature ORYX Massage",
-    addons: ["Aromatherapy", "Deep Tissue Upgrade"],
+    services: [
+      { name: "Signature ORYX Massage", addons: ["Aromatherapy", "Deep Tissue Upgrade"] }
+    ],
     date: "2026-07-14",
     time: "11:00",
     status: "Completed",
@@ -61,8 +69,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1033",
     customerName: "Mariam H.",
     phone: "+974 5555 7890",
-    service: "Radiance Facial",
-    addons: [],
+    services: [
+      { name: "Radiance Facial", addons: [] }
+    ],
     date: "2026-07-16",
     time: "13:00",
     status: "Cancelled",
@@ -72,8 +81,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1034",
     customerName: "Noura A.",
     phone: "+974 5555 1111",
-    service: "Deep Tissue Therapy",
-    addons: [],
+    services: [
+      { name: "Deep Tissue Therapy", addons: [] }
+    ],
     date: "2026-07-14",
     time: "09:00",
     status: "Confirmed",
@@ -83,8 +93,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1035",
     customerName: "Chloe D.",
     phone: "+974 5555 2222",
-    service: "Signature ORYX Massage",
-    addons: ["Hot Stones"],
+    services: [
+      { name: "Signature ORYX Massage", addons: ["Hot Stones"] }
+    ],
     date: "2026-07-14",
     time: "11:30",
     status: "Pending",
@@ -94,8 +105,9 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1036",
     customerName: "Latifa Q.",
     phone: "+974 5555 3333",
-    service: "Radiance Facial",
-    addons: ["LED Light Therapy"],
+    services: [
+      { name: "Radiance Facial", addons: ["LED Light Therapy"] }
+    ],
     date: "2026-07-14",
     time: "14:00",
     status: "Confirmed",
@@ -105,19 +117,22 @@ export const MOCK_BOOKINGS: Booking[] = [
     id: "B-1037",
     customerName: "Sara W.",
     phone: "+974 5555 4444",
-    service: "Signature ORYX Massage",
-    addons: [],
+    services: [
+      { name: "Signature ORYX Massage", addons: [] },
+      { name: "Radiance Facial", addons: [] }
+    ],
     date: "2026-07-14",
     time: "14:45",
     status: "Pending",
-    amount: 120,
+    amount: 215, // 120 + 95
   },
   {
     id: "B-1038",
     customerName: "Emily S.",
     phone: "+974 5555 5555",
-    service: "Deep Tissue Therapy",
-    addons: [],
+    services: [
+      { name: "Deep Tissue Therapy", addons: [] }
+    ],
     date: "2026-07-14",
     time: "18:00",
     status: "Completed",

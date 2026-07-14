@@ -259,7 +259,7 @@ export default function HomePage() {
         {!searchQuery && (
           <section>
             <div className="flex justify-between items-end mb-4">
-              <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Shop Products</h2>
+              <h2 className="font-serif text-xl md:text-3xl text-primary-dark">Our Products</h2>
               <Link href="/products" className="text-sm text-primary font-medium">Show All</Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-2 gap-y-6 md:gap-6">
@@ -274,7 +274,6 @@ export default function HomePage() {
                   </div>
                   <div className="p-3 md:p-6 flex flex-col">
                     <h3 className="font-serif text-text-primary font-medium text-sm md:text-xl leading-tight line-clamp-1">{item.name}</h3>
-                    <span className="font-sans font-semibold text-primary-dark mt-1.5 md:mt-3 text-sm md:text-xl">${item.price}</span>
                   </div>
                 </Link>
               ))}

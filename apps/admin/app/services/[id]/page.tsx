@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, use } from "react";
-import { ArrowLeft, Upload, ImageIcon, Plus, Trash2, Save, Clock, Users, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, Upload, ImageIcon, Plus, X, Save, Clock, Users, ChevronDown, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { MOCK_SERVICES, Service, ServiceCategory, PricingTier, Addon } from "../../../src/features/services/mock-data";
 
@@ -251,8 +251,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                       <input value={tier.label} onChange={(e) => updateTier(tier.id, "label", e.target.value)} placeholder="e.g. 60 min" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
                       <input type="number" value={tier.price || ""} onChange={(e) => updateTier(tier.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
                       <input type="number" value={tier.duration || ""} onChange={(e) => updateTier(tier.id, "duration", Number(e.target.value))} placeholder="60" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
-                      <button onClick={() => removeTier(tier.id)} disabled={service.pricingTiers.length === 1} className="text-red-400 hover:text-red-600 transition-colors flex justify-center disabled:opacity-20">
-                        <Trash2 className="w-4 h-4" />
+                      <button onClick={() => removeTier(tier.id)} disabled={service.pricingTiers.length === 1} className="text-primary hover:text-primary-dark transition-colors flex justify-center disabled:opacity-20">
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -281,8 +281,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                         <input value={addon.name} onChange={(e) => updateAddon(addon.id, "name", e.target.value)} placeholder="Addon name" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
                         <input type="number" value={addon.price || ""} onChange={(e) => updateAddon(addon.id, "price", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm font-medium placeholder:text-primary/40" />
                         <input type="number" value={addon.duration || ""} onChange={(e) => updateAddon(addon.id, "duration", Number(e.target.value))} placeholder="0" className="w-full px-3 py-2 rounded-xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/40" />
-                        <button onClick={() => removeAddon(addon.id)} className="text-red-400 hover:text-red-600 flex justify-center">
-                          <Trash2 className="w-4 h-4" />
+                        <button onClick={() => removeAddon(addon.id)} className="text-primary hover:text-primary-dark flex justify-center">
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -298,3 +298,4 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     </div>
   );
 }
+

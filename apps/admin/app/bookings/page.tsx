@@ -158,9 +158,9 @@ function BookingsContent() {
                           + {booking.services.length - 1} more service{booking.services.length > 2 ? 's' : ''}
                         </p>
                       )}
-                      {booking.services[0]?.addons.length > 0 && (
+                      {(booking.services[0]?.addons?.length ?? 0) > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
-                          {booking.services[0].addons.map((addon, idx) => (
+                          {booking.services[0]?.addons.map((addon, idx) => (
                             <span key={idx} className="inline-block px-2 py-0.5 bg-gray-100 text-text-secondary text-[10px] uppercase tracking-wider rounded-md">
                               + {addon}
                             </span>

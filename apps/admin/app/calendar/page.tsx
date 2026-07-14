@@ -54,7 +54,9 @@ export default function CalendarPage() {
   // Calculate lanes to pack bookings efficiently towards the top
   const laneEndTimes: number[] = [];
   const todaysBookings = rawBookings.map(booking => {
-    const [h, m] = booking.time.split(':').map(Number);
+    const parts = booking.time.split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
     const startMinutes = h * 60 + m;
     const endMinutes = startMinutes + 60; // Assume 60 mins duration
 
@@ -96,7 +98,9 @@ export default function CalendarPage() {
   // Calculate position and width of a booking
   // We assume 60 minutes duration by default
   const getBookingStyle = (time: string, index: number) => {
-    const [h, m] = time.split(':').map(Number);
+    const parts = time.split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
     
     const normalizedH = Math.max(START_HOUR, Math.min(h, END_HOUR));
     

@@ -7,17 +7,20 @@ import { MOCK_BOOKINGS } from "../../src/features/bookings/mock-data";
 
 const START_HOUR = 8;
 const END_HOUR = 20; // 8:00 PM
-const HOUR_HEIGHT = 80; // px per hour
+const HOUR_WIDTH = 240; // px per hour to give horizontal space
+const ROW_HEIGHT = 90; // px per booking row
 
 export default function CalendarPage() {
-  // We'll use 2026-07-14 as the default "today" since the mock data is around this date.
   const [currentDate, setCurrentDate] = useState(new Date("2026-07-14T00:00:00"));
   const router = useRouter();
 
   const formattedDate = currentDate.toISOString().split('T')[0];
   
   // Filter bookings for the selected date, excluding cancelled ones
-  const todaysBookings = MOCK_BOOKINGS.filter(b => b.date === formattedDate && b.status !== 'Cancelled');
+  // Sort them by time so they stack sequentially
+  const todaysBookings = MOCK_BOOKINGS
+    .filter(b => b.date === formattedDate && b.status !== 'Cancelled')
+    .sort((a, b) => a.time.localeCompare(b.time));
 
   const goToPreviousDay = () => {
     const prev = new Date(currentDate);
@@ -42,20 +45,22 @@ export default function CalendarPage() {
     hours.push({ value: i, label });
   }
 
-  // Calculate position and height of a booking
+  // Calculate position and width of a booking
   // We assume 60 minutes duration by default
-  const getBookingStyle = (time: string) => {
+  const getBookingStyle = (time: string, index: number) => {
     const [h, m] = time.split(':').map(Number);
     
-    // If booking starts before our calendar start, clamp to start (or hide, but clamp is better)
     const normalizedH = Math.max(START_HOUR, Math.min(h, END_HOUR));
     
-    const topPx = ((normalizedH - START_HOUR) + (m / 60)) * HOUR_HEIGHT;
-    const heightPx = HOUR_HEIGHT; // 60 minutes = 1 hour height
+    const leftPx = ((normalizedH - START_HOUR) + (m / 60)) * HOUR_WIDTH;
+    const widthPx = HOUR_WIDTH; // 60 minutes
+    const topPx = index * ROW_HEIGHT + 24; // offset from top header
 
     return {
+      left: `${leftPx}px`,
+      width: `${widthPx}px`,
       top: `${topPx}px`,
-      height: `${heightPx}px`,
+      height: `${ROW_HEIGHT - 12}px`, // gap between rows
     };
   };
 
@@ -80,7 +85,7 @@ export default function CalendarPage() {
           </div>
           <div>
             <h1 className="text-2xl font-serif text-primary-dark">Schedule</h1>
-            <p className="text-sm text-text-secondary">Daily view of your spa appointments</p>
+            <p className="text-sm text-text-secondary">Timeline overview of appointments</p>
           </div>
         </div>
 
@@ -111,88 +116,85 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Timeline View */}
-      <div className="bg-white flex-1 overflow-y-auto scrollbar-hide rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative">
-        <div className="flex min-w-[800px] h-full relative">
+      {/* Horizontal Timeline View */}
+      <div className="bg-white flex-1 overflow-auto rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative">
+        <div 
+          className="relative min-h-[400px]"
+          style={{ width: `${(END_HOUR - START_HOUR + 1) * HOUR_WIDTH}px`, height: `${Math.max(400, todaysBookings.length * ROW_HEIGHT + 64)}px` }}
+        >
           
-          {/* Time Gutter */}
-          <div className="w-24 shrink-0 border-r border-primary/10 bg-white sticky left-0 z-10 flex flex-col pt-8">
+          {/* Top Time Header (Sticky) */}
+          <div className="sticky top-0 z-20 flex bg-white/95 backdrop-blur-sm border-b border-primary/10 h-12">
             {hours.map((hour) => (
               <div 
                 key={hour.value} 
-                className="text-xs font-semibold text-text-secondary/70 text-right pr-4 relative"
-                style={{ height: `${HOUR_HEIGHT}px` }}
+                className="shrink-0 border-l border-primary/10 first:border-l-0 relative"
+                style={{ width: `${HOUR_WIDTH}px` }}
               >
-                {/* The label aligns with the top of the hour block */}
-                <span className="relative -top-2.5">{hour.label}</span>
+                <span className="absolute left-3 top-3 text-xs font-semibold text-text-secondary">
+                  {hour.label}
+                </span>
               </div>
             ))}
           </div>
 
-          {/* Grid and Bookings Area */}
-          <div className="flex-1 relative pt-8">
-            {/* Horizontal Grid Lines */}
-            <div className="absolute inset-0 pt-8 pointer-events-none">
-              {hours.map((hour) => (
-                <div 
-                  key={`grid-${hour.value}`} 
-                  className="w-full border-t border-primary/5 border-dashed"
-                  style={{ height: `${HOUR_HEIGHT}px` }}
-                />
-              ))}
-            </div>
-
-            {/* Vertical Line for current time (Mocked for 2:15 PM) */}
-            {formattedDate === "2026-07-14" && (
+          {/* Vertical Grid Lines */}
+          <div className="absolute inset-0 top-12 pointer-events-none flex">
+            {hours.map((hour) => (
               <div 
-                className="absolute left-0 right-0 border-t-2 border-red-400 z-10 pointer-events-none"
-                style={{ top: `${8 + ((14 - START_HOUR) + (15 / 60)) * HOUR_HEIGHT}px` }} // +8px for pt-8 offset
-              >
-                <div className="absolute -left-1.5 -top-1.5 w-3 h-3 rounded-full bg-red-400" />
-              </div>
-            )}
+                key={`grid-${hour.value}`} 
+                className="shrink-0 border-l border-primary/5 border-dashed h-full"
+                style={{ width: `${HOUR_WIDTH}px` }}
+              />
+            ))}
+          </div>
 
-            {/* Render Bookings */}
-            <div className="absolute inset-0 pt-8 pl-4 pr-4">
-              {todaysBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  onClick={() => router.push(`/bookings/${booking.id}`)}
-                  className={`absolute left-4 right-4 rounded-xl border p-3 cursor-pointer transition-all hover:brightness-95 hover:shadow-md ${getStatusColor(booking.status)}`}
-                  style={{
-                    ...getBookingStyle(booking.time),
-                    // We reduce the height slightly to create a gap between consecutive bookings
-                    height: `calc(${HOUR_HEIGHT}px - 4px)`
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-bold text-sm mb-1">{booking.customerName}</div>
-                      <div className="text-xs font-medium opacity-80 mb-1">{booking.service}</div>
-                      <div className="flex items-center gap-3 text-[10px] opacity-75">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {booking.time} (60m)
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {booking.id}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-md bg-white/50 text-[10px] font-bold uppercase tracking-wider">
-                      {booking.status}
-                    </span>
+          {/* Current Time Indicator (Mocked for 2:15 PM) */}
+          {formattedDate === "2026-07-14" && (
+            <div 
+              className="absolute top-12 bottom-0 border-l-2 border-red-400 z-10 pointer-events-none"
+              style={{ left: `${((14 - START_HOUR) + (15 / 60)) * HOUR_WIDTH}px` }}
+            >
+              <div className="absolute -left-1.5 -top-1 w-3 h-3 rounded-full bg-red-400" />
+            </div>
+          )}
+
+          {/* Bookings Area */}
+          <div className="absolute inset-0 top-12">
+            {todaysBookings.map((booking, index) => (
+              <div
+                key={booking.id}
+                onClick={() => router.push(`/bookings/${booking.id}`)}
+                className={`absolute rounded-xl border p-3 cursor-pointer transition-all hover:brightness-95 hover:shadow-md flex flex-col justify-between ${getStatusColor(booking.status)}`}
+                style={getBookingStyle(booking.time, index)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="truncate pr-2">
+                    <div className="font-bold text-sm truncate">{booking.customerName}</div>
+                    <div className="text-xs font-medium opacity-80 truncate">{booking.service}</div>
+                  </div>
+                  <span className="shrink-0 px-2 py-0.5 rounded-md bg-white/50 text-[10px] font-bold uppercase tracking-wider">
+                    {booking.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] opacity-75 mt-2">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {booking.time} (1h)
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    {booking.id}
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
 
-              {todaysBookings.length === 0 && (
-                <div className="h-full flex items-center justify-center text-text-secondary">
-                  No bookings scheduled for this date.
-                </div>
-              )}
-            </div>
+            {todaysBookings.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-text-secondary">
+                No bookings scheduled for this date.
+              </div>
+            )}
           </div>
 
         </div>

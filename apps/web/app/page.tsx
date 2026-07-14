@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, Sparkles, Flower2, Droplets, Scissors, User, MapPin, Phone, Brush, Wind, Heart, Bath } from "lucide-react";
+import { Search, Sparkles, Flower2, Droplets, Scissors, User, MapPin, Phone, Brush, Wind, Heart, Bath, Star } from "lucide-react";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
+import { TestimonialCarousel } from "@/features/home/testimonial-carousel";
 import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
 import { Item } from "@/shared/types";
+import { useUserStore } from "@/shared/store";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const logoRef = useRef<HTMLImageElement>(null);
+  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     const mainArea = document.getElementById("main-scroll-container");
@@ -66,7 +69,11 @@ export default function HomePage() {
               />
             </div>
             <Link href="/profile" className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center flex-shrink-0 text-primary hover:text-primary-dark transition-colors">
-              <User className="w-5 h-5" />
+              {user ? (
+                <span className="font-semibold text-xl">{user.name.charAt(0).toUpperCase()}</span>
+              ) : (
+                <User className="w-5 h-5" />
+              )}
             </Link>
           </div>
         </div>
@@ -279,6 +286,19 @@ export default function HomePage() {
               ))}
             </div>
 
+          </section>
+        )}
+
+        {/* Testimonials Section */}
+        {!searchQuery && (
+          <section className="mt-16 md:mt-28">
+            <div className="flex justify-center items-center mb-8">
+              <h2 className="font-serif text-2xl md:text-4xl text-primary-dark">What Our Clients Say</h2>
+            </div>
+            
+            <div className="w-full flex justify-center pb-8 pt-2">
+              <TestimonialCarousel />
+            </div>
           </section>
         )}
 

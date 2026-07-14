@@ -173,7 +173,7 @@ export default function NotificationsPage() {
 
               {/* BOOKING SPECIFIC UI */}
               {selectedNotif.type === "Booking" && selectedNotif.bookingData && (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 max-w-4xl">
+                <div className="flex flex-col gap-6 max-w-4xl">
                   
                   {/* Customer Card */}
                   <div className="bg-white rounded-3xl p-6 border border-primary/20 shadow-sm flex flex-col">

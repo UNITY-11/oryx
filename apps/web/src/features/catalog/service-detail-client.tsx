@@ -42,6 +42,30 @@ export function ServiceDetailClient({ item }: { item: Item }) {
     router.push("/booking");
   };
 
+  if (item.isProduct) {
+    return (
+      <div className="absolute inset-0 z-40 bg-surface overflow-y-auto pb-24 px-6 md:px-24 pt-8 md:pt-12 text-center flex flex-col items-center">
+        <button
+          onClick={() => router.back()}
+          className="absolute top-6 left-6 md:top-8 md:left-8 bg-black/5 border border-primary/20 p-2.5 md:p-3 rounded-full text-primary-dark hover:bg-primary/10 transition-colors z-10"
+        >
+          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+        </button>
+
+        <h1 className="font-serif text-3xl md:text-5xl font-medium text-primary-dark mb-8 mt-12 md:mt-0 max-w-4xl">{item.name}</h1>
+        
+        <div className="w-full max-w-2xl aspect-square rounded-[40px] overflow-hidden mb-12 shadow-sm border border-primary/10">
+           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+        </div>
+
+        <div className="max-w-2xl w-full text-left bg-white p-8 md:p-12 rounded-[40px] shadow-sm border border-primary/10 mb-20">
+          <h2 className="font-serif text-2xl md:text-3xl text-primary-dark mb-4">About the Product</h2>
+          <p className="text-text-secondary leading-relaxed text-lg md:text-xl">{item.description}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute inset-0 z-40 flex flex-col md:flex-row bg-surface overflow-hidden">
       {/* Left Column (Desktop) / Header Image (Mobile) */}

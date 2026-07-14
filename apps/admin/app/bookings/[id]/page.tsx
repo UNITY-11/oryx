@@ -2,9 +2,15 @@
 
 import { use, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Printer, MessageCircle, FileText, Calendar, Clock, User, CheckCircle2, ChevronRight, Check, X, Clock8 } from "lucide-react";
+import { 
+  ArrowLeft, Save, Printer, MessageCircle, FileText, Calendar, Clock, User, 
+  CheckCircle2, ChevronRight, Check, X, Clock8, Edit3 
+} from "lucide-react";
 import { MOCK_BOOKINGS, Booking, BookingStatus } from "../../../src/features/bookings/mock-data";
 import { MOCK_SERVICES as REAL_SERVICES } from "../../../src/features/services/mock-data";
+
+type PageMode = 'view' | 'edit-services' | 'checkout';
+type PosState = 'services' | 'addons';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -24,11 +30,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const [booking, setBooking] = useState<Booking>(original);
+  const [pageMode, setPageMode] = useState<PageMode>('view');
+  const [posState, setPosState] = useState<PosState>('services');
   const [saved, setSaved] = useState(false);
-  const [checkoutMode, setCheckoutMode] = useState(false);
-
-  // POS State
-  const [posState, setPosState] = useState<'services' | 'addons'>('services');
 
   // Find the currently selected service from REAL_SERVICES based on name matching
   const currentServiceObject = useMemo(() => {
@@ -104,23 +108,28 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       {/* Top Action Bar */}
       <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm px-6 md:px-8 py-5 flex items-center justify-between shrink-0 mb-4 print:hidden">
         <button
-          onClick={() => checkoutMode ? setCheckoutMode(false) : router.back()}
+          onClick={() => {
+            if (pageMode === 'checkout' || pageMode === 'edit-services') {
+              setPageMode('view');
+            } else {
+              router.back();
+            }
+          }}
           className="flex items-center gap-2 text-text-secondary hover:text-primary-dark transition-colors text-sm font-medium group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          {checkoutMode ? "Back to Booking" : "Back"}
+          {pageMode === 'view' ? "Back to Bookings" : "Back to Details"}
         </button>
 
-        {!checkoutMode ? (
+        {pageMode === 'view' && (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setCheckoutMode(true)}
+              onClick={() => setPageMode('checkout')}
               className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium border border-primary text-primary hover:bg-primary/5 transition-colors"
             >
               <FileText className="w-4 h-4" />
               Checkout / Final Bill
             </button>
-
             <button
               onClick={handleSave}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium shadow-sm transition-all ${
@@ -131,7 +140,21 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               {saved ? "Saved!" : "Save Changes"}
             </button>
           </div>
-        ) : (
+        )}
+
+        {pageMode === 'edit-services' && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPageMode('view')}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium bg-primary text-white hover:opacity-90 shadow-sm transition-all"
+            >
+              <Check className="w-4 h-4" />
+              Done Editing
+            </button>
+          </div>
+        )}
+
+        {pageMode === 'checkout' && (
           <div className="flex items-center gap-3">
             <button
               onClick={handlePrint}
@@ -140,7 +163,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <Printer className="w-4 h-4" />
               Print Bill
             </button>
-
             <button
               onClick={handleWhatsAppBill}
               className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium bg-[#25D366] text-white hover:bg-[#20b858] transition-colors shadow-sm"
@@ -154,35 +176,40 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden flex flex-col print:overflow-visible">
-        {!checkoutMode ? (
-          // ============================
-          // EDIT MODE (POS STYLE)
-          // ============================
-          <div className="flex h-full w-full gap-4">
-            
-            {/* LEFT PANE: Booking Summary & Details */}
-            <div className="w-full lg:w-[400px] xl:w-[480px] bg-white rounded-[32px] border border-primary/10 flex flex-col shrink-0 overflow-y-auto scrollbar-hide shadow-sm">
-              <div className="p-6 md:p-8 space-y-8 flex flex-col h-full">
-                <div>
-                  <h1 className="text-3xl font-serif text-primary-dark mb-1">Booking Cart</h1>
-                  <p className="text-text-secondary font-mono text-xs uppercase tracking-wider">{booking.id}</p>
+        
+        {/* ============================ */}
+        {/* VIEW MODE (MAIN DETAILS PAGE) */}
+        {/* ============================ */}
+        {pageMode === 'view' && (
+          <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm p-6 md:p-10 overflow-y-auto h-full scrollbar-hide">
+            <div className="max-w-4xl mx-auto space-y-8">
+              
+              <div>
+                <h1 className="text-3xl font-serif text-primary-dark mb-1">Booking Details</h1>
+                <p className="text-text-secondary font-mono text-xs uppercase tracking-wider">{booking.id}</p>
+              </div>
+
+              {/* Customer & Schedule Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Customer Details */}
+                <div className="bg-[#fcf4f0] border border-primary/10 rounded-3xl p-6 shadow-sm">
+                  <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4">Customer Information</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-white text-primary flex items-center justify-center text-2xl font-serif shrink-0 border border-primary/10">
+                      {booking.customerName.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-primary-dark">{booking.customerName}</h3>
+                      <p className="text-text-secondary mt-1">{booking.phone}</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Customer Card */}
-                <div className="bg-[#fcf4f0] border border-primary/10 rounded-2xl p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white text-primary flex items-center justify-center text-lg font-serif shrink-0 border border-primary/10">
-                    {booking.customerName.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-primary-dark">{booking.customerName}</h3>
-                    <p className="text-text-secondary text-xs">{booking.phone}</p>
-                  </div>
-                </div>
-
-                {/* Schedule Controls */}
-                <div className="bg-white rounded-2xl border border-primary/10 p-5 shadow-sm space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b border-primary/10">
-                    <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">Status</span>
+                {/* Schedule & Status Controls */}
+                <div className="bg-white border border-primary/10 rounded-3xl p-6 shadow-sm flex flex-col justify-center space-y-4">
+                  <div className="flex justify-between items-center pb-4 border-b border-primary/5">
+                    <span className="text-sm font-bold text-text-secondary">Current Status</span>
                     <select
                       value={booking.status}
                       onChange={(e) => update("status", e.target.value as BookingStatus)}
@@ -225,66 +252,72 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
 
-                {/* Cart Items */}
-                <div>
-                  <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Selected Services</h3>
-                  <div className="bg-[#fcf4f0] border border-primary/10 rounded-2xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-primary-dark">{booking.service}</span>
-                      <span className="font-semibold text-primary-dark">
-                        QAR {basePrice}
-                      </span>
-                    </div>
-                    
-                    {booking.addons.length > 0 ? (
-                      <div className="space-y-2 mt-3 pt-3 border-t border-primary/10">
-                        {booking.addons.map((addon, idx) => {
-                          const matchedAddon = currentServiceObject?.addons.find(a => a.name === addon);
-                          return (
-                            <div key={idx} className="flex justify-between items-center text-sm">
-                              <span className="text-text-secondary flex items-center gap-2">
-                                <ChevronRight className="w-3 h-3 text-primary/40" /> {addon}
-                              </span>
-                              <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-text-secondary italic mt-2">No add-ons selected.</div>
-                    )}
-                  </div>
+              </div>
+
+              {/* Selected Services Section */}
+              <div className="bg-white border border-primary/10 rounded-3xl p-6 md:p-8 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Session Configuration</h3>
+                  <button 
+                    onClick={() => setPageMode('edit-services')}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                  >
+                    <Edit3 className="w-3 h-3" /> Edit Services & Add-ons
+                  </button>
                 </div>
 
-                {/* Totals */}
-                <div className="bg-primary-dark text-white rounded-2xl p-6 shadow-md mt-auto">
-                  <div className="flex justify-between items-center mb-2 opacity-80 text-sm">
-                    <span>Subtotal</span>
-                    <span>QAR {booking.amount}</span>
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-lg font-semibold text-primary-dark">{booking.service}</span>
+                  <span className="text-lg font-semibold text-primary-dark">
+                    QAR {basePrice}
+                  </span>
+                </div>
+                
+                {booking.addons.length > 0 ? (
+                  <div className="space-y-3 mt-4 pt-4 border-t border-primary/5">
+                    {booking.addons.map((addon, idx) => {
+                      const matchedAddon = currentServiceObject?.addons.find(a => a.name === addon);
+                      return (
+                        <div key={idx} className="flex justify-between items-center text-sm">
+                          <span className="text-text-secondary flex items-center gap-2">
+                            <ChevronRight className="w-4 h-4 text-primary/40" /> {addon}
+                          </span>
+                          <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="flex justify-between items-center mb-4 opacity-80 text-sm pb-4 border-b border-white/20">
-                    <span>Tax</span>
-                    <span>QAR 0</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xl font-bold">
-                    <span>Total</span>
-                    <span>QAR {booking.amount}</span>
-                  </div>
+                ) : (
+                  <div className="text-sm text-text-secondary italic mt-4">No add-ons selected.</div>
+                )}
+
+                <div className="mt-8 pt-6 border-t border-primary/10 flex justify-between items-center">
+                  <span className="text-lg font-bold text-text-secondary">Total Amount</span>
+                  <span className="text-2xl font-bold text-primary-dark">QAR {booking.amount}</span>
                 </div>
 
               </div>
-            </div>
 
-            {/* RIGHT PANE: Interactive Catalog */}
+            </div>
+          </div>
+        )}
+
+        {/* ============================ */}
+        {/* EDIT SERVICES MODE (POS STYLE) */}
+        {/* ============================ */}
+        {pageMode === 'edit-services' && (
+          <div className="flex h-full w-full gap-4">
+            
+            {/* LEFT PANE: Interactive Catalog (Swapped based on user request) */}
             <div className="flex-1 bg-white rounded-[32px] border border-primary/10 shadow-sm overflow-y-auto scrollbar-hide p-6 md:p-10 relative">
               
               {posState === 'services' && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                   <div className="mb-8">
                     <h2 className="text-2xl font-serif text-primary-dark mb-2">Service Catalog</h2>
                     <p className="text-text-secondary text-sm">Select a primary service to build the session.</p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {REAL_SERVICES.map((service) => (
                       <div 
                         key={service.id}
@@ -334,7 +367,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               )}
 
               {posState === 'addons' && currentServiceObject && (
-                <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                   <button 
                     onClick={() => setPosState('services')}
                     className="flex items-center gap-2 text-sm font-semibold text-primary mb-8 hover:opacity-80 transition-opacity"
@@ -400,11 +433,72 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               )}
 
             </div>
+
+            {/* RIGHT PANE: Shopping Cart (Summary) */}
+            <div className="w-full lg:w-[350px] xl:w-[400px] bg-white rounded-[32px] border border-primary/10 flex flex-col shrink-0 overflow-y-auto scrollbar-hide shadow-sm">
+              <div className="p-6 space-y-6 flex flex-col h-full">
+                
+                <div>
+                  <h1 className="text-2xl font-serif text-primary-dark mb-1">Session Cart</h1>
+                  <p className="text-text-secondary text-xs">Configure the services for this booking.</p>
+                </div>
+
+                {/* Cart Items */}
+                <div className="flex-1">
+                  <div className="bg-[#fcf4f0] border border-primary/10 rounded-2xl p-5">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-semibold text-primary-dark">{booking.service}</span>
+                      <span className="font-semibold text-primary-dark">
+                        QAR {basePrice}
+                      </span>
+                    </div>
+                    
+                    {booking.addons.length > 0 ? (
+                      <div className="space-y-2 mt-3 pt-3 border-t border-primary/10">
+                        {booking.addons.map((addon, idx) => {
+                          const matchedAddon = currentServiceObject?.addons.find(a => a.name === addon);
+                          return (
+                            <div key={idx} className="flex justify-between items-center text-sm">
+                              <span className="text-text-secondary flex items-center gap-2">
+                                <ChevronRight className="w-3 h-3 text-primary/40" /> {addon}
+                              </span>
+                              <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : '+'}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-text-secondary italic mt-2">No add-ons selected.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="bg-primary-dark text-white rounded-2xl p-6 shadow-md mt-auto">
+                  <div className="flex justify-between items-center mb-2 opacity-80 text-sm">
+                    <span>Subtotal</span>
+                    <span>QAR {booking.amount}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-4 opacity-80 text-sm pb-4 border-b border-white/20">
+                    <span>Tax</span>
+                    <span>QAR 0</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xl font-bold">
+                    <span>Total</span>
+                    <span>QAR {booking.amount}</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
-        ) : (
-          // ============================
-          // CHECKOUT / INVOICE MODE
-          // ============================
+        )}
+
+        {/* ============================ */}
+        {/* CHECKOUT / INVOICE MODE      */}
+        {/* ============================ */}
+        {pageMode === 'checkout' && (
           <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm p-6 md:p-10 overflow-y-auto h-full scrollbar-hide print:border-none print:shadow-none print:p-0">
             <div className="max-w-2xl mx-auto bg-white p-10 border border-primary/10 rounded-2xl shadow-sm print:border-none print:shadow-none print:p-0">
               {/* Header */}

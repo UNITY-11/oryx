@@ -56,7 +56,7 @@ export function TopNav() {
           <input
             type="text"
             placeholder="Search treatments or products..."
-            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder-primary focus:ring-2 focus:ring-primary outline-none transition-shadow"
+            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder:text-primary focus:ring-2 focus:ring-primary outline-none transition-shadow"
           />
         </div>
         

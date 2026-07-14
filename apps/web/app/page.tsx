@@ -63,7 +63,7 @@ export default function HomePage() {
                 placeholder="Search treatments or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-full py-3.5 pl-12 pr-4 text-sm placeholder-primary focus:ring-2 focus:ring-primary outline-none transition-shadow"
+                className="w-full bg-gray-50 border border-gray-100 rounded-full py-3.5 pl-12 pr-4 text-sm placeholder:text-primary focus:ring-2 focus:ring-primary outline-none transition-shadow"
               />
             </div>
             <Link href="/profile" className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center flex-shrink-0 text-primary hover:text-primary-dark transition-colors">
@@ -79,7 +79,7 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="px-3 md:px-0 mt-4 md:mt-0 pb-8 md:pb-24">
+        <section className="px-3 md:px-0 mt-6 md:mt-0 pb-8 md:pb-24">
           <HeroCarousel />
         </section>
       )}
@@ -300,7 +300,7 @@ export default function HomePage() {
                 {/* Location & Map */}
                 <div className="mb-8 md:mb-0">
                   <h2 className="font-serif text-xl md:text-3xl text-primary-dark mb-4">Visit Us</h2>
-                  <div className="bg-[#fcf4f0] rounded-2xl p-4 shadow-sm border border-[#d4a373]/20">
+                  <div className="bg-surface rounded-2xl p-4 shadow-sm border border-primary/20">
                     <div className="w-full h-40 bg-gray-100 rounded-xl overflow-hidden mb-4 relative shadow-inner">
                       {/* Google Maps iFrame Placeholder */}
                       <iframe
@@ -313,7 +313,7 @@ export default function HomePage() {
                         referrerPolicy="no-referrer-when-downgrade"
                       />
                     </div>
-                    <div className="flex items-start gap-3 text-text-secondary text-sm">
+                    <div className="flex items-start gap-3 text-text-primary text-sm">
                       <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-primary-dark">ORYX Beauty Spa</p>
@@ -321,7 +321,7 @@ export default function HomePage() {
                         <p>Dubai, UAE</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 text-text-secondary text-sm mt-3">
+                    <div className="flex items-start gap-3 text-text-primary text-sm mt-3">
                       <Phone className="w-5 h-5 text-primary shrink-0" />
                       <p>+971 50 123 4567</p>
                     </div>
@@ -331,26 +331,26 @@ export default function HomePage() {
                 {/* Social & Links */}
                 <div className="flex flex-col items-center md:items-end md:text-right justify-center space-y-6">
                   <div className="flex gap-4">
-                    <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                    <a href="#" className="w-10 h-10 rounded-full bg-surface border border-primary/20 flex items-center justify-center text-primary-dark hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>
                     </a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                    <a href="#" className="w-10 h-10 rounded-full bg-surface border border-primary/20 flex items-center justify-center text-primary-dark hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
                     </a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                    <a href="#" className="w-10 h-10 rounded-full bg-surface border border-primary/20 flex items-center justify-center text-primary-dark hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" /></svg>
                     </a>
                   </div>
 
-                  <div className="flex gap-4 text-xs font-medium text-text-secondary/70">
-                    <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
-                    <span>•</span>
-                    <Link href="/terms" className="hover:text-primary">Terms of Service</Link>
-                    <span>•</span>
-                    <Link href="/contact" className="hover:text-primary">Contact</Link>
+                  <div className="flex gap-4 text-xs font-medium text-text-primary">
+                    <Link href="/privacy" className="hover:text-primary-dark">Privacy Policy</Link>
+                    <span className="text-primary/40">•</span>
+                    <Link href="/terms" className="hover:text-primary-dark">Terms of Service</Link>
+                    <span className="text-primary/40">•</span>
+                    <Link href="/contact" className="hover:text-primary-dark">Contact</Link>
                   </div>
 
-                  <p className="text-[10px] md:text-xs text-text-secondary/50 mt-4">
+                  <p className="text-[10px] md:text-xs text-text-secondary mt-4">
                     © {new Date().getFullYear()} ORYX Beauty Spa. All rights reserved.
                   </p>
                 </div>

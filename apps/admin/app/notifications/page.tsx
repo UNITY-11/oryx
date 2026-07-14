@@ -191,18 +191,18 @@ export default function NotificationsPage() {
                     
                     {/* Contact Actions */}
                     <div className="flex items-center gap-2">
-                      <button className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Call">
+                      <a href={`tel:${selectedNotif.bookingData.customerPhone}`} className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Call">
                         <Phone className="w-4 h-4" />
-                      </button>
-                      <button className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Message">
+                      </a>
+                      <a href={`sms:${selectedNotif.bookingData.customerPhone}`} className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Message">
                         <MessageSquare className="w-4 h-4" />
-                      </button>
-                      <button className="flex-1 p-3 bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="WhatsApp">
+                      </a>
+                      <a href={`https://wa.me/${selectedNotif.bookingData.customerPhone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="flex-1 p-3 bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="WhatsApp">
                         <MessageCircle className="w-4 h-4" />
-                      </button>
-                      <button className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Email">
+                      </a>
+                      <a href={`mailto:${selectedNotif.bookingData.customerName.replace(/\s+/g, '.').toLowerCase()}@example.com`} className="flex-1 p-3 bg-white border border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary rounded-2xl transition-all flex justify-center items-center" title="Email">
                         <Mail className="w-4 h-4" />
-                      </button>
+                      </a>
                     </div>
                   </div>
 

@@ -6,6 +6,9 @@ export interface BookingPayload {
   customerName: string;
   customerPhone: string;
   serviceName: string;
+  duration: string;
+  addons: string[];
+  price: number;
   date: string;
   time: string;
   staffName: string;
@@ -19,6 +22,7 @@ export interface Notification {
   message: string;
   timestamp: string;
   status: NotificationStatus;
+  isStarred?: boolean;
   actionUrl?: string;
   bookingData?: BookingPayload;
 }
@@ -31,11 +35,15 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     message: "Sarah Jenkins requested a 60 min Signature Massage for tomorrow at 2:00 PM.",
     timestamp: "Just now",
     status: "Unread",
+    isStarred: false,
     bookingData: {
       customerId: "cust-1",
       customerName: "Sarah Jenkins",
       customerPhone: "+974 5555 1234",
-      serviceName: "Signature Massage (60 min)",
+      serviceName: "Signature Massage",
+      duration: "60 mins",
+      addons: ["Aromatherapy"],
+      price: 350,
       date: "Tomorrow, 15 July 2026",
       time: "2:00 PM",
       staffName: "Emma",
@@ -49,6 +57,7 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     message: "Bamboo Massage Roller is running low. Only 5 items remaining.",
     timestamp: "2 hours ago",
     status: "Unread",
+    isStarred: true,
     actionUrl: "/products",
   },
   {
@@ -58,11 +67,15 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     message: "Michael Chen requested a Deep Tissue Massage with Hot Stones.",
     timestamp: "4 hours ago",
     status: "Unread",
+    isStarred: false,
     bookingData: {
       customerId: "cust-2",
       customerName: "Michael Chen",
       customerPhone: "+974 5555 9876",
-      serviceName: "Deep Tissue Massage (90 min) + Hot Stones",
+      serviceName: "Deep Tissue Massage",
+      duration: "90 mins",
+      addons: ["Hot Stones", "Extra Scalp Massage"],
+      price: 520,
       date: "Friday, 17 July 2026",
       time: "10:30 AM",
       staffName: "David",

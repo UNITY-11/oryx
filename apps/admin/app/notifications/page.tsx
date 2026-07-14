@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Calendar, Package, Info, Check, Phone, MessageSquare, MessageCircle, Mail, Clock, User, CalendarCheck, ArrowRight } from "lucide-react";
+import { Bell, Calendar, Package, Info, Check, Phone, MessageSquare, MessageCircle, Mail, Clock, User, CalendarCheck, ArrowRight, Star } from "lucide-react";
 import { MOCK_NOTIFICATIONS, Notification, NotificationType, BookingPayload } from "../../src/features/notifications/mock-data";
 import Link from "next/link";
 
@@ -30,6 +30,11 @@ export default function NotificationsPage() {
       }
       return n;
     }));
+  };
+
+  const toggleStar = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isStarred: !n.isStarred } : n));
   };
 
   const getIcon = (type: NotificationType) => {
@@ -103,16 +108,21 @@ export default function NotificationsPage() {
                   {getIcon(notification.type)}
                 </div>
 
-                <div className="flex-1 min-w-0 pr-4">
+                <div className="flex-1 min-w-0 pr-2">
                   <div className="flex justify-between items-baseline mb-1">
-                    <h3 className={`text-sm truncate pr-2 ${notification.status === "Unread" ? "font-bold text-primary-dark" : "font-medium text-primary-dark/80"}`}>
+                    <h3 className={`text-sm truncate pr-2 flex-1 ${notification.status === "Unread" ? "font-bold text-primary-dark" : "font-medium text-primary-dark/80"}`}>
                       {notification.title}
                     </h3>
-                    <span className="text-[10px] text-primary/60 font-semibold whitespace-nowrap">
-                      {notification.timestamp}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {notification.isStarred && (
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      )}
+                      <span className="text-[10px] text-primary/60 font-semibold whitespace-nowrap">
+                        {notification.timestamp}
+                      </span>
+                    </div>
                   </div>
-                  <p className={`text-xs truncate ${notification.status === "Unread" ? "text-text-secondary font-medium" : "text-text-secondary/70"}`}>
+                  <p className={`text-xs truncate pr-6 ${notification.status === "Unread" ? "text-text-secondary font-medium" : "text-text-secondary/70"}`}>
                     {notification.message}
                   </p>
                 </div>
@@ -132,11 +142,19 @@ export default function NotificationsPage() {
           <div className="flex-1 overflow-auto scrollbar-hide flex flex-col">
             
             {/* Detail Header */}
-            <div className="p-10 border-b border-primary/10 bg-white flex items-start gap-5">
+            <div className="p-10 border-b border-primary/10 bg-white flex items-start gap-5 relative">
+              
+              <button 
+                onClick={(e) => toggleStar(e, selectedNotif.id)}
+                className={`absolute top-10 right-10 p-2 rounded-full transition-all ${selectedNotif.isStarred ? 'bg-amber-50 text-amber-500' : 'bg-primary/5 text-primary/40 hover:text-primary hover:bg-primary/10'}`}
+              >
+                <Star className={`w-5 h-5 ${selectedNotif.isStarred ? 'fill-amber-400 text-amber-400' : ''}`} />
+              </button>
+
               <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center shrink-0 border bg-white border-primary/20 text-primary">
                 {getIcon(selectedNotif.type)}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 pr-12">
                 <span className="inline-block px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider mb-3 bg-white border-primary/20 text-primary">
                   {selectedNotif.type}
                 </span>
@@ -159,10 +177,10 @@ export default function NotificationsPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 max-w-4xl">
                   
                   {/* Customer Card */}
-                  <div className="bg-white rounded-3xl p-6 border border-primary/20 shadow-sm">
+                  <div className="bg-white rounded-3xl p-6 border border-primary/20 shadow-sm flex flex-col">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 mb-5">Customer Details</h4>
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 text-primary-dark flex items-center justify-center text-lg font-serif">
+                    <div className="flex items-center gap-4 mb-6 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 text-primary-dark flex items-center justify-center text-lg font-serif shrink-0">
                         {selectedNotif.bookingData.customerName.charAt(0)}
                       </div>
                       <div>
@@ -202,9 +220,21 @@ export default function NotificationsPage() {
                     </div>
                     
                     <div className="space-y-4 flex-1">
-                      <div>
-                        <p className="text-sm font-semibold text-primary-dark">{selectedNotif.bookingData.serviceName}</p>
+                      <div className="pb-4 border-b border-primary/10">
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-base font-semibold text-primary-dark">{selectedNotif.bookingData.serviceName}</p>
+                          <span className="text-base font-bold text-primary-dark ml-2">${selectedNotif.bookingData.price}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
+                          <span className="bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">{selectedNotif.bookingData.duration}</span>
+                          {selectedNotif.bookingData.addons?.map((addon, idx) => (
+                            <span key={idx} className="bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
+                              + {addon}
+                            </span>
+                          ))}
+                        </div>
                       </div>
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex items-center gap-2 text-text-secondary text-sm">
                           <CalendarCheck className="w-4 h-4 shrink-0 text-primary/60" />

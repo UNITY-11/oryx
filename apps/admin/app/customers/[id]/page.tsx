@@ -235,7 +235,7 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                   <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Message">
                     <MessageSquare className="w-4 h-4" />
                   </button>
-                  <button className="p-3 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] rounded-full transition-colors flex-1 flex justify-center items-center" title="WhatsApp">
+                  <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="WhatsApp">
                     <MessageCircle className="w-4 h-4" />
                   </button>
                   <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Email">

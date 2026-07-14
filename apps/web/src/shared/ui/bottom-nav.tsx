@@ -22,7 +22,7 @@ export function BottomNav() {
 
   return (
     <nav className="w-full bg-white/90 backdrop-blur-xl rounded-t-4xl md:rounded-none md:bg-transparent md:h-full md:flex md:flex-col md:pt-12" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      
+
       {/* Desktop Logo */}
       <div className="hidden md:flex flex-col items-center justify-center mb-12">
         <h1 className="font-serif text-4xl text-primary-dark">ORYX</h1>
@@ -41,7 +41,7 @@ export function BottomNav() {
                 href={item.href}
                 className="relative -top-4 md:top-0 md:relative md:w-full flex flex-col items-center justify-center focus:outline-none"
               >
-                <div className={`flex h-14 w-14 md:h-12 md:w-full md:rounded-2xl items-center justify-center rounded-full shadow-spa transition-colors ${isActive ? 'bg-primary-dark' : 'bg-primary'} md:space-x-3`}>
+                <div className={`flex h-14 w-14 md:h-12 md:w-full md:rounded-2xl items-center justify-center rounded-full shadow-spa transition-colors ${isActive ? 'bg-primary md:bg-primary-dark' : 'bg-primary md:bg-primary'} md:space-x-3`}>
                   <Icon className="h-6 w-6 text-surface md:h-5 md:w-5" strokeWidth={2.5} />
                   <span className="hidden md:block text-surface font-medium text-sm">{item.name}</span>
                 </div>

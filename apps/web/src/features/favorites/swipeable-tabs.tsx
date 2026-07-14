@@ -95,10 +95,10 @@ export function SwipableFavorites() {
                     toggleFavorite(item);
                   }}
                   className={`absolute top-2 right-2 md:top-4 md:right-4 p-2 md:p-2.5 rounded-full backdrop-blur-md transition-all z-10 shadow-sm
-                    ${favorite ? 'bg-white text-[#E5C37A]' : 'bg-black/20 text-white hover:bg-white/30'}
+                    ${favorite ? 'bg-primary md:bg-white text-white md:text-[#E5C37A]' : 'bg-black/20 text-white hover:bg-white/30'}
                   `}
                 >
-                  <Heart className={`w-4 h-4 md:w-5 md:h-5 transition-colors ${favorite ? 'fill-[#E5C37A]' : ''}`} />
+                  <Heart className={`w-4 h-4 md:w-5 md:h-5 transition-colors ${favorite ? 'fill-white md:fill-[#E5C37A]' : ''}`} />
                 </button>
               </div>
                 

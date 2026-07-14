@@ -89,4 +89,6 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     message: "Collagen Booster Serum is completely out of stock. Please reorder.",
     timestamp: "5 hours ago",
     status: "Read",
+    actionUrl: "/products",
+  }
 ];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Calendar, Package, Info, Check, Phone, MessageSquare, MessageCircle, Mail, Clock, User, CalendarCheck } from "lucide-react";
+import { Bell, Calendar, Package, Info, Check, Phone, MessageSquare, MessageCircle, Mail, Clock, User, CalendarCheck, ArrowRight } from "lucide-react";
 import { MOCK_NOTIFICATIONS, Notification, NotificationType, BookingPayload } from "../../src/features/notifications/mock-data";
 import Link from "next/link";
 

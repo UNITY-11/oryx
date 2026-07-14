@@ -135,7 +135,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="bg-white flex-1 overflow-auto rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative">
+      <div className="bg-white flex-1 overflow-auto scrollbar-hide rounded-b-[32px] border border-t-0 border-primary/10 shadow-sm relative">
         <div 
           className="relative min-h-[400px]"
           style={{ width: `${(END_HOUR - START_HOUR + 1) * HOUR_WIDTH}px`, height: `${Math.max(400, Math.max(1, laneEndTimes.length) * ROW_HEIGHT + 64)}px` }}
@@ -146,10 +146,10 @@ export default function CalendarPage() {
             {hours.map((hour) => (
               <div 
                 key={hour.value} 
-                className="shrink-0 border-l border-primary/10 first:border-l-0 relative"
+                className="shrink-0 border-l border-primary/10 first:border-l-0 flex items-center justify-center"
                 style={{ width: `${HOUR_WIDTH}px` }}
               >
-                <span className="absolute left-3 top-3 text-xs font-semibold text-text-secondary">
+                <span className="text-xs font-semibold text-text-secondary">
                   {hour.label}
                 </span>
               </div>

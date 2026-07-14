@@ -23,8 +23,8 @@ export default function ProductsPage() {
     );
 
   const activeCount = products.filter((p) => p.status === "Active").length;
-  const lowStockCount = products.filter((p) => p.stock > 0 && p.stock <= 10).length;
-  const outOfStockCount = products.filter((p) => p.stock === 0).length;
+  const lowStockCount = products.filter((p) => p.quantity > 0 && p.quantity <= 10).length;
+  const outOfStockCount = products.filter((p) => p.quantity === 0).length;
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -103,12 +103,12 @@ export default function ProductsPage() {
                   )}
 
                   {/* Stock badge */}
-                  {product.stock === 0 && (
+                  {product.quantity === 0 && (
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-xs font-semibold text-red-500 px-2 py-1 rounded-full border border-red-100">
                       Out of stock
                     </div>
                   )}
-                  {product.stock > 0 && product.stock <= 10 && (
+                  {product.quantity > 0 && product.quantity <= 10 && (
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-xs font-semibold text-amber-600 px-2 py-1 rounded-full border border-amber-100">
                       Low stock
                     </div>

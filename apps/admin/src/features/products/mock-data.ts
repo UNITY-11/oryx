@@ -1,13 +1,3 @@
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  image: string | null;
-  stock: number;
-  category: ProductCategory;
-  status: "Active" | "Inactive";
-}
-
 export type ProductCategory =
   | "Skincare"
   | "Body Care"
@@ -16,77 +6,105 @@ export type ProductCategory =
   | "Accessories"
   | "Supplements";
 
+export interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  volumeOrWeight: string;
+  quantity: number;
+  price: number;
+  category: ProductCategory;
+  image: string | null;
+  status: "Active" | "Inactive";
+}
+
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: "prod-1",
     name: "Rose Hip Facial Oil",
-    description: "A luxurious facial oil rich in Omega-3 and Omega-6 fatty acids to deeply nourish and hydrate the skin.",
-    image: null,
-    stock: 24,
+    brand: "Oryx Naturals",
+    volumeOrWeight: "30 ml",
+    quantity: 24,
+    price: 150,
     category: "Skincare",
+    image: null,
     status: "Active",
   },
   {
     id: "prod-2",
     name: "Lavender Body Scrub",
-    description: "An exfoliating body scrub infused with lavender essential oil to smooth and soften skin.",
-    image: null,
-    stock: 16,
+    brand: "Oryx Naturals",
+    volumeOrWeight: "250 g",
+    quantity: 16,
+    price: 95,
     category: "Body Care",
+    image: null,
     status: "Active",
   },
   {
     id: "prod-3",
     name: "Argan Shampoo",
-    description: "Sulfate-free shampoo enriched with argan oil for silky, frizz-free hair.",
-    image: null,
-    stock: 8,
+    brand: "Desert Essence",
+    volumeOrWeight: "500 ml",
+    quantity: 8,
+    price: 120,
     category: "Hair Care",
+    image: null,
     status: "Active",
   },
   {
     id: "prod-4",
     name: "Eucalyptus Essential Oil",
-    description: "Pure eucalyptus essential oil for aromatherapy, diffusers, and topical use.",
-    image: null,
-    stock: 32,
+    brand: "Pure Botanics",
+    volumeOrWeight: "15 ml",
+    quantity: 32,
+    price: 65,
     category: "Aromatherapy",
+    image: null,
     status: "Active",
   },
   {
     id: "prod-5",
     name: "Bamboo Massage Roller",
-    description: "Handcrafted bamboo roller for targeted muscle relief and lymphatic drainage.",
-    image: null,
-    stock: 5,
+    brand: "Oryx Spa Tools",
+    volumeOrWeight: "200 g",
+    quantity: 5,
+    price: 45,
     category: "Accessories",
+    image: null,
     status: "Active",
   },
   {
     id: "prod-6",
     name: "Collagen Booster Serum",
-    description: "A potent serum with marine collagen peptides to firm and plump the skin.",
-    image: null,
-    stock: 0,
+    brand: "Oryx Naturals",
+    volumeOrWeight: "50 ml",
+    quantity: 0,
+    price: 210,
     category: "Skincare",
+    image: null,
     status: "Inactive",
   },
   {
     id: "prod-7",
     name: "Peppermint Foot Cream",
-    description: "Cooling and hydrating foot cream with peppermint and shea butter.",
-    image: null,
-    stock: 19,
+    brand: "Desert Essence",
+    volumeOrWeight: "100 ml",
+    quantity: 19,
+    price: 75,
     category: "Body Care",
+    image: null,
     status: "Active",
   },
   {
     id: "prod-8",
     name: "Biotin Hair Supplement",
-    description: "Daily supplement with biotin, zinc and vitamin B complex to support healthy hair growth.",
-    image: null,
-    stock: 11,
+    brand: "Wellness Co",
+    volumeOrWeight: "60 capsules",
+    quantity: 11,
+    price: 180,
     category: "Supplements",
+    image: null,
     status: "Active",
   },
 ];

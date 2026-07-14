@@ -11,19 +11,23 @@ const CATEGORIES: ProductCategory[] = [
 
 interface NewProductState {
   name: string;
+  brand: string;
+  volumeOrWeight: string;
+  quantity: number;
+  price: number;
   category: ProductCategory;
-  description: string;
   image: string | null;
-  stock: number;
   status: "Active" | "Inactive";
 }
 
 const DEFAULT_STATE: NewProductState = {
   name: "",
+  brand: "",
+  volumeOrWeight: "",
+  quantity: 0,
+  price: 0,
   category: "Skincare",
-  description: "",
   image: null,
-  stock: 0,
   status: "Active",
 };
 
@@ -105,9 +109,9 @@ export default function NewProductPage() {
   };
 
   const stockColor =
-    product.stock === 0
+    product.quantity === 0
       ? "text-red-500"
-      : product.stock <= 10
+      : product.quantity <= 10
       ? "text-amber-600"
       : "text-green-600";
 
@@ -190,7 +194,6 @@ export default function NewProductPage() {
             {/* RIGHT — Details */}
             <div className="flex-1 space-y-6 min-w-0">
 
-              {/* Name & Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Product Name *</label>
@@ -207,34 +210,54 @@ export default function NewProductPage() {
                 </div>
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Description</label>
-                <textarea
-                  value={product.description}
-                  onChange={(e) => update("description", e.target.value)}
-                  rows={6}
-                  placeholder="Describe the product..."
-                  className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm resize-none placeholder:text-primary/30"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Brand</label>
+                  <input
+                    value={product.brand}
+                    onChange={(e) => update("brand", e.target.value)}
+                    placeholder="e.g. Oryx Naturals"
+                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Liters / Grams</label>
+                  <input
+                    value={product.volumeOrWeight}
+                    onChange={(e) => update("volumeOrWeight", e.target.value)}
+                    placeholder="e.g. 50 ml or 200 g"
+                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm placeholder:text-primary/30"
+                  />
+                </div>
               </div>
 
-              {/* Stock */}
-              <div className="bg-primary/5 rounded-2xl p-4 space-y-3">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary">Stock</label>
-                <div className="flex items-center gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Price (QAR)</label>
                   <input
                     type="number"
                     min={0}
-                    value={product.stock}
-                    onChange={(e) => update("stock", Math.max(0, Number(e.target.value)))}
-                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark font-semibold text-lg text-center"
+                    value={product.price}
+                    onChange={(e) => update("price", Math.max(0, Number(e.target.value)))}
+                    className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
                   />
-                  <Package className={`w-5 h-5 shrink-0 ${stockColor}`} />
                 </div>
-                <p className={`text-xs font-medium text-center ${stockColor}`}>
-                  {product.stock === 0 ? "Out of Stock" : product.stock <= 10 ? `Low Stock — ${product.stock} left` : `${product.stock} in stock`}
-                </p>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Quantity (Stock)</label>
+                  <div className="flex items-center gap-3 relative">
+                    <input
+                      type="number"
+                      min={0}
+                      value={product.quantity}
+                      onChange={(e) => update("quantity", Math.max(0, Number(e.target.value)))}
+                      className="w-full px-4 py-3 pr-12 rounded-2xl border border-primary/40 bg-white focus:outline-none focus:border-primary text-primary-dark font-semibold text-base"
+                    />
+                    <Package className={`absolute right-4 w-5 h-5 shrink-0 ${stockColor}`} />
+                  </div>
+                  <p className={`text-[10px] font-medium mt-1 ${stockColor}`}>
+                    {product.quantity === 0 ? "Out of Stock" : product.quantity <= 10 ? `Low Stock — ${product.quantity} left` : `${product.quantity} in stock`}
+                  </p>
+                </div>
               </div>
 
             </div>

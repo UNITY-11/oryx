@@ -44,7 +44,6 @@ export default function RootLayout({
 
           <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
             <TopHeader />
-
             {/* Main Scrollable Content */}
             <main id="admin-main-container" className="flex-1 flex flex-col w-full h-full relative overflow-hidden px-4 md:px-8 pb-4 pt-0">
               {children}

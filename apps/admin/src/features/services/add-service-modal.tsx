@@ -73,7 +73,7 @@ export function AddServiceModal({ isOpen, onClose, onAddService }: AddServiceMod
       cleanupTime: form.cleanupTime,
       maxCapacity: form.maxCapacity,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      createdAt: new Date().toISOString().split("T")[0],
+      createdAt: new Date().toISOString().split("T")[0] || "",
     };
     onAddService(newService);
     onClose();

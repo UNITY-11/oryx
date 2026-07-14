@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
                   contentStyle={{ borderRadius: '20px', border: '1px solid rgba(200,169,156,0.3)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', padding: '12px 20px' }}
                   labelStyle={{ fontWeight: 'bold', color: '#4a3f3a', marginBottom: '8px', fontSize: '14px' }}
                   itemStyle={{ color: '#c8a99c', fontWeight: 'bold', fontSize: '16px' }}
-                  formatter={(value: number) => [`QAR ${value}`, 'Revenue']}
+                  formatter={(value: any) => [`QAR ${value}`, 'Revenue']}
                 />
                 <Area 
                   type="monotone" 
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                 <Tooltip 
                   contentStyle={{ borderRadius: '20px', border: '1px solid rgba(200,169,156,0.3)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '12px 16px' }}
                   itemStyle={{ color: '#4a3f3a', fontWeight: 'bold', fontSize: '15px' }}
-                  formatter={(value: number) => [`${value}%`, 'Share']}
+                  formatter={(value: any) => [`${value}%`, 'Share']}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
                   contentStyle={{ borderRadius: '20px', border: '1px solid rgba(200,169,156,0.3)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '12px 20px' }}
                   labelStyle={{ fontWeight: 'bold', color: '#4a3f3a', marginBottom: '8px', fontSize: '14px' }}
                   itemStyle={{ color: '#c8a99c', fontWeight: 'bold', fontSize: '16px' }}
-                  formatter={(value: number) => [`${value} Bookings`, 'Volume']}
+                  formatter={(value: any) => [`${value} Bookings`, 'Volume']}
                 />
                 <Bar 
                   dataKey="bookings" 

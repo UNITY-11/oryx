@@ -5,7 +5,7 @@ import { Calendar, Users, ShoppingBag, DollarSign, ArrowUpRight } from "lucide-r
 export default function AdminDashboard() {
   const stats = [
     { label: "Total Bookings", value: "248", change: "+12%", icon: Calendar },
-    { label: "Revenue", value: "$12,450", change: "+8%", icon: DollarSign },
+    { label: "Revenue", value: "QAR 12,450", change: "+8%", icon: DollarSign },
     { label: "Active Customers", value: "1,204", change: "+5%", icon: Users },
     { label: "Products Sold", value: "89", change: "-2%", icon: ShoppingBag },
   ];
@@ -60,9 +60,9 @@ export default function AdminDashboard() {
             </thead>
             <tbody className="divide-y divide-primary/5">
               {[
-                { name: "Sarah Al M.", service: "Signature Massage", date: "Today, 2:30 PM", status: "Confirmed", amount: "$120" },
-                { name: "Fatima K.", service: "Gold Facial", date: "Today, 4:00 PM", status: "Pending", amount: "$180" },
-                { name: "Jessica R.", service: "Hot Stone Therapy", date: "Tomorrow, 10:00 AM", status: "Confirmed", amount: "$150" },
+                { name: "Sarah Al M.", service: "Signature Massage", date: "Today, 2:30 PM", status: "Confirmed", amount: "QAR 120" },
+                { name: "Fatima K.", service: "Gold Facial", date: "Today, 4:00 PM", status: "Pending", amount: "QAR 180" },
+                { name: "Jessica R.", service: "Hot Stone Therapy", date: "Tomorrow, 10:00 AM", status: "Confirmed", amount: "QAR 150" },
               ].map((booking, i) => (
                 <tr key={i} className="hover:bg-primary/5 transition-colors group">
                   <td className="py-4 font-medium text-primary-dark">{booking.name}</td>

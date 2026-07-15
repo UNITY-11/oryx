@@ -286,6 +286,19 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Age</label>
+                    <input
+                      type="number"
+                      value={customer.age || ""}
+                      onChange={(e) => update("age", e.target.value)}
+                      placeholder="e.g. 35"
+                      className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

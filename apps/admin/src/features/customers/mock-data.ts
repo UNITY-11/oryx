@@ -8,6 +8,7 @@ export interface Customer {
   totalSpent: number;
   lastVisit: string;
   status: "Active" | "Inactive";
+  age?: string;
 }
 
 export type CustomerTier = "Bronze" | "Silver" | "Gold" | "Platinum";
@@ -23,6 +24,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     totalSpent: 4500,
     lastVisit: "2026-07-10",
     status: "Active",
+    age: "32",
   },
   {
     id: "cus-2",

@@ -29,7 +29,7 @@ export function TopHeader() {
   };
 
   return (
-    <div className="px-4 md:px-8 pt-4 pb-4">
+    <div className="px-4 md:pl-4 md:pr-8 pt-4 pb-4">
       <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
         <div className="flex items-center space-x-4 flex-1">
           <button className="md:hidden p-2 -ml-2 text-primary hover:bg-primary/5 rounded-full transition-colors">

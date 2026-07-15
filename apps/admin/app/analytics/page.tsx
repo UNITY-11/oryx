@@ -159,7 +159,7 @@ export default function AnalyticsPage() {
             </div>
             <div className="flex-1 w-full min-h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={MOCK_REVENUE_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={MOCK_REVENUE_DATA} margin={{ top: 10, right: 10, left: 20, bottom: 20 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#c8a99c" stopOpacity={0.8} />
@@ -258,7 +258,7 @@ export default function AnalyticsPage() {
             </div>
             <div className="flex-1 w-full min-h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={MOCK_PEAK_HOURS} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={MOCK_PEAK_HOURS} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e9e6" />
                   <XAxis
                     dataKey="hour"

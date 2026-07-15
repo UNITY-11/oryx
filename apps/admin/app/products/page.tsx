@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ImageIcon, Package } from "lucide-react";
+import { Search, ImageIcon, Package, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { MOCK_PRODUCTS, Product, ProductCategory } from "../../src/features/products/mock-data";
 
@@ -13,6 +13,14 @@ export default function ProductsPage() {
   const [products] = useState<Product[]>(MOCK_PRODUCTS);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "All">("All");
+  const [sortBy, setSortBy] = useState("Default");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+
+  const sortOptions = [
+    { value: "Default", label: "Sort: Default" },
+    { value: "StockHigh", label: "Stock: High to Low" },
+    { value: "StockLow", label: "Stock: Low to High" },
+  ];
 
   const filtered = products
     .filter((p) => categoryFilter === "All" || p.category === categoryFilter)
@@ -20,7 +28,12 @@ export default function ProductsPage() {
       (p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    )
+    .sort((a, b) => {
+      if (sortBy === "StockHigh") return b.quantity - a.quantity;
+      if (sortBy === "StockLow") return a.quantity - b.quantity;
+      return 0;
+    });
 
   const activeCount = products.filter((p) => p.status === "Active").length;
   const lowStockCount = products.filter((p) => p.quantity > 0 && p.quantity <= 10).length;
@@ -32,15 +45,52 @@ export default function ProductsPage() {
 
         {/* Top Bar */}
         <div className="p-4 md:p-6 border-b border-primary/10 flex flex-col md:flex-row gap-4 justify-between items-center shrink-0">
-          <div className="relative w-full md:w-80 shrink-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-transparent border border-primary rounded-full focus:outline-none focus:ring-1 focus:ring-primary text-primary-dark placeholder:text-primary/70 text-sm"
-            />
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+            <div className="relative w-full sm:w-64 md:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-transparent border border-primary rounded-full focus:outline-none focus:ring-1 focus:ring-primary text-primary-dark placeholder:text-primary/70 text-sm"
+              />
+            </div>
+            <div className="relative w-full sm:w-48 shrink-0 z-40">
+              <button
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="w-full flex items-center justify-between pl-5 pr-4 py-3 bg-white border border-primary/20 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/30 text-primary-dark text-sm cursor-pointer hover:bg-primary/5 transition-all font-medium shadow-sm"
+              >
+                <span className="truncate">{sortOptions.find(o => o.value === sortBy)?.label}</span>
+                <ChevronDown className={`w-4 h-4 text-primary transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`} />
+              </button>
+              
+              {isSortOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setIsSortOpen(false)} />
+                  <div className="absolute top-full right-0 mt-2 w-full min-w-[180px] bg-white rounded-2xl shadow-xl border border-primary/10 overflow-hidden z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="py-2">
+                      {sortOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value);
+                            setIsSortOpen(false);
+                          }}
+                          className={`w-full text-left px-5 py-2.5 text-sm transition-colors ${
+                            sortBy === option.value
+                              ? "bg-primary/10 text-primary-dark font-bold"
+                              : "text-text-secondary hover:bg-primary/5 hover:text-primary-dark font-medium"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide shrink-0">
@@ -121,7 +171,7 @@ export default function ProductsPage() {
 
                   {/* Inactive dim */}
                   {product.status === "Inactive" && (
-                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]" />
+                    <div className="absolute inset-0 bg-white/40" />
                   )}
                 </Link>
               ))}

@@ -1,10 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}", "./app/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
@@ -19,7 +16,7 @@ const config: Config = {
           primary: "var(--color-text-primary)",
           secondary: "var(--color-text-secondary)",
         },
-        favorite: "#EBBaa0",
+        favorite: "#D65C42",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],

@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Cinzel } from "next/font/google";
+import { Cinzel, Inter } from "next/font/google";
+
 import "./globals.css";
+
 import { BottomNav } from "@/shared/ui/bottom-nav";
-import { TopNav } from "@/shared/ui/top-nav";
 import { LenisProvider } from "@/shared/ui/lenis-provider";
+import { TopNav } from "@/shared/ui/top-nav";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,28 +44,27 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${cinzel.variable}`}>
-      <body suppressHydrationWarning className="min-h-screen bg-[#fcf4f0] text-text-primary antialiased overflow-x-hidden">
+      <body
+        suppressHydrationWarning
+        className="bg-background text-text-primary min-h-screen overflow-x-hidden antialiased"
+      >
         {/* App Layout Wrapper */}
-        <div className="mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-col bg-[#fcf4f0] shadow-2xl relative overflow-x-hidden">
-
-          <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none md:pointer-events-auto">
+        <div className="bg-background relative mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-col overflow-x-hidden shadow-2xl">
+          <div className="pointer-events-none absolute top-4 right-4 left-4 z-50 md:pointer-events-auto">
             <TopNav />
           </div>
 
           {/* Bottom Navigation - Mobile Only */}
-          <div className="md:hidden absolute bottom-0 left-0 w-full z-50 pointer-events-none">
+          <div className="pointer-events-none absolute bottom-0 left-0 z-50 w-full md:hidden">
             <div className="pointer-events-auto">
               <BottomNav />
             </div>
           </div>
 
           {/* Main Scrollable Content */}
-          <div className="flex-1 h-[100dvh] relative overflow-hidden flex flex-col">
-            <LenisProvider>
-              {children}
-            </LenisProvider>
+          <div className="relative flex h-[100dvh] flex-1 flex-col overflow-hidden">
+            <LenisProvider>{children}</LenisProvider>
           </div>
-
         </div>
       </body>
     </html>

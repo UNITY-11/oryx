@@ -10,6 +10,12 @@ importers:
       "@ianvs/prettier-plugin-sort-imports":
         specifier: ^4.7.1
         version: 4.7.1(prettier@3.9.5)
+      "@repo/eslint-config":
+        specifier: workspace:*
+        version: link:packages/eslint-config
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.5(jiti@2.7.0)
       husky:
         specifier: ^9.1.7
         version: 9.1.7

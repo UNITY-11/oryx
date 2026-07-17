@@ -552,7 +552,7 @@ export default function BillingPage() {
                 {/* Invoice card */}
                 <div className="flex-1 overflow-y-auto scrollbar-hide">
                   <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm overflow-hidden w-full max-w-2xl mx-auto">
-                    <div className="bg-[#fcf4f0] px-10 py-8 flex items-start justify-between border-b border-primary/10">
+                    <div className="bg-white px-10 py-8 flex items-start justify-between border-b border-primary/10">
                       <div className="flex flex-col gap-1">
                         <img src="/images/oryx-logo.png" alt="Oryx Spa" className="h-14 w-auto object-contain brightness-75 contrast-125" />
                         <p className="text-[10px] tracking-widest text-text-secondary uppercase font-medium mt-1">Luxury Beauty & Wellness</p>

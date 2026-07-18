@@ -1,18 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ImageIcon, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MOCK_SERVICES, Service, ServiceCategory } from "../../src/features/services/mock-data";
+import { AlertCircle, ImageIcon, Loader2, Search, Star } from "lucide-react";
+
+import { fetchServices } from "../../src/features/services/api";
+import {
+  Service,
+  ServiceCategory,
+} from "../../src/features/services/mock-data";
 
 const CATEGORY_FILTERS: Array<ServiceCategory | "All"> = [
-  "All", "Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package",
+  "All",
+  "Massage",
+  "Facial",
+  "Body Treatment",
+  "Hair",
+  "Nails",
+  "Package",
 ];
 
 export default function ServicesPage() {
-  const [services] = useState<Service[]>(MOCK_SERVICES);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<ServiceCategory | "All">("All");
+  const [categoryFilter, setCategoryFilter] = useState<ServiceCategory | "All">(
+    "All"
+  );
+
+  useEffect(() => {
+    fetchServices()
+      .then(setServices)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = services
     .filter((s) => categoryFilter === "All" || s.category === categoryFilter)
@@ -23,31 +45,30 @@ export default function ServicesPage() {
     );
 
   return (
-    <div className="flex flex-col h-full space-y-6">
-      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-
+    <div className="flex h-full flex-col space-y-6">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {/* Top Bar */}
-        <div className="p-4 md:p-6 border-b border-primary/10 flex flex-col md:flex-row gap-4 justify-between items-center shrink-0">
-          <div className="relative w-full md:w-80 shrink-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+        <div className="border-primary/10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
+          <div className="relative w-full shrink-0 md:w-80">
+            <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-transparent border border-primary rounded-full focus:outline-none focus:ring-1 focus:ring-primary text-primary-dark placeholder:text-primary/70 text-sm"
+              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 text-sm focus:ring-1 focus:outline-none"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide shrink-0">
+          <div className="scrollbar-hide flex shrink-0 items-center gap-2 overflow-x-auto pb-1">
             {CATEGORY_FILTERS.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                className={`rounded-full border px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   categoryFilter === cat
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white text-text-secondary border-primary/10 hover:bg-primary/5"
+                    ? "bg-primary border-primary text-white shadow-sm"
+                    : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
                 }`}
               >
                 {cat}
@@ -57,25 +78,36 @@ export default function ServicesPage() {
         </div>
 
         {/* Cards Grid */}
-        <div className="overflow-auto scrollbar-hide flex-1 p-4 md:p-6">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-text-secondary">
-              <ImageIcon className="w-10 h-10 mb-3 text-primary/20" />
+        <div className="scrollbar-hide flex-1 overflow-auto p-4 md:p-6">
+          {loading ? (
+            <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
+              <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+              <p>Loading services...</p>
+            </div>
+          ) : error ? (
+            <div className="flex h-48 flex-col items-center justify-center text-red-500">
+              <AlertCircle className="mb-3 h-8 w-8" />
+              <p>{error}</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
+              <ImageIcon className="text-primary/20 mb-3 h-10 w-10" />
               <p>No services found. Try adjusting your filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {/* Add Service Card — navigates to /services/new */}
               <Link
                 href="/services/new"
-                className="group flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-primary/50 hover:text-primary"
+                className="group border-primary/30 hover:border-primary/60 hover:bg-primary/5 text-primary/50 hover:text-primary flex flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all"
                 style={{ aspectRatio: "3/4" }}
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center mb-3 transition-colors">
-                  <span className="text-2xl font-light leading-none">+</span>
+                <div className="bg-primary/10 group-hover:bg-primary/20 mb-3 flex h-12 w-12 items-center justify-center rounded-full transition-colors">
+                  <span className="text-2xl leading-none font-light">+</span>
                 </div>
-                <span className="text-sm font-medium text-center px-4">Add Service</span>
+                <span className="px-4 text-center text-sm font-medium">
+                  Add Service
+                </span>
               </Link>
 
               {/* Service Cards — image only */}
@@ -83,24 +115,26 @@ export default function ServicesPage() {
                 <Link
                   key={service.id}
                   href={`/services/${service.id}`}
-                  className="group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all bg-gradient-to-br from-primary/10 to-primary/5"
+                  className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                   style={{ aspectRatio: "3/4" }}
                 >
                   {service.image ? (
                     <img
                       src={service.image}
                       alt={service.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <ImageIcon className="w-10 h-10 text-primary/20" />
+                      <ImageIcon className="text-primary/20 h-10 w-10" />
                     </div>
                   )}
 
                   {/* Name on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                    <p className="text-white text-sm font-semibold leading-tight">{service.name}</p>
+                  <div className="from-primary-dark/70 absolute inset-0 flex items-end bg-gradient-to-t via-transparent to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <p className="text-sm leading-tight font-semibold text-white">
+                      {service.name}
+                    </p>
                   </div>
 
                   {/* Inactive dim */}
@@ -114,12 +148,14 @@ export default function ServicesPage() {
         </div>
 
         {/* Footer Stats */}
-        <div className="px-6 py-3 border-t border-primary/5 shrink-0 flex items-center gap-4 text-xs text-text-secondary">
+        <div className="border-primary/5 text-text-secondary flex shrink-0 items-center gap-4 border-t px-6 py-3 text-xs">
           <span className="flex items-center gap-1">
-            <Star className="w-3 h-3 text-primary" />
+            <Star className="text-primary h-3 w-3" />
             {services.filter((s) => s.status === "Active").length} Active
           </span>
-          <span>{services.filter((s) => s.status === "Inactive").length} Inactive</span>
+          <span>
+            {services.filter((s) => s.status === "Inactive").length} Inactive
+          </span>
           <span className="ml-auto">{filtered.length} shown</span>
         </div>
       </div>

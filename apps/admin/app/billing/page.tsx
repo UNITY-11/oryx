@@ -1,29 +1,33 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  AlertCircle,
   Check,
   CheckCircle2,
   ChevronRight,
   Clock,
   DollarSign,
+  Loader2,
   MessageCircle,
   Printer,
   Search,
   X,
 } from "lucide-react";
 
-import { MOCK_BOOKINGS } from "../../src/features/bookings/mock-data";
-import { MOCK_SERVICES as REAL_SERVICES } from "../../src/features/services/mock-data";
+import { fetchBookings } from "../../src/features/bookings/api";
+import { Booking } from "../../src/features/bookings/mock-data";
+import { fetchServices } from "../../src/features/services/api";
+import { Service } from "../../src/features/services/mock-data";
 
 type FilterStatus = "All" | "Started" | "Completed";
-type BillingBooking = (typeof MOCK_BOOKINGS)[0];
+type BillingBooking = Booking;
 // Standard thermal billing machine roll widths
 type ThermalSize = "58mm" | "80mm" | "110mm";
 
-function getServiceLineItems(booking: BillingBooking) {
+function getServiceLineItems(booking: BillingBooking, catalog: Service[]) {
   return booking.services.map((svc) => {
-    const obj = REAL_SERVICES.find((r) => r.name === svc.name);
+    const obj = catalog.find((r) => r.name === svc.name);
     const base = obj?.pricingTiers?.[0]?.price || 0;
     const addonItems = svc.addons.map((aName) => {
       const a = obj?.addons.find((ad) => ad.name === aName);
@@ -33,8 +37,8 @@ function getServiceLineItems(booking: BillingBooking) {
   });
 }
 
-function getTotal(booking: BillingBooking) {
-  return getServiceLineItems(booking).reduce(
+function getTotal(booking: BillingBooking, catalog: Service[]) {
+  return getServiceLineItems(booking, catalog).reduce(
     (sum, s) => sum + s.base + s.addons.reduce((a, ad) => a + ad.price, 0),
     0
   );
@@ -446,33 +450,48 @@ export default function BillingPage() {
   const [selected, setSelected] = useState<BillingBooking | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
-  const billable = MOCK_BOOKINGS.filter((b) => {
-    const matchStatus =
-      filter === "All"
-        ? b.status === "Started" || b.status === "Completed"
-        : b.status === filter;
-    const matchSearch =
-      !search ||
-      b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      b.id.toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchSearch;
-  }).sort((a, b) => {
-    if (a.status === b.status) return b.date.localeCompare(a.date);
-    return a.status === "Started" ? -1 : 1;
-  });
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const totalRevenue = MOCK_BOOKINGS.filter(
-    (b) => b.status === "Started" || b.status === "Completed"
-  ).reduce((s, b) => s + getTotal(b), 0);
-  const startedCount = MOCK_BOOKINGS.filter(
-    (b) => b.status === "Started"
-  ).length;
-  const completedCount = MOCK_BOOKINGS.filter(
+  useEffect(() => {
+    Promise.all([fetchBookings(), fetchServices()])
+      .then(([b, s]) => {
+        setBookings(b);
+        setServices(s);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const billable = bookings
+    .filter((b) => {
+      const matchStatus =
+        filter === "All"
+          ? b.status === "Started" || b.status === "Completed"
+          : b.status === filter;
+      const matchSearch =
+        !search ||
+        b.customerName.toLowerCase().includes(search.toLowerCase()) ||
+        b.id.toLowerCase().includes(search.toLowerCase());
+      return matchStatus && matchSearch;
+    })
+    .sort((a, b) => {
+      if (a.status === b.status) return b.date.localeCompare(a.date);
+      return a.status === "Started" ? -1 : 1;
+    });
+
+  const totalRevenue = bookings
+    .filter((b) => b.status === "Started" || b.status === "Completed")
+    .reduce((s, b) => s + getTotal(b, services), 0);
+  const startedCount = bookings.filter((b) => b.status === "Started").length;
+  const completedCount = bookings.filter(
     (b) => b.status === "Completed"
   ).length;
 
   const handleWhatsApp = (booking: BillingBooking) => {
-    const lines = getServiceLineItems(booking);
+    const lines = getServiceLineItems(booking, services);
     const servicesText = lines
       .map((s) => {
         const addonsText = s.addons
@@ -481,7 +500,7 @@ export default function BillingPage() {
         return `• ${s.name}: QAR ${s.base}${addonsText ? "\n" + addonsText : ""}`;
       })
       .join("\n");
-    const total = getTotal(booking);
+    const total = getTotal(booking, services);
     const bill =
       `*🌿 Oryx Spa — Invoice*\n\n` +
       `Invoice #: ${booking.id}\n` +
@@ -497,8 +516,8 @@ export default function BillingPage() {
     );
   };
 
-  const selectedLines = selected ? getServiceLineItems(selected) : [];
-  const selectedTotal = selected ? getTotal(selected) : 0;
+  const selectedLines = selected ? getServiceLineItems(selected, services) : [];
+  const selectedTotal = selected ? getTotal(selected, services) : 0;
 
   return (
     <>
@@ -603,13 +622,22 @@ export default function BillingPage() {
               </div>
 
               <div className="scrollbar-hide divide-primary/5 flex-1 divide-y overflow-y-auto">
-                {billable.length === 0 ? (
+                {loading ? (
+                  <div className="text-text-secondary flex items-center justify-center gap-2 py-20 text-center text-sm">
+                    <Loader2 className="h-5 w-5 animate-spin" /> Loading
+                    sessions...
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center justify-center gap-2 py-20 text-center text-sm text-red-500">
+                    <AlertCircle className="h-5 w-5" /> {error}
+                  </div>
+                ) : billable.length === 0 ? (
                   <div className="text-text-secondary py-20 text-center text-sm italic">
                     No billable sessions found.
                   </div>
                 ) : (
                   billable.map((booking) => {
-                    const total = getTotal(booking);
+                    const total = getTotal(booking, services);
                     const isStarted = booking.status === "Started";
                     const isActive = selected?.id === booking.id;
                     return (

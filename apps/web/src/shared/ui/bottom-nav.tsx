@@ -1,20 +1,49 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
-import { Brush, Calendar, Home, Phone, Scissors, Search } from "lucide-react";
+import { Brush, Calendar, Home, Phone, Scissors } from "lucide-react";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [hideForService, setHideForService] = useState(false);
 
-  // Hide on detail pages, EXCEPT for products
-  if (pathname.startsWith("/service/")) {
-    const id = pathname.split("/")[2];
-    const item = ALL_MOCK_ITEMS.find((i) => i.id === id);
-    if (!item?.isProduct) {
-      return null;
+  useEffect(() => {
+    if (!pathname.startsWith("/service/")) {
+      setHideForService(false);
+      return;
     }
+
+    const id = pathname.split("/")[2];
+    if (!id) {
+      setHideForService(false);
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/catalog/${id}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{ isProduct?: boolean }>;
+      })
+      .then((item) => {
+        if (!cancelled) {
+          // Hide bottom nav on service detail pages, keep it for products
+          setHideForService(Boolean(item) && !item?.isProduct);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setHideForService(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  if (hideForService) {
+    return null;
   }
 
   const navItems = [

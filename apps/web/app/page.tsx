@@ -3,22 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
-import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
+import { useCatalog } from "@/features/catalog/use-catalog";
 import { TestimonialCarousel } from "@/features/home/testimonial-carousel";
 import { useUserStore } from "@/shared/store";
-import { Item } from "@/shared/types";
 import {
   Bath,
   Brush,
   Droplets,
   Flower2,
   Heart,
-  MapPin,
-  Phone,
+  Loader2,
   Scissors,
   Search,
   Sparkles,
-  Star,
   User,
   Wind,
 } from "lucide-react";
@@ -27,6 +24,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const logoRef = useRef<HTMLImageElement>(null);
   const user = useUserStore((state) => state.user);
+  const { items, loading, error } = useCatalog();
 
   useEffect(() => {
     const mainArea = document.getElementById("main-scroll-container");
@@ -52,7 +50,7 @@ export default function HomePage() {
     return () => mainArea.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const filteredItems = ALL_MOCK_ITEMS.filter(
+  const filteredItems = items.filter(
     (item) =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -287,6 +285,19 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* Catalog loading / error */}
+        {(loading || error) && !searchQuery && (
+          <section className="py-8 text-center">
+            {loading ? (
+              <div className="text-text-secondary flex items-center justify-center gap-2 text-sm">
+                <Loader2 className="h-5 w-5 animate-spin" /> Loading catalog...
+              </div>
+            ) : (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
+          </section>
+        )}
+
         {/* Search Results */}
         {searchQuery && (
           <section>
@@ -294,25 +305,31 @@ export default function HomePage() {
               Search Results
             </h2>
             <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
-              {filteredItems.map((item) => (
-                <Link
-                  href={`/service/${item.id}`}
-                  key={item.id}
-                  className="group block w-44 flex-none"
-                >
-                  <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm transition-transform group-hover:scale-[1.02]">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="h-full w-full object-cover"
-                    />
-                    <h3 className="absolute right-4 bottom-4 left-4 font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
-                      {item.name}
-                    </h3>
-                  </div>
-                </Link>
-              ))}
-              {filteredItems.length === 0 && (
+              {loading && (
+                <div className="text-text-secondary flex w-full items-center justify-center gap-2 py-8 text-sm">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Searching...
+                </div>
+              )}
+              {!loading &&
+                filteredItems.map((item) => (
+                  <Link
+                    href={`/service/${item.id}`}
+                    key={item.id}
+                    className="group block w-44 flex-none"
+                  >
+                    <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm transition-transform group-hover:scale-[1.02]">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                      <h3 className="absolute right-4 bottom-4 left-4 font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
+                        {item.name}
+                      </h3>
+                    </div>
+                  </Link>
+                ))}
+              {!loading && filteredItems.length === 0 && (
                 <p className="text-text-secondary w-full py-8 text-center">
                   No items found.
                 </p>
@@ -322,7 +339,7 @@ export default function HomePage() {
         )}
 
         {/* Featured Services */}
-        {!searchQuery && (
+        {!searchQuery && !loading && !error && (
           <section>
             <div className="mb-4 flex items-end justify-between">
               <h2 className="text-surface font-serif text-xl md:text-3xl">
@@ -336,32 +353,38 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
-              {filteredItems
-                .filter((item) => !item.isProduct)
-                .map((item) => (
-                  <Link
-                    href={`/service/${item.id}`}
-                    key={item.id}
-                    className="group block w-[44%] flex-none md:w-80"
-                  >
-                    <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#A87434] shadow-sm md:h-96">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                      <h3 className="absolute right-4 bottom-4 left-4 text-center font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
-                        {item.name}
-                      </h3>
-                    </div>
-                  </Link>
-                ))}
+              {filteredItems.filter((item) => !item.isProduct).length === 0 ? (
+                <p className="text-text-secondary w-full py-8 text-center text-sm">
+                  No services available yet.
+                </p>
+              ) : (
+                filteredItems
+                  .filter((item) => !item.isProduct)
+                  .map((item) => (
+                    <Link
+                      href={`/service/${item.id}`}
+                      key={item.id}
+                      className="group block w-[44%] flex-none md:w-80"
+                    >
+                      <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#A87434] shadow-sm md:h-96">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                        />
+                        <h3 className="absolute right-4 bottom-4 left-4 text-center font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
+                          {item.name}
+                        </h3>
+                      </div>
+                    </Link>
+                  ))
+              )}
             </div>
           </section>
         )}
 
         {/* Products Section */}
-        {!searchQuery && (
+        {!searchQuery && !loading && !error && (
           <section>
             <div className="mb-4 flex items-end justify-between">
               <h2 className="text-surface font-serif text-xl md:text-3xl">
@@ -375,29 +398,35 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6">
-              {filteredItems
-                .filter((item) => item.isProduct)
-                .slice(0, 6)
-                .map((item) => (
-                  <Link
-                    href={`/service/${item.id}`}
-                    key={item.id}
-                    className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1"
-                  >
-                    <div className="relative aspect-square">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col p-3 md:p-6">
-                      <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
-                        {item.name}
-                      </h3>
-                    </div>
-                  </Link>
-                ))}
+              {filteredItems.filter((item) => item.isProduct).length === 0 ? (
+                <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3">
+                  No products available yet.
+                </p>
+              ) : (
+                filteredItems
+                  .filter((item) => item.isProduct)
+                  .slice(0, 6)
+                  .map((item) => (
+                    <Link
+                      href={`/service/${item.id}`}
+                      key={item.id}
+                      className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1"
+                    >
+                      <div className="relative aspect-square">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col p-3 md:p-6">
+                        <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
+                          {item.name}
+                        </h3>
+                      </div>
+                    </Link>
+                  ))
+              )}
             </div>
           </section>
         )}

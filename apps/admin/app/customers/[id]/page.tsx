@@ -1,21 +1,63 @@
 "use client";
 
-import { useState, useRef, useEffect, use } from "react";
-import { ArrowLeft, Upload, Save, UserCircle2, ChevronDown, Check, Phone, Mail, MessageSquare, Calendar, Plus, MessageCircle, X } from "lucide-react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MOCK_CUSTOMERS, Customer, CustomerTier } from "../../../src/features/customers/mock-data";
-import { MOCK_SERVICES, Service, PricingTier, Addon } from "../../../src/features/services/mock-data";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  Check,
+  ChevronDown,
+  Loader2,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Phone,
+  Plus,
+  Save,
+  Upload,
+  UserCircle2,
+  X,
+} from "lucide-react";
+
+import {
+  createBooking,
+  fetchBookings,
+} from "../../../src/features/bookings/api";
+import { Booking } from "../../../src/features/bookings/mock-data";
+import {
+  fetchCustomer,
+  updateCustomer,
+  uploadCustomerAvatar,
+} from "../../../src/features/customers/api";
+import {
+  Customer,
+  CustomerTier,
+} from "../../../src/features/customers/mock-data";
+import { fetchServices } from "../../../src/features/services/api";
+import {
+  Addon,
+  PricingTier,
+  Service,
+} from "../../../src/features/services/mock-data";
 
 const TIERS: CustomerTier[] = ["Bronze", "Silver", "Gold", "Platinum"];
 
-function TierDropdown({ value, onChange }: { value: CustomerTier; onChange: (v: CustomerTier) => void }) {
+function TierDropdown({
+  value,
+  onChange,
+}: {
+  value: CustomerTier;
+  onChange: (v: CustomerTier) => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handleOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     const handleScroll = () => setOpen(false);
     document.addEventListener("mousedown", handleOutside);
@@ -31,23 +73,28 @@ function TierDropdown({ value, onChange }: { value: CustomerTier; onChange: (v: 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-primary/40 bg-transparent hover:border-primary focus:outline-none focus:border-primary text-primary-dark text-sm transition-colors"
+        className="border-primary/40 hover:border-primary focus:border-primary text-primary-dark flex w-full items-center justify-between rounded-2xl border bg-transparent px-4 py-3 text-sm transition-colors focus:outline-none"
       >
         <span>{value}</span>
-        <ChevronDown className={`w-4 h-4 text-primary/60 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`text-primary/60 h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-primary/10 rounded-2xl shadow-xl z-20 overflow-hidden">
+        <div className="border-primary/10 absolute top-full right-0 left-0 z-20 mt-2 overflow-hidden rounded-2xl border bg-white shadow-xl">
           {TIERS.map((tier) => (
             <button
               key={tier}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(tier); setOpen(false); }}
-              className={`w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-primary/5 transition-colors ${tier === value ? "text-primary font-medium" : "text-primary-dark"}`}
+              onClick={() => {
+                onChange(tier);
+                setOpen(false);
+              }}
+              className={`hover:bg-primary/5 flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${tier === value ? "text-primary font-medium" : "text-primary-dark"}`}
             >
               <span>{tier}</span>
-              {tier === value && <Check className="w-4 h-4 text-primary" />}
+              {tier === value && <Check className="text-primary h-4 w-4" />}
             </button>
           ))}
         </div>
@@ -56,39 +103,92 @@ function TierDropdown({ value, onChange }: { value: CustomerTier; onChange: (v: 
   );
 }
 
-export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function CustomerDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const original = MOCK_CUSTOMERS.find((c) => c.id === id) ?? null;
-  const [customer, setCustomer] = useState<Customer | null>(original ? { ...original } : null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
-  // Sessions State
-  const [sessions, setSessions] = useState([
-    { id: "ses-1", date: "2026-07-10", service: "Signature Massage", staff: "Maria", status: "Completed", price: 450 },
-    { id: "ses-2", date: "2026-06-25", service: "Hydrating Facial", staff: "Sarah", status: "Completed", price: 300 },
-    { id: "ses-3", date: "2026-07-20", service: "Deep Tissue Massage", staff: "Maria", status: "Upcoming", price: 500 },
-  ]);
+  // Sessions State — derived from real bookings matching this customer
+  const [sessions, setSessions] = useState<Booking[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
 
   // Booking Modal State
   const [showBooking, setShowBooking] = useState(false);
   const [bookingStep, setBookingStep] = useState<1 | 2 | 3>(1);
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesError, setServicesError] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
-  
+
   // Booking Form fields
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
   const [bookingStaff, setBookingStaff] = useState("");
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingSubmitError, setBookingSubmitError] = useState<string | null>(
+    null
+  );
 
-  if (!customer) {
+  useEffect(() => {
+    fetchCustomer(id)
+      .then((data) => setCustomer(data))
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    if (!customer) return;
+    setSessionsLoading(true);
+    fetchBookings()
+      .then((all) =>
+        setSessions(all.filter((b) => b.customerName === customer.name))
+      )
+      .catch((err) => setSessionsError(err.message))
+      .finally(() => setSessionsLoading(false));
+  }, [customer]);
+
+  useEffect(() => {
+    if (!showBooking || availableServices.length > 0) return;
+    setServicesLoading(true);
+    fetchServices()
+      .then(setAvailableServices)
+      .catch((err) => setServicesError(err.message))
+      .finally(() => setServicesLoading(false));
+  }, [showBooking, availableServices.length]);
+
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-text-secondary">
-        <p className="text-lg mb-4">Customer not found.</p>
-        <button onClick={() => router.push("/customers")} className="text-primary underline text-sm">
+      <div className="text-text-secondary flex h-full flex-col items-center justify-center">
+        <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+        <p>Loading customer...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !customer) {
+    return (
+      <div className="text-text-secondary flex h-full flex-col items-center justify-center">
+        <AlertCircle className="mb-3 h-8 w-8 text-red-500" />
+        <p className="mb-4 text-lg">{loadError ?? "Customer not found."}</p>
+        <button
+          onClick={() => router.push("/customers")}
+          className="text-primary text-sm underline"
+        >
           Back to Customers
         </button>
       </div>
@@ -96,23 +196,49 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const update = <K extends keyof Customer>(key: K, value: Customer[K]) =>
-    setCustomer((prev) => prev ? { ...prev, [key]: value } : prev);
+    setCustomer((prev) => (prev ? { ...prev, [key]: value } : prev));
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPendingAvatarFile(file);
     const reader = new FileReader();
     reader.onloadend = () => update("avatar", reader.result as string);
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      let avatarUrl = customer.avatar;
+      if (pendingAvatarFile) {
+        avatarUrl = await uploadCustomerAvatar(pendingAvatarFile);
+      }
+      const result = await updateCustomer(id, {
+        ...customer,
+        avatar: avatarUrl,
+      });
+      setCustomer(result);
+      setPendingAvatarFile(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to save changes"
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
   };
 
   // Booking Handlers
@@ -128,59 +254,90 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
   };
 
   const toggleAddon = (addon: Addon) => {
-    setSelectedAddons(prev => 
-      prev.find(a => a.id === addon.id) ? prev.filter(a => a.id !== addon.id) : [...prev, addon]
+    setSelectedAddons((prev) =>
+      prev.find((a) => a.id === addon.id)
+        ? prev.filter((a) => a.id !== addon.id)
+        : [...prev, addon]
     );
   };
 
-  const finalizeBooking = () => {
-    if (!selectedService || !selectedTier || !bookingDate || !bookingTime || !bookingStaff) return;
-    
-    const totalPrice = selectedTier.price + selectedAddons.reduce((acc, curr) => acc + curr.price, 0);
-    
-    const newSession = {
-      id: `ses-${Date.now()}`,
-      date: bookingDate,
-      service: selectedService.name,
-      staff: bookingStaff,
-      status: "Upcoming",
-      price: totalPrice,
-    };
-    
-    setSessions(prev => [newSession, ...prev]);
-    setShowBooking(false);
-    
-    // Reset state
-    setBookingStep(1);
-    setSelectedService(null);
-    setSelectedTier(null);
-    setSelectedAddons([]);
-    setBookingDate("");
-    setBookingTime("");
-    setBookingStaff("");
+  const finalizeBooking = async () => {
+    if (
+      !selectedService ||
+      !selectedTier ||
+      !bookingDate ||
+      !bookingTime ||
+      !bookingStaff
+    )
+      return;
+
+    const totalPrice =
+      selectedTier.price +
+      selectedAddons.reduce((acc, curr) => acc + curr.price, 0);
+
+    setBookingSubmitting(true);
+    setBookingSubmitError(null);
+    try {
+      const created = await createBooking({
+        customerName: customer.name,
+        phone: customer.phone,
+        services: [
+          {
+            name: selectedService.name,
+            addons: selectedAddons.map((a) => a.name),
+          },
+        ],
+        date: bookingDate,
+        time: bookingTime,
+        status: "Confirmed",
+        amount: totalPrice,
+      });
+
+      setSessions((prev) => [created, ...prev]);
+      setShowBooking(false);
+
+      // Reset state
+      setBookingStep(1);
+      setSelectedService(null);
+      setSelectedTier(null);
+      setSelectedAddons([]);
+      setBookingDate("");
+      setBookingTime("");
+      setBookingStaff("");
+    } catch (err) {
+      setBookingSubmitError(
+        err instanceof Error ? err.message : "Failed to create booking"
+      );
+    } finally {
+      setBookingSubmitting(false);
+    }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden relative">
-      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-        
+    <div className="relative flex h-full flex-col overflow-hidden">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {/* Top Bar */}
-        <div className="px-6 md:px-8 py-5 border-b border-primary/10 flex items-center justify-between shrink-0">
+        <div className="border-primary/10 flex shrink-0 items-center justify-between border-b px-6 py-5 md:px-8">
           <button
             onClick={() => router.push("/customers")}
-            className="flex items-center gap-2 text-text-secondary hover:text-primary-dark transition-colors text-sm font-medium group"
+            className="text-text-secondary hover:text-primary-dark group flex items-center gap-2 text-sm font-medium transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Back to Customers
           </button>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => update("status", customer.status === "Active" ? "Inactive" : "Active")}
-              className={`px-4 py-2 rounded-full text-xs font-medium border transition-colors ${
+              onClick={() =>
+                update(
+                  "status",
+                  customer.status === "Active" ? "Inactive" : "Active"
+                )
+              }
+              className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
                 customer.status === "Active"
-                  ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                  : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
+                  ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                  : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
             >
               {customer.status}
@@ -188,114 +345,167 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
             <button
               onClick={handleSave}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium shadow-sm transition-all ${
-                saved ? "bg-green-500 text-white" : "bg-primary text-white hover:opacity-90"
+              disabled={saving}
+              className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium shadow-sm transition-all disabled:opacity-60 ${
+                saved
+                  ? "bg-green-500 text-white"
+                  : "bg-primary text-white hover:opacity-90"
               }`}
             >
-              <Save className="w-4 h-4" />
-              {saved ? "Saved!" : "Save Changes"}
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
             </button>
           </div>
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-auto scrollbar-hide flex-1 p-6 md:p-8">
-          <div className="max-w-4xl mx-auto space-y-12">
-            
+        <div className="scrollbar-hide flex-1 overflow-auto p-6 md:p-8">
+          {saveError && (
+            <div className="mx-auto mb-6 flex max-w-4xl items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {saveError}
+            </div>
+          )}
+          <div className="mx-auto max-w-4xl space-y-12">
             {/* Top Grid: Avatar (Left) + Form Details (Right) */}
-            <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex flex-col gap-8 lg:flex-row">
               {/* LEFT — Avatar */}
-              <div className="flex flex-col gap-4 items-center lg:w-48 shrink-0">
+              <div className="flex shrink-0 flex-col items-center gap-4 lg:w-48">
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="relative w-40 h-40 cursor-pointer rounded-full overflow-hidden border-4 border-white shadow-md bg-primary/5 group"
+                  className="bg-primary/5 group relative h-40 w-40 cursor-pointer overflow-hidden rounded-full border-4 border-white shadow-md"
                 >
                   {customer.avatar ? (
                     <>
-                      <img src={customer.avatar} alt={customer.name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-primary-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center flex-col gap-2">
-                        <Upload className="w-6 h-6 text-white" />
+                      <img
+                        src={customer.avatar}
+                        alt={customer.name}
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="bg-primary-dark/40 absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Upload className="h-6 w-6 text-white" />
                       </div>
                     </>
                   ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                      <span className="text-4xl font-serif">{getInitials(customer.name)}</span>
-                      <div className="absolute inset-0 bg-primary-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center flex-col gap-2">
-                        <Upload className="w-6 h-6 text-white" />
+                    <div className="bg-primary/10 text-primary group-hover:bg-primary/20 absolute inset-0 flex flex-col items-center justify-center gap-1 transition-colors">
+                      <span className="font-serif text-4xl">
+                        {getInitials(customer.name)}
+                      </span>
+                      <div className="bg-primary-dark/40 absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Upload className="h-6 w-6 text-white" />
                       </div>
                     </div>
                   )}
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-                
-                <div className="flex gap-2 w-full mt-2 justify-center">
-                  <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Call">
-                    <Phone className="w-4 h-4" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+
+                <div className="mt-2 flex w-full justify-center gap-2">
+                  <button
+                    className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
+                    title="Call"
+                  >
+                    <Phone className="h-4 w-4" />
                   </button>
-                  <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Message">
-                    <MessageSquare className="w-4 h-4" />
+                  <button
+                    className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
+                    title="Message"
+                  >
+                    <MessageSquare className="h-4 w-4" />
                   </button>
-                  <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="WhatsApp">
-                    <MessageCircle className="w-4 h-4" />
+                  <button
+                    className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
+                    title="WhatsApp"
+                  >
+                    <MessageCircle className="h-4 w-4" />
                   </button>
-                  <button className="p-3 bg-primary/5 hover:bg-primary/10 text-primary rounded-full transition-colors flex-1 flex justify-center items-center" title="Email">
-                    <Mail className="w-4 h-4" />
+                  <button
+                    className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
+                    title="Email"
+                  >
+                    <Mail className="h-4 w-4" />
                   </button>
                 </div>
-                
-                <div className="text-center w-full mt-2 space-y-1">
-                  <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Total Spent</p>
-                  <p className="text-lg font-bold text-primary-dark">QAR {customer.totalSpent}</p>
+
+                <div className="mt-2 w-full space-y-1 text-center">
+                  <p className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+                    Total Spent
+                  </p>
+                  <p className="text-primary-dark text-lg font-bold">
+                    QAR {customer.totalSpent}
+                  </p>
                 </div>
               </div>
 
               {/* RIGHT — Details */}
-              <div className="flex-1 space-y-6 min-w-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="min-w-0 flex-1 space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Full Name</label>
+                    <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                      Full Name
+                    </label>
                     <input
                       value={customer.name}
                       onChange={(e) => update("name", e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark font-medium text-base"
+                      className="border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-base font-medium focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Tier</label>
-                    <TierDropdown value={customer.tier} onChange={(v) => update("tier", v)} />
+                    <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                      Tier
+                    </label>
+                    <TierDropdown
+                      value={customer.tier}
+                      onChange={(v) => update("tier", v)}
+                    />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Email Address</label>
+                    <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       value={customer.email}
                       onChange={(e) => update("email", e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
+                      className="border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Phone Number</label>
+                    <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                      Phone Number
+                    </label>
                     <input
                       type="tel"
                       value={customer.phone}
                       onChange={(e) => update("phone", e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
+                      className="border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Age</label>
+                    <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                      Age
+                    </label>
                     <input
                       type="number"
                       value={customer.age || ""}
                       onChange={(e) => update("age", e.target.value)}
                       placeholder="e.g. 35"
-                      className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
+                      className="border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                     />
                   </div>
                 </div>
@@ -304,124 +514,205 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
             {/* Bottom Section: Sessions History FULL WIDTH */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-primary-dark uppercase tracking-wider">Sessions History</h3>
-                <button 
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-primary-dark text-sm font-bold tracking-wider uppercase">
+                  Sessions History
+                </h3>
+                <button
                   onClick={() => setShowBooking(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary hover:opacity-90 px-4 py-2 rounded-full transition-opacity shadow-sm"
+                  className="bg-primary flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="h-3.5 w-3.5" />
                   Add Session
                 </button>
               </div>
-              
-              <div className="rounded-2xl border border-primary/10 overflow-hidden">
-                <div className="grid grid-cols-[120px_1fr_150px_120px_100px] bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-6 py-4 border-b border-primary/10">
+
+              <div className="border-primary/10 overflow-hidden rounded-2xl border">
+                <div className="text-text-secondary border-primary/10 grid grid-cols-[120px_1fr_100px_120px_100px] border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase">
                   <span>Date</span>
                   <span>Service</span>
-                  <span>Staff</span>
+                  <span>Time</span>
                   <span>Status</span>
-                  <span className="text-right">Price</span>
+                  <span className="text-right">Amount</span>
                 </div>
-                <div className="divide-y divide-primary/5 bg-white">
-                  {sessions.length === 0 ? (
-                    <div className="p-8 text-center text-text-secondary text-sm">No sessions found for this customer.</div>
+                <div className="divide-primary/5 divide-y bg-white">
+                  {sessionsLoading ? (
+                    <div className="text-text-secondary flex items-center justify-center gap-2 p-8 text-center text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                      sessions...
+                    </div>
+                  ) : sessionsError ? (
+                    <div className="flex items-center justify-center gap-2 p-8 text-center text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" /> {sessionsError}
+                    </div>
+                  ) : sessions.length === 0 ? (
+                    <div className="text-text-secondary p-8 text-center text-sm">
+                      No sessions found for this customer.
+                    </div>
                   ) : (
                     sessions.map((session) => (
-                      <div key={session.id} onClick={() => router.push(`/bookings/${session.id}`)} className="grid grid-cols-[120px_1fr_150px_120px_100px] items-center px-6 py-4 text-sm hover:bg-primary/5 transition-colors cursor-pointer">
-                        <span className="text-text-secondary font-medium">{session.date}</span>
-                        <span className="font-semibold text-primary-dark">{session.service}</span>
-                        <span className="text-text-secondary">{session.staff}</span>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border inline-block text-center self-start w-fit
-                          ${session.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' : 
-                            'bg-amber-50 text-amber-600 border-amber-200'}
-                        `}>
+                      <div
+                        key={session.id}
+                        onClick={() => router.push(`/bookings/${session.id}`)}
+                        className="hover:bg-primary/5 grid cursor-pointer grid-cols-[120px_1fr_100px_120px_100px] items-center px-6 py-4 text-sm transition-colors"
+                      >
+                        <span className="text-text-secondary font-medium">
+                          {session.date}
+                        </span>
+                        <span className="text-primary-dark truncate pr-2 font-semibold">
+                          {session.services.map((s) => s.name).join(", ") ||
+                            "Custom Session"}
+                        </span>
+                        <span className="text-text-secondary">
+                          {session.time}
+                        </span>
+                        <span
+                          className={`inline-block w-fit self-start rounded-full border px-2.5 py-1 text-center text-[10px] font-bold tracking-wider uppercase ${
+                            session.status === "Completed"
+                              ? "border-green-200 bg-green-50 text-green-700"
+                              : session.status === "Cancelled"
+                                ? "border-red-200 bg-red-50 text-red-600"
+                                : session.status === "Started"
+                                  ? "bg-primary-dark border-primary-dark text-white"
+                                  : "border-amber-200 bg-amber-50 text-amber-600"
+                          } `}
+                        >
                           {session.status}
                         </span>
-                        <span className="text-right font-bold text-primary-dark">QAR {session.price}</span>
+                        <span className="text-primary-dark text-right font-bold">
+                          QAR {session.amount}
+                        </span>
                       </div>
                     ))
                   )}
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
       {/* Add Session Booking Overlay Modal */}
       {showBooking && (
-        <div className="absolute inset-0 z-40 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 md:p-8">
-          <div className="bg-white w-full max-w-2xl max-h-full rounded-[32px] shadow-2xl flex flex-col overflow-hidden border border-primary/10">
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm md:p-8">
+          <div className="border-primary/10 flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-[32px] border bg-white shadow-2xl">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-primary/10 flex items-center justify-between bg-[#fcf4f0]">
+            <div className="border-primary/10 flex items-center justify-between border-b bg-[#fcf4f0] px-6 py-5">
               <div>
-                <h2 className="text-lg font-serif font-medium text-primary-dark">Add New Session</h2>
-                <p className="text-xs text-text-secondary">Booking for {customer.name}</p>
+                <h2 className="text-primary-dark font-serif text-lg font-medium">
+                  Add New Session
+                </h2>
+                <p className="text-text-secondary text-xs">
+                  Booking for {customer.name}
+                </p>
               </div>
-              <button onClick={() => setShowBooking(false)} className="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors">
-                <X className="w-5 h-5" />
+              <button
+                onClick={() => setShowBooking(false)}
+                className="text-primary hover:bg-primary/10 rounded-full p-2 transition-colors"
+              >
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-auto p-6 scrollbar-hide">
-              
+            <div className="scrollbar-hide flex-1 overflow-auto p-6">
               {bookingStep === 1 && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-primary-dark uppercase tracking-wider mb-4">Step 1: Select Service & Tier</h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    {MOCK_SERVICES.filter(s => s.status === "Active").map(svc => (
-                      <div key={svc.id} className="border border-primary/20 rounded-2xl p-4 space-y-3">
-                        <div className="font-medium text-primary-dark">{svc.name}</div>
-                        <div className="flex flex-wrap gap-2">
-                          {svc.pricingTiers.map(tier => (
-                            <button
-                              key={tier.id}
-                              onClick={() => handleServiceSelect(svc, tier)}
-                              className="px-4 py-2 text-sm border border-primary/20 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors text-left"
-                            >
-                              <div className="font-semibold text-primary">{tier.label}</div>
-                              <div className="text-xs text-text-secondary">QAR {tier.price}</div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <h3 className="text-primary-dark mb-4 text-sm font-bold tracking-wider uppercase">
+                    Step 1: Select Service & Tier
+                  </h3>
+                  {servicesLoading ? (
+                    <div className="text-text-secondary flex items-center justify-center gap-2 py-10 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                      services...
+                    </div>
+                  ) : servicesError ? (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" /> {servicesError}
+                    </div>
+                  ) : availableServices.filter((s) => s.status === "Active")
+                      .length === 0 ? (
+                    <div className="text-text-secondary py-10 text-center text-sm">
+                      No active services available.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {availableServices
+                        .filter((s) => s.status === "Active")
+                        .map((svc) => (
+                          <div
+                            key={svc.id}
+                            className="border-primary/20 space-y-3 rounded-2xl border p-4"
+                          >
+                            <div className="text-primary-dark font-medium">
+                              {svc.name}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {svc.pricingTiers.map((tier) => (
+                                <button
+                                  key={tier.id}
+                                  onClick={() => handleServiceSelect(svc, tier)}
+                                  className="border-primary/20 hover:border-primary hover:bg-primary/5 rounded-xl border px-4 py-2 text-left text-sm transition-colors"
+                                >
+                                  <div className="text-primary font-semibold">
+                                    {tier.label}
+                                  </div>
+                                  <div className="text-text-secondary text-xs">
+                                    QAR {tier.price}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               )}
 
               {bookingStep === 2 && selectedService && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-primary-dark uppercase tracking-wider mb-4">Step 2: Select Add-ons</h3>
+                  <h3 className="text-primary-dark mb-4 text-sm font-bold tracking-wider uppercase">
+                    Step 2: Select Add-ons
+                  </h3>
                   <div className="space-y-3">
-                    {selectedService.addons.map(addon => {
-                      const isSelected = selectedAddons.some(a => a.id === addon.id);
+                    {selectedService.addons.map((addon) => {
+                      const isSelected = selectedAddons.some(
+                        (a) => a.id === addon.id
+                      );
                       return (
                         <button
                           key={addon.id}
                           onClick={() => toggleAddon(addon)}
-                          className={`w-full flex items-center justify-between p-4 border rounded-2xl transition-colors ${
-                            isSelected ? "border-primary bg-primary/5" : "border-primary/20 hover:border-primary/50"
+                          className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-colors ${
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-primary/20 hover:border-primary/50"
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-primary/30'}`}>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                            <div
+                              className={`flex h-5 w-5 items-center justify-center rounded border ${isSelected ? "bg-primary border-primary" : "border-primary/30"}`}
+                            >
+                              {isSelected && (
+                                <Check className="h-3.5 w-3.5 text-white" />
+                              )}
                             </div>
-                            <span className="font-medium text-primary-dark text-sm">{addon.name}</span>
+                            <span className="text-primary-dark text-sm font-medium">
+                              {addon.name}
+                            </span>
                           </div>
-                          <span className="text-sm font-semibold text-primary">+ QAR {addon.price}</span>
+                          <span className="text-primary text-sm font-semibold">
+                            + QAR {addon.price}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
                   <div className="flex justify-end pt-4">
-                    <button 
+                    <button
                       onClick={() => setBookingStep(3)}
-                      className="bg-primary text-white px-8 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+                      className="bg-primary rounded-full px-8 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
                     >
                       Continue
                     </button>
@@ -431,46 +722,58 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
 
               {bookingStep === 3 && selectedService && selectedTier && (
                 <div className="space-y-6">
-                  <h3 className="text-sm font-bold text-primary-dark uppercase tracking-wider mb-2">Step 3: Finalize Booking</h3>
-                  
-                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
-                    <div className="font-semibold text-primary-dark">{selectedService.name} - {selectedTier.label}</div>
+                  <h3 className="text-primary-dark mb-2 text-sm font-bold tracking-wider uppercase">
+                    Step 3: Finalize Booking
+                  </h3>
+
+                  <div className="bg-primary/5 border-primary/10 rounded-2xl border p-4">
+                    <div className="text-primary-dark font-semibold">
+                      {selectedService.name} - {selectedTier.label}
+                    </div>
                     {selectedAddons.length > 0 && (
-                      <div className="text-xs text-text-secondary mt-1">
-                        + {selectedAddons.map(a => a.name).join(", ")}
+                      <div className="text-text-secondary mt-1 text-xs">
+                        + {selectedAddons.map((a) => a.name).join(", ")}
                       </div>
                     )}
-                    <div className="mt-3 text-lg font-bold text-primary">
-                      Total: QAR {selectedTier.price + selectedAddons.reduce((sum, a) => sum + a.price, 0)}
+                    <div className="text-primary mt-3 text-lg font-bold">
+                      Total: QAR{" "}
+                      {selectedTier.price +
+                        selectedAddons.reduce((sum, a) => sum + a.price, 0)}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Date</label>
-                      <input 
+                      <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                        Date
+                      </label>
+                      <input
                         type="date"
                         value={bookingDate}
                         onChange={(e) => setBookingDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
+                        className="border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Time</label>
-                      <input 
+                      <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                        Time
+                      </label>
+                      <input
                         type="time"
                         value={bookingTime}
                         onChange={(e) => setBookingTime(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm"
+                        className="border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Staff Member</label>
+                    <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                      Staff Member
+                    </label>
                     <select
                       value={bookingStaff}
                       onChange={(e) => setBookingStaff(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-primary/40 bg-transparent focus:outline-none focus:border-primary text-primary-dark text-sm appearance-none"
+                      className="border-primary/40 focus:border-primary text-primary-dark w-full appearance-none rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                     >
                       <option value="">Select Staff...</option>
                       <option value="Maria">Maria</option>
@@ -479,19 +782,38 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
                     </select>
                   </div>
 
-                  <div className="flex justify-between items-center pt-4">
-                    <button 
-                      onClick={() => setBookingStep(selectedService.addons.length > 0 ? 2 : 1)}
+                  {bookingSubmitError && (
+                    <div className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      {bookingSubmitError}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-4">
+                    <button
+                      onClick={() =>
+                        setBookingStep(
+                          selectedService.addons.length > 0 ? 2 : 1
+                        )
+                      }
                       className="text-primary text-sm font-medium hover:underline"
                     >
                       Back
                     </button>
-                    <button 
+                    <button
                       onClick={finalizeBooking}
-                      disabled={!bookingDate || !bookingTime || !bookingStaff}
-                      className="bg-primary text-white px-8 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                      disabled={
+                        !bookingDate ||
+                        !bookingTime ||
+                        !bookingStaff ||
+                        bookingSubmitting
+                      }
+                      className="bg-primary flex items-center gap-2 rounded-full px-8 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
-                      Confirm Booking
+                      {bookingSubmitting && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      {bookingSubmitting ? "Booking..." : "Confirm Booking"}
                     </button>
                   </div>
                 </div>
@@ -500,7 +822,6 @@ export default function CustomerDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
       )}
-
     </div>
   );
 }

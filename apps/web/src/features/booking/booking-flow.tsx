@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
 import { useBookingStore, useCartStore, useUserStore } from "@/shared/store";
 import { CartItem, Item, ItemVariant } from "@/shared/types";
 import {
@@ -15,6 +14,7 @@ import {
   ChevronUp,
   ClipboardList,
   Clock,
+  Loader2,
   Plus,
   X,
 } from "lucide-react";
@@ -184,11 +184,12 @@ export function BookingFlow({
   const [channel, setChannel] = useState<"SMS" | "WhatsApp">("WhatsApp");
 
   const [isMounted, setIsMounted] = useState(false);
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const services = ALL_MOCK_ITEMS.filter((i) => !i.isProduct);
 
   // Calendar Helpers
   const getDaysInMonth = (date: Date) =>
@@ -273,59 +274,116 @@ export function BookingFlow({
     dynamicTimeSlots
   );
 
-  const handleCheckout = () => {
-    if (user) {
-      addBooking({
-        id: `b${Date.now()}`,
-        cartItems,
-        totalPrice: total,
-        date:
-          selectedDate?.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          }) ||
-          new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          }),
-        time: selectedTime || "",
-        status: "upcoming",
-        bookingRef: `#ORYX-${Math.floor(Math.random() * 90000) + 10000}`,
-      });
-      setStep("success");
-      clearCart();
-    } else {
+  const toIsoDate = (date: Date | null) => {
+    const d = date || new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const to24Hour = (timeLabel: string) => {
+    if (!timeLabel) return "10:00";
+    const match = timeLabel.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match || !match[1] || !match[2] || !match[3]) return timeLabel;
+    let hours = Number(match[1]);
+    const minutes = match[2];
+    const period = match[3].toUpperCase();
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+    return `${String(hours).padStart(2, "0")}:${minutes}`;
+  };
+
+  const persistBookingToSanity = async (
+    customerName: string,
+    customerPhone: string
+  ) => {
+    const servicesPayload = cartItems.map((ci) => ({
+      name: ci.item.name,
+      addons: (ci.selectedAddons ?? []).map((a) => a.name),
+    }));
+
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerName,
+        phone: customerPhone,
+        services: servicesPayload,
+        date: toIsoDate(selectedDate),
+        time: to24Hour(selectedTime || "10:00 AM"),
+        amount: total,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error ?? "Failed to create booking");
+    }
+
+    return res.json() as Promise<{ id: string }>;
+  };
+
+  const completeLocalBooking = (createdId: string) => {
+    addBooking({
+      id: createdId,
+      cartItems,
+      totalPrice: total,
+      date:
+        selectedDate?.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }) ||
+        new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+      time: selectedTime || "",
+      status: "upcoming",
+      bookingRef: `#ORYX-${createdId.slice(-5).toUpperCase()}`,
+    });
+    setStep("success");
+    clearCart();
+  };
+
+  const handleCheckout = async () => {
+    if (!user) {
       setStep("auth");
+      return;
+    }
+
+    setBookingSubmitting(true);
+    setBookingError(null);
+    try {
+      const created = await persistBookingToSanity(user.name, user.phone);
+      completeLocalBooking(created.id);
+    } catch (err) {
+      setBookingError(
+        err instanceof Error ? err.message : "Failed to create booking"
+      );
+    } finally {
+      setBookingSubmitting(false);
     }
   };
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name && phone) {
+    if (!name || !phone) return;
+
+    setBookingSubmitting(true);
+    setBookingError(null);
+    try {
       setUser({ id: "u1", name, phone, channel });
-      addBooking({
-        id: `b${Date.now()}`,
-        cartItems,
-        totalPrice: total,
-        date:
-          selectedDate?.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          }) ||
-          new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          }),
-        time: selectedTime || "",
-        status: "upcoming",
-        bookingRef: `#ORYX-${Math.floor(Math.random() * 90000) + 10000}`,
-      });
-      setStep("success");
-      clearCart();
+      const created = await persistBookingToSanity(name, phone);
+      completeLocalBooking(created.id);
+    } catch (err) {
+      setBookingError(
+        err instanceof Error ? err.message : "Failed to create booking"
+      );
+    } finally {
+      setBookingSubmitting(false);
     }
   };
 
@@ -779,21 +837,55 @@ export function BookingFlow({
                   Proceed to Time <ChevronRight className="ml-2 h-5 w-5" />
                 </button>
               ) : step === "time" ? (
-                <button
-                  disabled={!selectedTime}
-                  onClick={handleCheckout}
-                  className="bg-primary hover:bg-primary-dark flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
-                >
-                  Checkout <ChevronRight className="ml-2 h-5 w-5" />
-                </button>
+                <>
+                  {bookingError && (
+                    <p className="mb-3 text-center text-sm text-red-500">
+                      {bookingError}
+                    </p>
+                  )}
+                  <button
+                    disabled={!selectedTime || bookingSubmitting}
+                    onClick={handleCheckout}
+                    className="bg-primary hover:bg-primary-dark flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+                  >
+                    {bookingSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
+                        Booking...
+                      </>
+                    ) : (
+                      <>
+                        Checkout <ChevronRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </button>
+                </>
               ) : step === "auth" ? (
-                <button
-                  type="submit"
-                  form="auth-form"
-                  className="flex w-full items-center justify-center rounded-xl bg-[#A87434] py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90"
-                >
-                  Verify & Confirm <ChevronRight className="ml-2 h-5 w-5" />
-                </button>
+                <>
+                  {bookingError && (
+                    <p className="mb-3 text-center text-sm text-red-500">
+                      {bookingError}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    form="auth-form"
+                    disabled={bookingSubmitting}
+                    className="flex w-full items-center justify-center rounded-xl bg-[#A87434] py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+                  >
+                    {bookingSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
+                        Confirming...
+                      </>
+                    ) : (
+                      <>
+                        Verify & Confirm{" "}
+                        <ChevronRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </button>
+                </>
               ) : null}
             </div>
           </div>
@@ -820,11 +912,19 @@ export function BookingFlow({
               </button>
             ) : (
               <button
-                disabled={!selectedTime}
+                disabled={!selectedTime || bookingSubmitting}
                 onClick={handleCheckout}
                 className="bg-primary text-surface hover:bg-primary-dark border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
               >
-                Checkout <ChevronRight className="ml-1 h-4 w-4" />
+                {bookingSubmitting ? (
+                  <>
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Booking...
+                  </>
+                ) : (
+                  <>
+                    Checkout <ChevronRight className="ml-1 h-4 w-4" />
+                  </>
+                )}
               </button>
             )}
           </div>

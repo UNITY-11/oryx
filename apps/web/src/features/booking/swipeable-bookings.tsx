@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useRef, TouchEvent } from "react";
-import { useBookingStore } from "@/shared/store";
-import { BookingFlow } from "@/features/booking/booking-flow";
+import { TouchEvent, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Calendar as CalendarIcon, Clock, Settings, LogOut } from "lucide-react";
+import { BookingFlow } from "@/features/booking/booking-flow";
+import { useBookingStore } from "@/shared/store";
+import {
+  Calendar as CalendarIcon,
+  ChevronRight,
+  Clock,
+  LogOut,
+  Settings,
+} from "lucide-react";
 
 export function SwipeableBookings() {
-  const [activeTab, setActiveTab] = useState<"current" | "upcoming" | "completed">("current");
-  
+  const [activeTab, setActiveTab] = useState<
+    "current" | "upcoming" | "completed"
+  >("current");
+
   // Touch gesture state
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
@@ -41,53 +49,69 @@ export function SwipeableBookings() {
   };
 
   const bookings = useBookingStore((state) => state.bookings);
-  const upcomingBookings = bookings.filter(b => b.status === "upcoming");
-  const completedBookings = bookings.filter(b => b.status === "completed");
+  const upcomingBookings = bookings.filter((b) => b.status === "upcoming");
+  const completedBookings = bookings.filter((b) => b.status === "completed");
 
   const renderBookingList = (list: typeof bookings, emptyMessage: string) => {
     if (list.length === 0) {
       return (
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-primary/10 text-center flex flex-col items-center justify-center mt-2">
-          <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
-            <CalendarIcon className="w-8 h-8 text-primary/40" />
+        <div className="border-primary/10 mt-2 flex flex-col items-center justify-center rounded-3xl border bg-white p-8 text-center shadow-sm">
+          <div className="bg-primary/5 mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <CalendarIcon className="text-primary/40 h-8 w-8" />
           </div>
-          <h4 className="font-serif text-lg text-primary-dark mb-2">No sessions found</h4>
-          <p className="text-sm text-text-secondary max-w-[200px] mb-6">{emptyMessage}</p>
+          <h4 className="text-primary-dark mb-2 font-serif text-lg">
+            No sessions found
+          </h4>
+          <p className="text-text-secondary mb-6 max-w-[200px] text-sm">
+            {emptyMessage}
+          </p>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         {list.map((booking) => {
           const primaryItem = booking.cartItems[0]?.item;
           if (!primaryItem) return null;
-          
+
           return (
-            <Link key={booking.id} href={`/session/${booking.id}`} className="block bg-white rounded-3xl p-4 shadow-sm border border-primary/20 relative overflow-hidden group hover:shadow-md transition-all active:scale-[0.98]">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-10 -mt-10 pointer-events-none" />
+            <Link
+              key={booking.id}
+              href={`/session/${booking.id}`}
+              className="border-primary/20 group relative block overflow-hidden rounded-3xl border bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+            >
+              <div className="bg-primary/5 pointer-events-none absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-bl-full" />
               <div className="flex space-x-4">
-                <div className="w-20 h-24 rounded-2xl overflow-hidden shrink-0">
-                  <img src={primaryItem.imageUrl} alt={primaryItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="h-24 w-20 shrink-0 overflow-hidden rounded-2xl">
+                  <img
+                    src={primaryItem.imageUrl}
+                    alt={primaryItem.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
                 </div>
-                <div className="flex-1 py-1 flex flex-col justify-between">
+                <div className="flex flex-1 flex-col justify-between py-1">
                   <div>
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-md">{booking.status}</span>
-                      <ChevronRight className="w-4 h-4 text-primary/40 group-hover:text-primary transition-colors" />
+                    <div className="mb-1 flex items-start justify-between">
+                      <span className="text-primary bg-primary/10 rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                        {booking.status}
+                      </span>
+                      <ChevronRight className="text-primary/40 group-hover:text-primary h-4 w-4 transition-colors" />
                     </div>
-                    <h4 className="font-serif text-[15px] text-primary-dark leading-tight line-clamp-1 mb-2 pr-2">
-                      {booking.cartItems.length > 1 ? `${primaryItem.name} + ${booking.cartItems.length - 1} more` : primaryItem.name}
+                    <h4 className="text-primary-dark mb-2 line-clamp-1 pr-2 font-serif text-[15px] leading-tight">
+                      {booking.cartItems.length > 1
+                        ? `${primaryItem.name} + ${booking.cartItems.length - 1} more`
+                        : primaryItem.name}
                     </h4>
                   </div>
-                  
+
                   <div className="space-y-1.5">
-                    <div className="flex items-center text-xs text-text-secondary">
-                      <CalendarIcon className="w-3.5 h-3.5 mr-2 text-[#E5C37A]" />
+                    <div className="text-text-secondary flex items-center text-xs">
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-[#A87434]" />
                       <span>{booking.date}</span>
                     </div>
-                    <div className="flex items-center text-xs text-text-secondary">
-                      <Clock className="w-3.5 h-3.5 mr-2 text-[#E5C37A]" />
+                    <div className="text-text-secondary flex items-center text-xs">
+                      <Clock className="mr-2 h-3.5 w-3.5 text-[#A87434]" />
                       <span>{booking.time}</span>
                     </div>
                   </div>
@@ -101,67 +125,75 @@ export function SwipeableBookings() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#faf6f3] md:bg-white overflow-hidden relative">
-      <div className="pt-6 px-6 bg-white shrink-0 z-10 md:hidden">
-        <h1 className="font-serif text-3xl font-medium text-primary-dark mb-4">Bookings</h1>
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#faf6f3] md:bg-white">
+      <div className="z-10 shrink-0 bg-white px-6 pt-6 md:hidden">
+        <h1 className="text-primary-dark mb-4 font-serif text-3xl font-medium">
+          Bookings
+        </h1>
       </div>
 
       {/* Tabs */}
-      <div className="flex w-full border-b border-primary/20 bg-white px-6 md:pt-6 shrink-0 relative z-10">
-        <button 
+      <div className="border-primary/20 relative z-10 flex w-full shrink-0 border-b bg-white px-6 md:pt-6">
+        <button
           onClick={() => setActiveTab("current")}
           className={`flex-1 pb-3 text-sm font-medium transition-colors ${activeTab === "current" ? "text-primary" : "text-text-secondary"}`}
         >
           New Booking
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab("upcoming")}
           className={`flex-1 pb-3 text-sm font-medium transition-colors ${activeTab === "upcoming" ? "text-primary" : "text-text-secondary"}`}
         >
           Upcoming
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab("completed")}
           className={`flex-1 pb-3 text-sm font-medium transition-colors ${activeTab === "completed" ? "text-primary" : "text-text-secondary"}`}
         >
           Completed
         </button>
         {/* Animated indicator */}
-        <div 
-          className="absolute bottom-0 h-0.5 bg-primary transition-transform duration-300"
-          style={{ 
+        <div
+          className="bg-primary absolute bottom-0 h-0.5 transition-transform duration-300"
+          style={{
             width: "calc((100% - 3rem) / 3)",
-            transform: `translateX(calc(${activeTab === "current" ? 0 : activeTab === "upcoming" ? 100 : 200}%))` 
+            transform: `translateX(calc(${activeTab === "current" ? 0 : activeTab === "upcoming" ? 100 : 200}%))`,
           }}
         />
       </div>
 
       {/* Swipable Area */}
-      <div 
-        className="flex-1 overflow-hidden relative"
+      <div
+        className="relative flex-1 overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div 
-          className="flex w-[300%] h-full transition-transform duration-300 ease-in-out"
-          style={{ 
-            transform: `translateX(-${activeTab === "current" ? 0 : activeTab === "upcoming" ? 33.333 : 66.666}%)` 
+        <div
+          className="flex h-full w-[300%] transition-transform duration-300 ease-in-out"
+          style={{
+            transform: `translateX(-${activeTab === "current" ? 0 : activeTab === "upcoming" ? 33.333 : 66.666}%)`,
           }}
         >
           {/* Current Booking / Cart */}
-          <div className="w-1/3 h-full overflow-hidden relative flex flex-col min-h-0 bg-[#faf6f3] md:bg-transparent">
+          <div className="relative flex h-full min-h-0 w-1/3 flex-col overflow-hidden bg-[#faf6f3] md:bg-transparent">
             <BookingFlow isIntegrated={true} />
           </div>
 
           {/* Upcoming Bookings */}
-          <div className="w-1/3 px-6 h-full overflow-y-auto pb-24 relative bg-[#faf6f3] md:bg-transparent">
-            {renderBookingList(upcomingBookings, "You have no upcoming sessions.")}
+          <div className="relative h-full w-1/3 overflow-y-auto bg-[#faf6f3] px-6 pb-24 md:bg-transparent">
+            {renderBookingList(
+              upcomingBookings,
+              "You have no upcoming sessions."
+            )}
           </div>
 
           {/* Completed Bookings */}
-          <div className="w-1/3 px-6 h-full overflow-y-auto pb-24 relative bg-[#faf6f3] md:bg-transparent">
-            {renderBookingList(completedBookings, "You have no completed sessions.")}
+          <div className="relative h-full w-1/3 overflow-y-auto bg-[#faf6f3] px-6 pb-24 md:bg-transparent">
+            {renderBookingList(
+              completedBookings,
+              "You have no completed sessions."
+            )}
           </div>
         </div>
       </div>

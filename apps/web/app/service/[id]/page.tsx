@@ -1,10 +1,16 @@
-import { ALL_MOCK_ITEMS } from "@/features/catalog/mock-data";
-import { ServiceDetailClient } from "@/features/catalog/service-detail-client";
 import { notFound } from "next/navigation";
+import { fetchItemById } from "@/features/catalog/sanity";
+import { ServiceDetailClient } from "@/features/catalog/service-detail-client";
 
-export default async function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export const dynamic = "force-dynamic";
+
+export default async function ServiceDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
-  const item = ALL_MOCK_ITEMS.find((i) => i.id === id);
+  const item = await fetchItemById(id);
 
   if (!item) {
     notFound();

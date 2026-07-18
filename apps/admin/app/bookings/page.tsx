@@ -1,17 +1,35 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Search, Plus, Filter, ArrowUpDown } from "lucide-react";
-import { MOCK_BOOKINGS, BookingStatus, Booking } from "../../src/features/bookings/mock-data";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  AlertCircle,
+  ArrowUpDown,
+  Filter,
+  Loader2,
+  Plus,
+  Search,
+} from "lucide-react";
+
 import { AddBookingModal } from "../../src/features/bookings/add-booking-modal";
+import { fetchBookings } from "../../src/features/bookings/api";
+import { Booking, BookingStatus } from "../../src/features/bookings/mock-data";
 
 function BookingsContent() {
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
+  useEffect(() => {
+    fetchBookings()
+      .then(setBookings)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   useEffect(() => {
     if (searchParams.get("action") === "add") {
       setIsModalOpen(true);
@@ -21,8 +39,12 @@ function BookingsContent() {
   }, [searchParams]);
   // Filter & Sort State
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">("All");
-  const [sortField, setSortField] = useState<"id" | "date" | "amount" | "customerName">("id");
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">(
+    "All"
+  );
+  const [sortField, setSortField] = useState<
+    "id" | "date" | "amount" | "customerName"
+  >("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Handlers
@@ -41,10 +63,11 @@ function BookingsContent() {
 
   // Derived State
   const filteredAndSortedBookings = bookings
-    .filter(b => statusFilter === "All" || b.status === statusFilter)
-    .filter(b => 
-      b.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      b.id.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter((b) => statusFilter === "All" || b.status === statusFilter)
+    .filter(
+      (b) =>
+        b.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.id.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
       let comparison = 0;
@@ -64,125 +87,197 @@ function BookingsContent() {
     });
 
   return (
-    <div className="flex flex-col h-full space-y-6 md:space-y-8">
+    <div className="flex h-full flex-col space-y-6 md:space-y-8">
       {/* Header Area */}
 
       {/* Combined Table and Filters */}
-      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {/* Filters and Search Bar */}
-        <div className="p-4 md:p-6 border-b border-primary/10 flex flex-col md:flex-row gap-4 justify-between items-center z-10 shrink-0">
-          <div className="relative w-full md:w-96 shrink-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-            <input 
-              type="text" 
-              placeholder="Search by customer or ID..." 
+        <div className="border-primary/10 z-10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
+          <div className="relative w-full shrink-0 md:w-96">
+            <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by customer or ID..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-transparent border border-primary rounded-full focus:outline-none focus:ring-1 focus:ring-primary transition-colors text-primary-dark placeholder:text-primary/70"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 transition-colors focus:ring-1 focus:outline-none"
             />
           </div>
 
-        <div className="flex items-center space-x-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide shrink-0">
-          <div className="flex items-center text-text-secondary px-2">
-            <Filter className="w-4 h-4 mr-2" />
-            <span className="text-sm font-medium">Status:</span>
+          <div className="scrollbar-hide flex w-full shrink-0 items-center space-x-2 overflow-x-auto pb-2 md:w-auto md:pb-0">
+            <div className="text-text-secondary flex items-center px-2">
+              <Filter className="mr-2 h-4 w-4" />
+              <span className="text-sm font-medium">Status:</span>
+            </div>
+            {["All", "Confirmed", "Pending", "Completed", "Cancelled"].map(
+              (status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status as any)}
+                  className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    statusFilter === status
+                      ? "bg-primary border-primary text-white shadow-sm"
+                      : "text-text-secondary border-primary/10 bg-white hover:bg-gray-50"
+                  }`}
+                >
+                  {status}
+                </button>
+              )
+            )}
           </div>
-          {["All", "Confirmed", "Pending", "Completed", "Cancelled"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status as any)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-                statusFilter === status 
-                  ? 'bg-primary text-white border-primary shadow-sm' 
-                  : 'bg-white text-text-secondary border-primary/10 hover:bg-gray-50'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
         </div>
 
         {/* Data Table */}
-        <div className="overflow-auto scrollbar-hide flex-1">
-          <table className="w-full min-w-[900px] text-left border-collapse">
-            <thead className="sticky top-0 bg-[#fcf4f0] z-10">
-              <tr className="border-b border-primary/10 text-xs uppercase tracking-wider text-text-secondary">
-                <th className="py-4 font-medium pl-6 md:pl-8 cursor-pointer group" onClick={() => toggleSort('id')}>
+        <div className="scrollbar-hide flex-1 overflow-auto">
+          <table className="w-full min-w-[900px] border-collapse text-left">
+            <thead className="sticky top-0 z-10 bg-[#fcf4f0]">
+              <tr className="border-primary/10 text-text-secondary border-b text-xs tracking-wider uppercase">
+                <th
+                  className="group cursor-pointer py-4 pl-6 font-medium md:pl-8"
+                  onClick={() => toggleSort("id")}
+                >
                   <div className="flex items-center">
                     ID
-                    <ArrowUpDown className={`w-3 h-3 ml-1 transition-opacity ${sortField === 'id' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+                    <ArrowUpDown
+                      className={`ml-1 h-3 w-3 transition-opacity ${sortField === "id" ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
+                    />
                   </div>
                 </th>
-                <th className="py-4 font-medium cursor-pointer group" onClick={() => toggleSort('customerName')}>
+                <th
+                  className="group cursor-pointer py-4 font-medium"
+                  onClick={() => toggleSort("customerName")}
+                >
                   <div className="flex items-center">
                     Customer
-                    <ArrowUpDown className={`w-3 h-3 ml-1 transition-opacity ${sortField === 'customerName' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+                    <ArrowUpDown
+                      className={`ml-1 h-3 w-3 transition-opacity ${sortField === "customerName" ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
+                    />
                   </div>
                 </th>
                 <th className="py-4 font-medium">Service & Add-ons</th>
-                <th className="py-4 font-medium cursor-pointer group" onClick={() => toggleSort('date')}>
+                <th
+                  className="group cursor-pointer py-4 font-medium"
+                  onClick={() => toggleSort("date")}
+                >
                   <div className="flex items-center">
                     Date & Time
-                    <ArrowUpDown className={`w-3 h-3 ml-1 transition-opacity ${sortField === 'date' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+                    <ArrowUpDown
+                      className={`ml-1 h-3 w-3 transition-opacity ${sortField === "date" ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
+                    />
                   </div>
                 </th>
                 <th className="py-4 font-medium">Status</th>
-                <th className="py-4 font-medium text-right cursor-pointer group pr-6 md:pr-8" onClick={() => toggleSort('amount')}>
+                <th
+                  className="group cursor-pointer py-4 pr-6 text-right font-medium md:pr-8"
+                  onClick={() => toggleSort("amount")}
+                >
                   <div className="flex items-center justify-end">
                     Amount
-                    <ArrowUpDown className={`w-3 h-3 ml-1 transition-opacity ${sortField === 'amount' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+                    <ArrowUpDown
+                      className={`ml-1 h-3 w-3 transition-opacity ${sortField === "amount" ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
+                    />
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-primary/5">
-              {filteredAndSortedBookings.length === 0 ? (
+            <tbody className="divide-primary/5 divide-y">
+              {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-text-secondary">
+                  <td
+                    colSpan={6}
+                    className="text-text-secondary py-12 text-center"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" /> Loading
+                      bookings...
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-red-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <AlertCircle className="h-5 w-5" /> {error}
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredAndSortedBookings.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="text-text-secondary py-12 text-center"
+                  >
                     No bookings found matching your filters.
                   </td>
                 </tr>
               ) : (
                 filteredAndSortedBookings.map((booking) => (
-                  <tr key={booking.id} onClick={() => router.push(`/bookings/${booking.id}`)} className="hover:bg-primary/5 transition-colors group cursor-pointer">
-                    <td className="py-5 font-mono text-xs text-text-secondary pl-6 md:pl-8">{booking.id}</td>
-                    <td className="py-5">
-                      <p className="font-medium text-primary-dark">{booking.customerName}</p>
-                      <p className="text-sm text-text-secondary mt-0.5">{booking.phone}</p>
+                  <tr
+                    key={booking.id}
+                    onClick={() => router.push(`/bookings/${booking.id}`)}
+                    className="hover:bg-primary/5 group cursor-pointer transition-colors"
+                  >
+                    <td className="text-text-secondary py-5 pl-6 font-mono text-xs md:pl-8">
+                      {booking.id}
                     </td>
                     <td className="py-5">
-                      <p className="font-medium text-text-primary">{booking.services[0]?.name || "Custom Session"}</p>
+                      <p className="text-primary-dark font-medium">
+                        {booking.customerName}
+                      </p>
+                      <p className="text-text-secondary mt-0.5 text-sm">
+                        {booking.phone}
+                      </p>
+                    </td>
+                    <td className="py-5">
+                      <p className="text-text-primary font-medium">
+                        {booking.services[0]?.name || "Custom Session"}
+                      </p>
                       {booking.services.length > 1 && (
-                        <p className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">
-                          + {booking.services.length - 1} more service{booking.services.length > 2 ? 's' : ''}
+                        <p className="text-text-secondary mt-0.5 text-[10px] tracking-wider uppercase">
+                          + {booking.services.length - 1} more service
+                          {booking.services.length > 2 ? "s" : ""}
                         </p>
                       )}
                       {(booking.services[0]?.addons?.length ?? 0) > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
+                        <div className="mt-1.5 flex flex-wrap gap-1">
                           {booking.services[0]?.addons.map((addon, idx) => (
-                            <span key={idx} className="inline-block px-2 py-0.5 bg-gray-100 text-text-secondary text-[10px] uppercase tracking-wider rounded-md">
+                            <span
+                              key={idx}
+                              className="text-text-secondary inline-block rounded-md bg-gray-100 px-2 py-0.5 text-[10px] tracking-wider uppercase"
+                            >
                               + {addon}
                             </span>
                           ))}
                         </div>
                       )}
                     </td>
-                    <td className="py-5 text-text-secondary">
-                      <p className="font-medium">{new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-                      <p className="text-sm mt-0.5">{booking.time}</p>
+                    <td className="text-text-secondary py-5">
+                      <p className="font-medium">
+                        {new Date(booking.date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                      <p className="mt-0.5 text-sm">{booking.time}</p>
                     </td>
                     <td className="py-5">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-                        booking.status === 'Confirmed' ? 'bg-green-50 text-green-700 border-green-200' : 
-                        booking.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                        booking.status === 'Completed' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                        'bg-red-50 text-red-700 border-red-200'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+                          booking.status === "Confirmed"
+                            ? "border-green-200 bg-green-50 text-green-700"
+                            : booking.status === "Pending"
+                              ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                              : booking.status === "Completed"
+                                ? "border-blue-200 bg-blue-50 text-blue-700"
+                                : "border-red-200 bg-red-50 text-red-700"
+                        }`}
+                      >
                         {booking.status}
                       </span>
                     </td>
-                    <td className="py-5 text-right font-medium text-primary-dark pr-6 md:pr-8">
+                    <td className="text-primary-dark py-5 pr-6 text-right font-medium md:pr-8">
                       QAR {booking.amount}
                     </td>
                   </tr>
@@ -193,10 +288,10 @@ function BookingsContent() {
         </div>
       </div>
 
-      <AddBookingModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onAddBooking={handleAddBooking} 
+      <AddBookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddBooking={handleAddBooking}
       />
     </div>
   );

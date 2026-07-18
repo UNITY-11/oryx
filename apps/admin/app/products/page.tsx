@@ -1,20 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ImageIcon, Package, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MOCK_PRODUCTS, Product, ProductCategory } from "../../src/features/products/mock-data";
+import {
+  AlertCircle,
+  ChevronDown,
+  ImageIcon,
+  Loader2,
+  Package,
+  Search,
+} from "lucide-react";
+
+import { fetchProducts } from "../../src/features/products/api";
+import {
+  Product,
+  ProductCategory,
+} from "../../src/features/products/mock-data";
 
 const CATEGORY_FILTERS: Array<ProductCategory | "All"> = [
-  "All", "Skincare", "Body Care", "Hair Care", "Aromatherapy", "Accessories", "Supplements",
+  "All",
+  "Skincare",
+  "Body Care",
+  "Hair Care",
+  "Aromatherapy",
+  "Accessories",
+  "Supplements",
 ];
 
 export default function ProductsPage() {
-  const [products] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "All">("All");
+  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "All">(
+    "All"
+  );
   const [sortBy, setSortBy] = useState("Default");
   const [isSortOpen, setIsSortOpen] = useState(false);
+
+  useEffect(() => {
+    fetchProducts()
+      .then(setProducts)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const sortOptions = [
     { value: "Default", label: "Sort: Default" },
@@ -36,39 +65,47 @@ export default function ProductsPage() {
     });
 
   const activeCount = products.filter((p) => p.status === "Active").length;
-  const lowStockCount = products.filter((p) => p.quantity > 0 && p.quantity <= 10).length;
+  const lowStockCount = products.filter(
+    (p) => p.quantity > 0 && p.quantity <= 10
+  ).length;
   const outOfStockCount = products.filter((p) => p.quantity === 0).length;
 
   return (
-    <div className="flex flex-col h-full space-y-6">
-      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-
+    <div className="flex h-full flex-col space-y-6">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {/* Top Bar */}
-        <div className="p-4 md:p-6 border-b border-primary/10 flex flex-col md:flex-row gap-4 justify-between items-center shrink-0">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+        <div className="border-primary/10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
+          <div className="flex w-full shrink-0 flex-col items-center gap-3 sm:flex-row md:w-auto">
             <div className="relative w-full sm:w-64 md:w-80">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+              <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-transparent border border-primary rounded-full focus:outline-none focus:ring-1 focus:ring-primary text-primary-dark placeholder:text-primary/70 text-sm"
+                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 text-sm focus:ring-1 focus:outline-none"
               />
             </div>
-            <div className="relative w-full sm:w-48 shrink-0 z-40">
+            <div className="relative z-40 w-full shrink-0 sm:w-48">
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="w-full flex items-center justify-between pl-5 pr-4 py-3 bg-white border border-primary/20 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/30 text-primary-dark text-sm cursor-pointer hover:bg-primary/5 transition-all font-medium shadow-sm"
+                className="border-primary/20 focus:ring-primary/30 text-primary-dark hover:bg-primary/5 flex w-full cursor-pointer items-center justify-between rounded-full border bg-white py-3 pr-4 pl-5 text-sm font-medium shadow-sm transition-all focus:ring-2 focus:outline-none"
               >
-                <span className="truncate">{sortOptions.find(o => o.value === sortBy)?.label}</span>
-                <ChevronDown className={`w-4 h-4 text-primary transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`} />
+                <span className="truncate">
+                  {sortOptions.find((o) => o.value === sortBy)?.label}
+                </span>
+                <ChevronDown
+                  className={`text-primary h-4 w-4 transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`}
+                />
               </button>
-              
+
               {isSortOpen && (
                 <>
-                  <div className="fixed inset-0 z-30" onClick={() => setIsSortOpen(false)} />
-                  <div className="absolute top-full right-0 mt-2 w-full min-w-[180px] bg-white rounded-2xl shadow-xl border border-primary/10 overflow-hidden z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setIsSortOpen(false)}
+                  />
+                  <div className="border-primary/10 animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-40 mt-2 w-full min-w-[180px] overflow-hidden rounded-2xl border bg-white shadow-xl duration-200">
                     <div className="py-2">
                       {sortOptions.map((option) => (
                         <button
@@ -77,7 +114,7 @@ export default function ProductsPage() {
                             setSortBy(option.value);
                             setIsSortOpen(false);
                           }}
-                          className={`w-full text-left px-5 py-2.5 text-sm transition-colors ${
+                          className={`w-full px-5 py-2.5 text-left text-sm transition-colors ${
                             sortBy === option.value
                               ? "bg-primary/10 text-primary-dark font-bold"
                               : "text-text-secondary hover:bg-primary/5 hover:text-primary-dark font-medium"
@@ -93,15 +130,15 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide shrink-0">
+          <div className="scrollbar-hide flex shrink-0 items-center gap-2 overflow-x-auto pb-1">
             {CATEGORY_FILTERS.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                className={`rounded-full border px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   categoryFilter === cat
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white text-text-secondary border-primary/10 hover:bg-primary/5"
+                    ? "bg-primary border-primary text-white shadow-sm"
+                    : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
                 }`}
               >
                 {cat}
@@ -111,25 +148,36 @@ export default function ProductsPage() {
         </div>
 
         {/* Cards Grid */}
-        <div className="overflow-auto scrollbar-hide flex-1 p-4 md:p-6">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-text-secondary">
-              <Package className="w-10 h-10 mb-3 text-primary/20" />
+        <div className="scrollbar-hide flex-1 overflow-auto p-4 md:p-6">
+          {loading ? (
+            <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
+              <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+              <p>Loading products...</p>
+            </div>
+          ) : error ? (
+            <div className="flex h-48 flex-col items-center justify-center text-red-500">
+              <AlertCircle className="mb-3 h-8 w-8" />
+              <p>{error}</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
+              <Package className="text-primary/20 mb-3 h-10 w-10" />
               <p>No products found. Try adjusting your filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {/* Add Product Card */}
               <Link
                 href="/products/new"
-                className="group flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-primary/50 hover:text-primary"
+                className="group border-primary/30 hover:border-primary/60 hover:bg-primary/5 text-primary/50 hover:text-primary flex flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all"
                 style={{ aspectRatio: "3/4" }}
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center mb-3 transition-colors">
-                  <span className="text-2xl font-light leading-none">+</span>
+                <div className="bg-primary/10 group-hover:bg-primary/20 mb-3 flex h-12 w-12 items-center justify-center rounded-full transition-colors">
+                  <span className="text-2xl leading-none font-light">+</span>
                 </div>
-                <span className="text-sm font-medium text-center px-4">Add Product</span>
+                <span className="px-4 text-center text-sm font-medium">
+                  Add Product
+                </span>
               </Link>
 
               {/* Product Cards — image only */}
@@ -137,36 +185,38 @@ export default function ProductsPage() {
                 <Link
                   key={product.id}
                   href={`/products/${product.id}`}
-                  className="group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all bg-gradient-to-br from-primary/10 to-primary/5"
+                  className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                   style={{ aspectRatio: "3/4" }}
                 >
                   {product.image ? (
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Package className="w-10 h-10 text-primary/20" />
+                      <Package className="text-primary/20 h-10 w-10" />
                     </div>
                   )}
 
                   {/* Stock badge */}
                   {product.quantity === 0 && (
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-xs font-semibold text-red-500 px-2 py-1 rounded-full border border-red-100">
+                    <div className="absolute top-3 right-3 rounded-full border border-red-100 bg-white/90 px-2 py-1 text-xs font-semibold text-red-500 backdrop-blur-sm">
                       Out of stock
                     </div>
                   )}
                   {product.quantity > 0 && product.quantity <= 10 && (
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-xs font-semibold text-amber-600 px-2 py-1 rounded-full border border-amber-100">
+                    <div className="absolute top-3 right-3 rounded-full border border-amber-100 bg-white/90 px-2 py-1 text-xs font-semibold text-amber-600 backdrop-blur-sm">
                       Low stock
                     </div>
                   )}
 
                   {/* Name on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary-dark/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                    <p className="text-white text-sm font-semibold leading-tight">{product.name}</p>
+                  <div className="from-primary-dark/70 absolute inset-0 flex items-end bg-gradient-to-t via-transparent to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <p className="text-sm leading-tight font-semibold text-white">
+                      {product.name}
+                    </p>
                   </div>
 
                   {/* Inactive dim */}
@@ -180,9 +230,9 @@ export default function ProductsPage() {
         </div>
 
         {/* Footer Stats */}
-        <div className="px-6 py-3 border-t border-primary/5 shrink-0 flex items-center gap-4 text-xs text-text-secondary">
+        <div className="border-primary/5 text-text-secondary flex shrink-0 items-center gap-4 border-t px-6 py-3 text-xs">
           <span className="flex items-center gap-1">
-            <Package className="w-3 h-3 text-primary" />
+            <Package className="text-primary h-3 w-3" />
             {activeCount} Active
           </span>
           <span className="text-amber-600">{lowStockCount} Low Stock</span>

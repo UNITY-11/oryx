@@ -1,16 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { Search, UserCircle2, Mail, Phone, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MOCK_CUSTOMERS, Customer, CustomerTier } from "../../src/features/customers/mock-data";
+import {
+  AlertCircle,
+  Loader2,
+  Mail,
+  Phone,
+  Search,
+  UserCircle2,
+} from "lucide-react";
 
-const TIER_FILTERS: Array<CustomerTier | "All"> = ["All", "Platinum", "Gold", "Silver", "Bronze"];
+import { fetchCustomers } from "../../src/features/customers/api";
+import { Customer, CustomerTier } from "../../src/features/customers/mock-data";
+
+const TIER_FILTERS: Array<CustomerTier | "All"> = [
+  "All",
+  "Platinum",
+  "Gold",
+  "Silver",
+  "Bronze",
+];
 
 export default function CustomersPage() {
-  const [customers] = useState<Customer[]>(MOCK_CUSTOMERS);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<CustomerTier | "All">("All");
+
+  useEffect(() => {
+    fetchCustomers()
+      .then(setCustomers)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = customers
     .filter((c) => tierFilter === "All" || c.tier === tierFilter)
@@ -25,31 +49,30 @@ export default function CustomersPage() {
   const inactiveCount = customers.filter((c) => c.status === "Inactive").length;
 
   return (
-    <div className="flex flex-col h-full space-y-6">
-      <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-
+    <div className="flex h-full flex-col space-y-6">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {/* Top Bar */}
-        <div className="p-4 md:p-6 border-b border-primary/10 flex flex-col md:flex-row gap-4 justify-between items-center shrink-0">
-          <div className="relative w-full md:w-80 shrink-0">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+        <div className="border-primary/10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
+          <div className="relative w-full shrink-0 md:w-80">
+            <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by name, email or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-transparent border border-primary rounded-full focus:outline-none focus:ring-1 focus:ring-primary text-primary-dark placeholder:text-primary/70 text-sm"
+              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 text-sm focus:ring-1 focus:outline-none"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide shrink-0">
+          <div className="scrollbar-hide flex shrink-0 items-center gap-2 overflow-x-auto pb-1">
             {TIER_FILTERS.map((tier) => (
               <button
                 key={tier}
                 onClick={() => setTierFilter(tier)}
-                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                className={`rounded-full border px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   tierFilter === tier
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white text-text-secondary border-primary/10 hover:bg-primary/5"
+                    ? "bg-primary border-primary text-white shadow-sm"
+                    : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
                 }`}
               >
                 {tier}
@@ -59,61 +82,96 @@ export default function CustomersPage() {
         </div>
 
         {/* Customers List */}
-        <div className="overflow-auto scrollbar-hide flex-1 p-4 md:p-6">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-text-secondary">
-              <UserCircle2 className="w-10 h-10 mb-3 text-primary/20" />
+        <div className="scrollbar-hide flex-1 overflow-auto p-4 md:p-6">
+          {loading ? (
+            <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
+              <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+              <p>Loading customers...</p>
+            </div>
+          ) : error ? (
+            <div className="flex h-48 flex-col items-center justify-center text-red-500">
+              <AlertCircle className="mb-3 h-8 w-8" />
+              <p>{error}</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
+              <UserCircle2 className="text-primary/20 mb-3 h-10 w-10" />
               <p>No customers found. Try adjusting your filters.</p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-primary/10 overflow-hidden">
-              <div className="grid grid-cols-[auto_1fr_1fr_100px_100px] gap-4 bg-[#fcf4f0] text-[10px] uppercase tracking-wider text-text-secondary px-6 py-4 border-b border-primary/10 items-center hidden md:grid">
+            <div className="border-primary/10 overflow-hidden rounded-2xl border">
+              <div className="text-text-secondary border-primary/10 grid hidden grid-cols-[auto_1fr_1fr_100px_100px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase md:grid">
                 <span className="w-10"></span>
                 <span>Customer</span>
                 <span>Contact</span>
                 <span>Tier</span>
                 <span className="text-right">Total Spent</span>
               </div>
-              
-              <div className="divide-y divide-primary/5">
+
+              <div className="divide-primary/5 divide-y">
                 {filtered.map((customer) => (
                   <Link
                     key={customer.id}
                     href={`/customers/${customer.id}`}
-                    className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_100px_100px] gap-4 items-center px-6 py-4 hover:bg-primary/5 transition-colors group"
+                    className="hover:bg-primary/5 group grid grid-cols-1 items-center gap-4 px-6 py-4 transition-colors md:grid-cols-[auto_1fr_1fr_100px_100px]"
                   >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary font-serif">
+                    <div className="bg-primary/10 border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-serif">
                       {customer.avatar ? (
-                        <img src={customer.avatar} alt={customer.name} className="w-full h-full rounded-full object-cover" />
+                        <img
+                          src={customer.avatar}
+                          alt={customer.name}
+                          className="h-full w-full rounded-full object-cover"
+                        />
                       ) : (
-                        <span>{customer.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</span>
+                        <span>
+                          {customer.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .substring(0, 2)
+                            .toUpperCase()}
+                        </span>
                       )}
                     </div>
-                    
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-semibold text-primary-dark truncate group-hover:text-primary transition-colors">{customer.name}</span>
-                      <span className="text-xs text-text-secondary">Last visit: {customer.lastVisit}</span>
+
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-primary-dark group-hover:text-primary truncate text-sm font-semibold transition-colors">
+                        {customer.name}
+                      </span>
+                      <span className="text-text-secondary text-xs">
+                        Last visit: {customer.lastVisit}
+                      </span>
                     </div>
 
-                    <div className="flex flex-col space-y-1 min-w-0 hidden md:flex">
-                      <span className="text-xs text-text-secondary flex items-center gap-1.5 truncate"><Mail className="w-3.5 h-3.5" /> {customer.email}</span>
-                      <span className="text-xs text-text-secondary flex items-center gap-1.5 truncate"><Phone className="w-3.5 h-3.5" /> {customer.phone}</span>
+                    <div className="flex hidden min-w-0 flex-col space-y-1 md:flex">
+                      <span className="text-text-secondary flex items-center gap-1.5 truncate text-xs">
+                        <Mail className="h-3.5 w-3.5" /> {customer.email}
+                      </span>
+                      <span className="text-text-secondary flex items-center gap-1.5 truncate text-xs">
+                        <Phone className="h-3.5 w-3.5" /> {customer.phone}
+                      </span>
                     </div>
 
                     <div className="hidden md:block">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border
-                        ${customer.tier === 'Platinum' ? 'bg-slate-100 text-slate-700 border-slate-200' :
-                          customer.tier === 'Gold' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                          customer.tier === 'Silver' ? 'bg-gray-50 text-gray-500 border-gray-200' :
-                          'bg-orange-50 text-orange-700 border-orange-200'
-                        }
-                      `}>
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase ${
+                          customer.tier === "Platinum"
+                            ? "border-slate-200 bg-slate-100 text-slate-700"
+                            : customer.tier === "Gold"
+                              ? "border-amber-200 bg-amber-50 text-amber-600"
+                              : customer.tier === "Silver"
+                                ? "border-gray-200 bg-gray-50 text-gray-500"
+                                : "border-orange-200 bg-orange-50 text-orange-700"
+                        } `}
+                      >
                         {customer.tier}
                       </span>
                     </div>
 
-                    <div className="text-right hidden md:block">
-                      <span className="text-sm font-semibold text-primary-dark">QAR {customer.totalSpent}</span>
+                    <div className="hidden text-right md:block">
+                      <span className="text-primary-dark text-sm font-semibold">
+                        QAR {customer.totalSpent}
+                      </span>
                     </div>
                   </Link>
                 ))}
@@ -123,9 +181,9 @@ export default function CustomersPage() {
         </div>
 
         {/* Footer Stats */}
-        <div className="px-6 py-3 border-t border-primary/5 shrink-0 flex items-center gap-4 text-xs text-text-secondary">
+        <div className="border-primary/5 text-text-secondary flex shrink-0 items-center gap-4 border-t px-6 py-3 text-xs">
           <span className="flex items-center gap-1">
-            <UserCircle2 className="w-3 h-3 text-primary" />
+            <UserCircle2 className="text-primary h-3 w-3" />
             {activeCount} Active
           </span>
           <span className="text-red-500">{inactiveCount} Inactive</span>

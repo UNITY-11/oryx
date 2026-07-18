@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Cinzel } from "next/font/google";
+import { Cinzel, Inter } from "next/font/google";
+
 import "./globals.css";
+
 import { Sidebar } from "@/shared/ui/sidebar";
 import { TopHeader } from "@/shared/ui/top-header";
 
@@ -36,16 +38,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${cinzel.variable}`}>
-      <body suppressHydrationWarning className="min-h-screen bg-[#fcf4f0] text-text-primary antialiased overflow-x-hidden">
+      <body
+        suppressHydrationWarning
+        className="bg-background text-text-primary min-h-screen overflow-x-hidden antialiased"
+      >
         {/* Admin App Layout Wrapper */}
-        <div className="mx-auto flex h-[100dvh] w-full max-w-[1920px] bg-[#fcf4f0] shadow-2xl relative overflow-hidden">
-
+        <div className="bg-background relative mx-auto flex h-[100dvh] w-full max-w-[1920px] overflow-hidden shadow-2xl">
           <Sidebar />
 
-          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <TopHeader />
             {/* Main Scrollable Content */}
-            <main id="admin-main-container" className="flex-1 flex flex-col w-full h-full relative overflow-hidden px-4 md:pl-4 md:pr-8 pb-4 pt-0">
+            <main
+              id="admin-main-container"
+              className="relative flex h-full w-full flex-1 flex-col overflow-hidden px-4 pt-0 pb-4 md:pr-8 md:pl-4"
+            >
               {children}
             </main>
           </div>

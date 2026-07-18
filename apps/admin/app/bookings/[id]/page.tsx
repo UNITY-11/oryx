@@ -1,69 +1,163 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Save, Calendar, Clock, User,
-  CheckCircle2, ChevronRight, Check, Edit3, Play, X
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Edit3,
+  Loader2,
+  Play,
+  Save,
+  User,
+  X,
 } from "lucide-react";
-import { MOCK_BOOKINGS, Booking, BookingStatus, BookingService } from "../../../src/features/bookings/mock-data";
-import { MOCK_SERVICES as REAL_SERVICES } from "../../../src/features/services/mock-data";
 
-export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+import {
+  fetchBooking,
+  updateBooking,
+} from "../../../src/features/bookings/api";
+import {
+  Booking,
+  BookingStatus,
+} from "../../../src/features/bookings/mock-data";
+import { fetchServices } from "../../../src/features/services/api";
+import { Service } from "../../../src/features/services/mock-data";
+
+export default function BookingDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
 
-  const original = MOCK_BOOKINGS.find((b) => b.id === id) || {
-    id,
-    customerName: "Unknown Customer",
-    phone: "+974 0000 0000",
-    services: [] as BookingService[],
-    date: new Date().toISOString().split("T")[0] || new Date().toISOString().substring(0, 10),
-    time: "10:00",
-    status: "Pending" as BookingStatus,
-    amount: 0,
-  };
-
-  const [booking, setBooking] = useState<Booking>(original);
-  const [savedBooking, setSavedBooking] = useState<Booking>(original);
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [savedBooking, setSavedBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [realServices, setRealServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState<string | null>(null);
 
   // POS State (service editor)
   const [posMode, setPosMode] = useState<"services" | "addons">("services");
-  const [activeServiceIndex, setActiveServiceIndex] = useState<number | null>(null);
+  const [activeServiceIndex, setActiveServiceIndex] = useState<number | null>(
+    null
+  );
 
-  const activeService = activeServiceIndex !== null ? booking.services[activeServiceIndex] : null;
+  useEffect(() => {
+    fetchBooking(id)
+      .then((data) => {
+        setBooking(data);
+        setSavedBooking(data);
+      })
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    fetchServices()
+      .then(setRealServices)
+      .catch((err) => setServicesError(err.message))
+      .finally(() => setServicesLoading(false));
+  }, []);
+
+  const activeService =
+    activeServiceIndex !== null && booking
+      ? booking.services[activeServiceIndex]
+      : null;
   const currentServiceObject = useMemo(() => {
-    return activeService ? REAL_SERVICES.find((s) => s.name === activeService.name) : null;
-  }, [activeService]);
+    return activeService
+      ? realServices.find((s) => s.name === activeService.name)
+      : null;
+  }, [activeService, realServices]);
 
-  const isCompleted = booking.status === "Completed" || booking.status === "Cancelled";
-  const canStart = booking.status === "Pending" || booking.status === "Confirmed";
+  if (loading) {
+    return (
+      <div className="text-text-secondary flex h-full flex-col items-center justify-center">
+        <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+        <p>Loading booking...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !booking || !savedBooking) {
+    return (
+      <div className="text-text-secondary flex h-full flex-col items-center justify-center">
+        <AlertCircle className="mb-3 h-8 w-8 text-red-500" />
+        <p className="mb-4 text-lg">{loadError ?? "Booking not found."}</p>
+        <button
+          onClick={() => router.push("/bookings")}
+          className="text-primary text-sm underline"
+        >
+          Back to Bookings
+        </button>
+      </div>
+    );
+  }
+
+  const isCompleted =
+    booking.status === "Completed" || booking.status === "Cancelled";
+  const canStart =
+    booking.status === "Pending" || booking.status === "Confirmed";
 
   // Deep compare to detect changes
   const hasChanges = JSON.stringify(booking) !== JSON.stringify(savedBooking);
 
   const update = <K extends keyof Booking>(key: K, value: Booking[K]) =>
-    setBooking((prev) => ({ ...prev, [key]: value }));
+    setBooking((prev) => (prev ? { ...prev, [key]: value } : prev));
 
-  const handleSave = () => {
-    setSavedBooking(booking);
-    setSaved(true);
-    setIsEditing(false);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const result = await updateBooking(id, booking);
+      setBooking(result);
+      setSavedBooking(result);
+      setSaved(true);
+      setIsEditing(false);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to save changes"
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleStartSession = () => {
-    update("status", "Started");
+  const handleStartSession = async () => {
+    try {
+      const result = await updateBooking(id, { status: "Started" });
+      setBooking(result);
+      setSavedBooking(result);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to start session"
+      );
+    }
   };
 
   const toggleService = (serviceId: string) => {
-    const serviceObj = REAL_SERVICES.find((s) => s.id === serviceId);
+    const serviceObj = realServices.find((s) => s.id === serviceId);
     if (!serviceObj) return;
 
     setBooking((prev) => {
-      const existingIndex = prev.services.findIndex((s) => s.name === serviceObj.name);
+      if (!prev) return prev;
+      const existingIndex = prev.services.findIndex(
+        (s) => s.name === serviceObj.name
+      );
 
       if (existingIndex >= 0) {
         const removedService = prev.services[existingIndex]!;
@@ -79,11 +173,18 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         if (activeServiceIndex === existingIndex) {
           setPosMode("services");
           setActiveServiceIndex(null);
-        } else if (activeServiceIndex !== null && activeServiceIndex > existingIndex) {
+        } else if (
+          activeServiceIndex !== null &&
+          activeServiceIndex > existingIndex
+        ) {
           setActiveServiceIndex(activeServiceIndex - 1);
         }
 
-        return { ...prev, services: newServices, amount: prev.amount - basePrice - addonsPrice };
+        return {
+          ...prev,
+          services: newServices,
+          amount: prev.amount - basePrice - addonsPrice,
+        };
       } else {
         const basePrice = serviceObj.pricingTiers?.[0]?.price || 0;
         return {
@@ -104,8 +205,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     if (activeServiceIndex === null) return;
 
     setBooking((prev) => {
+      if (!prev) return prev;
       const newServices = [...prev.services];
-      const service: BookingService = { ...newServices[activeServiceIndex]! };
+      const service = { ...newServices[activeServiceIndex]! };
       const hasAddon = service.addons?.includes(addonName) ?? false;
 
       service.addons = hasAddon
@@ -113,43 +215,50 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         : [...(service.addons || []), addonName];
 
       newServices[activeServiceIndex] = service;
-      return { ...prev, services: newServices, amount: prev.amount + (hasAddon ? -addonPrice : addonPrice) };
+      return {
+        ...prev,
+        services: newServices,
+        amount: prev.amount + (hasAddon ? -addonPrice : addonPrice),
+      };
     });
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-
+    <div className="flex h-full flex-col overflow-hidden">
       {/* ── Header ── */}
       <div className="shrink-0 pt-4 pb-4">
-        <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 z-30">
+        <header className="border-primary/10 z-30 flex h-20 w-full items-center justify-between rounded-3xl border bg-white/90 px-6 shadow-sm backdrop-blur-xl lg:px-10">
           {/* Left: back arrow + title */}
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex flex-1 items-center gap-4">
             <button
               onClick={() => {
-                if (isEditing) { setIsEditing(false); setBooking(savedBooking); }
-                else router.back();
+                if (isEditing) {
+                  setIsEditing(false);
+                  setBooking(savedBooking);
+                } else router.back();
               }}
-              className="w-10 h-10 rounded-2xl bg-[#fcf4f0] border border-primary/10 flex items-center justify-center text-primary hover:bg-primary/10 hover:-translate-x-0.5 transition-all shrink-0"
+              className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border bg-[#fcf4f0] transition-all hover:-translate-x-0.5"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex flex-col">
-              <h1 className="font-serif text-2xl font-medium text-primary-dark leading-tight">
+              <h1 className="text-primary-dark font-serif text-2xl leading-tight font-medium">
                 {booking.customerName}
               </h1>
-              <p className="text-xs text-text-secondary font-mono uppercase tracking-wider">{booking.id}</p>
+              <p className="text-text-secondary font-mono text-xs tracking-wider uppercase">
+                {booking.id}
+              </p>
             </div>
           </div>
 
           {/* Right: action buttons */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-3">
             {!isCompleted && !isEditing && canStart && (
               <button
                 onClick={handleStartSession}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm"
+                className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
               >
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="h-4 w-4 fill-white" />
                 Start Session
               </button>
             )}
@@ -157,9 +266,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             {!isCompleted && !isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-primary text-primary hover:bg-primary/5 transition-colors"
+                className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
               >
-                <Edit3 className="w-4 h-4" />
+                <Edit3 className="h-4 w-4" />
                 Edit
               </button>
             )}
@@ -167,25 +276,32 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             {isEditing && (
               <>
                 <button
-                  onClick={() => { setIsEditing(false); setBooking(savedBooking); }}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-primary/30 text-text-secondary hover:bg-primary/5 transition-colors"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setBooking(savedBooking);
+                  }}
+                  className="border-primary/30 text-text-secondary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                   Discard
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={!hasChanges}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold shadow-sm transition-all ${
+                  disabled={!hasChanges || saving}
+                  className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold shadow-sm transition-all ${
                     saved
                       ? "bg-green-500 text-white"
                       : hasChanges
-                      ? "bg-primary text-white hover:opacity-90"
-                      : "bg-primary/20 text-primary/40 cursor-not-allowed"
+                        ? "bg-primary text-white hover:opacity-90"
+                        : "bg-primary/20 text-primary/40 cursor-not-allowed"
                   }`}
                 >
-                  <Save className="w-4 h-4" />
-                  {saved ? "Saved!" : "Save Changes"}
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
                 </button>
               </>
             )}
@@ -193,89 +309,135 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </header>
       </div>
 
-      {/* ── Main Content ── */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      {saveError && (
+        <div className="mb-4 flex shrink-0 items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {saveError}
+        </div>
+      )}
 
+      {/* ── Main Content ── */}
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* ── VIEW / EDIT DETAILS ── */}
         {!isEditing && (
-          <div className="bg-white rounded-[32px] border border-primary/10 shadow-sm p-6 md:p-10 overflow-y-auto h-full scrollbar-hide">
-            <div className="max-w-4xl mx-auto space-y-8">
-
+          <div className="border-primary/10 scrollbar-hide h-full overflow-y-auto rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
+            <div className="mx-auto max-w-4xl space-y-8">
               {/* Status badge */}
               <div className="flex items-center gap-3">
-                <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                  booking.status === "Confirmed"  ? "bg-primary/20 border-primary text-primary-dark" :
-                  booking.status === "Pending"    ? "bg-primary/5 border-primary/40 text-primary-dark border-dashed" :
-                  booking.status === "Started"    ? "bg-primary-dark border-primary-dark text-white" :
-                  booking.status === "Completed"  ? "bg-primary border-primary-dark text-white" :
-                                                    "bg-white border-primary/20 text-text-secondary opacity-70"
-                }`}>
+                <span
+                  className={`rounded-full border px-4 py-1.5 text-xs font-bold tracking-wider uppercase ${
+                    booking.status === "Confirmed"
+                      ? "bg-primary/20 border-primary text-primary-dark"
+                      : booking.status === "Pending"
+                        ? "bg-primary/5 border-primary/40 text-primary-dark border-dashed"
+                        : booking.status === "Started"
+                          ? "bg-primary-dark border-primary-dark text-white"
+                          : booking.status === "Completed"
+                            ? "bg-primary border-primary-dark text-white"
+                            : "border-primary/20 text-text-secondary bg-white opacity-70"
+                  }`}
+                >
                   {booking.status}
                 </span>
                 {isCompleted && (
-                  <span className="text-xs text-text-secondary italic">This session is closed and cannot be edited.</span>
+                  <span className="text-text-secondary text-xs italic">
+                    This session is closed and cannot be edited.
+                  </span>
                 )}
               </div>
 
               {/* Customer & Schedule */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[#fcf4f0] border border-primary/10 rounded-3xl p-6 shadow-sm">
-                  <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4">Customer</h3>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="border-primary/10 rounded-3xl border bg-[#fcf4f0] p-6 shadow-sm">
+                  <h3 className="text-primary mb-4 text-xs font-bold tracking-wider uppercase">
+                    Customer
+                  </h3>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-white text-primary flex items-center justify-center text-2xl font-serif shrink-0 border border-primary/10">
+                    <div className="text-primary border-primary/10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border bg-white font-serif text-2xl">
                       {booking.customerName.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-primary-dark">{booking.customerName}</h3>
-                      <p className="text-text-secondary mt-1">{booking.phone}</p>
+                      <h3 className="text-primary-dark text-xl font-bold">
+                        {booking.customerName}
+                      </h3>
+                      <p className="text-text-secondary mt-1">
+                        {booking.phone}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-primary/10 rounded-3xl p-6 shadow-sm flex flex-col justify-center space-y-4">
-                  <div className="flex items-center gap-3 text-sm text-text-secondary">
-                    <Calendar className="w-4 h-4 text-primary" />
-                    <span className="font-medium text-primary-dark">{booking.date}</span>
+                <div className="border-primary/10 flex flex-col justify-center space-y-4 rounded-3xl border bg-white p-6 shadow-sm">
+                  <div className="text-text-secondary flex items-center gap-3 text-sm">
+                    <Calendar className="text-primary h-4 w-4" />
+                    <span className="text-primary-dark font-medium">
+                      {booking.date}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-text-secondary">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <span className="font-medium text-primary-dark">{booking.time}</span>
+                  <div className="text-text-secondary flex items-center gap-3 text-sm">
+                    <Clock className="text-primary h-4 w-4" />
+                    <span className="text-primary-dark font-medium">
+                      {booking.time}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-text-secondary">
-                    <User className="w-4 h-4 text-primary" />
-                    <span className="font-medium text-primary-dark">{booking.services.length} Service(s)</span>
+                  <div className="text-text-secondary flex items-center gap-3 text-sm">
+                    <User className="text-primary h-4 w-4" />
+                    <span className="text-primary-dark font-medium">
+                      {booking.services.length} Service(s)
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Services */}
-              <div className="bg-white border border-primary/10 rounded-3xl p-6 md:p-8 shadow-sm">
-                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-6">Session Services</h3>
+              <div className="border-primary/10 rounded-3xl border bg-white p-6 shadow-sm md:p-8">
+                <h3 className="text-primary mb-6 text-xs font-bold tracking-wider uppercase">
+                  Session Services
+                </h3>
                 <div className="space-y-4">
                   {booking.services.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary italic bg-[#fcf4f0] rounded-2xl border border-primary/5">
+                    <div className="text-text-secondary border-primary/5 rounded-2xl border bg-[#fcf4f0] py-8 text-center italic">
                       No services selected.
                     </div>
                   ) : (
                     booking.services.map((svc, idx) => {
-                      const matchedObj = REAL_SERVICES.find((r) => r.name === svc.name);
+                      const matchedObj = realServices.find(
+                        (r) => r.name === svc.name
+                      );
                       const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
                       return (
-                        <div key={idx} className="bg-[#fcf4f0] rounded-2xl p-5 border border-primary/10">
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-semibold text-primary-dark">{svc.name}</span>
-                            <span className="text-lg font-semibold text-primary-dark">QAR {baseP}</span>
+                        <div
+                          key={idx}
+                          className="border-primary/10 rounded-2xl border bg-[#fcf4f0] p-5"
+                        >
+                          <div className="mb-2 flex items-start justify-between">
+                            <span className="text-primary-dark text-lg font-semibold">
+                              {svc.name}
+                            </span>
+                            <span className="text-primary-dark text-lg font-semibold">
+                              QAR {baseP}
+                            </span>
                           </div>
                           {svc.addons.length > 0 && (
-                            <div className="space-y-2 mt-3 pt-3 border-t border-primary/10">
+                            <div className="border-primary/10 mt-3 space-y-2 border-t pt-3">
                               {svc.addons.map((addon, aIdx) => {
-                                const matchedAddon = matchedObj?.addons.find((a) => a.name === addon);
+                                const matchedAddon = matchedObj?.addons.find(
+                                  (a) => a.name === addon
+                                );
                                 return (
-                                  <div key={aIdx} className="flex justify-between items-center text-sm">
+                                  <div
+                                    key={aIdx}
+                                    className="flex items-center justify-between text-sm"
+                                  >
                                     <span className="text-text-secondary flex items-center gap-2">
-                                      <ChevronRight className="w-4 h-4 text-primary/40" /> {addon}
+                                      <ChevronRight className="text-primary/40 h-4 w-4" />{" "}
+                                      {addon}
                                     </span>
-                                    <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : "+"}</span>
+                                    <span className="text-text-secondary">
+                                      {matchedAddon
+                                        ? `+ QAR ${matchedAddon.price}`
+                                        : "+"}
+                                    </span>
                                   </div>
                                 );
                               })}
@@ -287,12 +449,15 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-primary/10 flex justify-between items-center">
-                  <span className="text-lg font-bold text-text-secondary">Total Amount</span>
-                  <span className="text-2xl font-bold text-primary-dark">QAR {booking.amount}</span>
+                <div className="border-primary/10 mt-8 flex items-center justify-between border-t pt-6">
+                  <span className="text-text-secondary text-lg font-bold">
+                    Total Amount
+                  </span>
+                  <span className="text-primary-dark text-2xl font-bold">
+                    QAR {booking.amount}
+                  </span>
                 </div>
               </div>
-
             </div>
           </div>
         )}
@@ -300,49 +465,55 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         {/* ── EDIT MODE ── */}
         {isEditing && (
           <div className="flex h-full w-full gap-4">
-
             {/* LEFT: Service Catalog / Add-ons */}
-            <div className="flex-1 bg-white rounded-[32px] border border-primary/10 shadow-sm overflow-y-auto scrollbar-hide p-6 md:p-10">
-
+            <div className="border-primary/10 scrollbar-hide flex-1 overflow-y-auto rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
               {posMode === "services" && (
                 <div className="animate-in fade-in duration-200">
                   <div className="mb-8">
-                    <h2 className="text-2xl font-serif text-primary-dark mb-2">Edit Session</h2>
-                    <p className="text-text-secondary text-sm">Update date, time, status, and services.</p>
+                    <h2 className="text-primary-dark mb-2 font-serif text-2xl">
+                      Edit Session
+                    </h2>
+                    <p className="text-text-secondary text-sm">
+                      Update date, time, status, and services.
+                    </p>
                   </div>
 
                   {/* Date / Time / Status */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 p-6 bg-[#fcf4f0] rounded-2xl border border-primary/10">
+                  <div className="border-primary/10 mb-8 grid grid-cols-1 gap-4 rounded-2xl border bg-[#fcf4f0] p-6 md:grid-cols-3">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-1 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> Date
+                      <label className="text-text-secondary mb-1 block flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase">
+                        <Calendar className="h-3 w-3" /> Date
                       </label>
                       <input
                         type="date"
                         value={booking.date}
                         onChange={(e) => update("date", e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark font-medium text-sm"
+                        className="border-primary/20 focus:border-primary text-primary-dark w-full rounded-xl border bg-white px-3 py-2 text-sm font-medium focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> Time
+                      <label className="text-text-secondary mb-1 block flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase">
+                        <Clock className="h-3 w-3" /> Time
                       </label>
                       <input
                         type="time"
                         value={booking.time}
                         onChange={(e) => update("time", e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark font-medium text-sm"
+                        className="border-primary/20 focus:border-primary text-primary-dark w-full rounded-xl border bg-white px-3 py-2 text-sm font-medium focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-1">Status</label>
+                      <label className="text-text-secondary mb-1 block text-[10px] font-bold tracking-wider uppercase">
+                        Status
+                      </label>
                       <select
                         value={booking.status}
-                        onChange={(e) => update("status", e.target.value as BookingStatus)}
-                        className="w-full px-3 py-2 rounded-xl border border-primary/20 bg-white focus:outline-none focus:border-primary text-primary-dark font-medium text-sm"
+                        onChange={(e) =>
+                          update("status", e.target.value as BookingStatus)
+                        }
+                        className="border-primary/20 focus:border-primary text-primary-dark w-full rounded-xl border bg-white px-3 py-2 text-sm font-medium focus:outline-none"
                       >
-                      <option value="Pending">Pending</option>
+                        <option value="Pending">Pending</option>
                         <option value="Confirmed">Confirmed</option>
                         <option value="Started">Started</option>
                         <option value="Completed">Completed</option>
@@ -352,153 +523,237 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </div>
 
                   {/* Service catalog */}
-                  <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4">Service Catalog</h3>
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    {REAL_SERVICES.map((service) => {
-                      const isSelected = booking.services.some((s) => s.name === service.name);
-                      return (
-                        <div
-                          key={service.id}
-                          onClick={() => toggleService(service.id)}
-                          className={`rounded-2xl border transition-all cursor-pointer group flex flex-row items-center overflow-hidden h-28 ${
-                            isSelected
-                              ? "border-primary ring-2 ring-primary bg-primary/5"
-                              : "border-primary/10 hover:border-primary/40 bg-white hover:shadow-md"
-                          }`}
-                        >
-                          <div className="w-28 h-full bg-primary/10 shrink-0 relative overflow-hidden">
-                            {service.image ? (
-                              <img src={service.image} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-primary/40 bg-primary/5 font-serif text-sm opacity-50">Oryx</div>
-                            )}
-                            <div className={`absolute inset-0 bg-primary/40 flex items-center justify-center backdrop-blur-[1px] transition-opacity ${isSelected ? "opacity-100" : "opacity-0"}`}>
-                              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-primary shadow-sm">
-                                <CheckCircle2 className="w-5 h-5" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="p-4 flex-1 flex flex-col justify-center">
-                            <div className="inline-block bg-primary/10 px-2 py-0.5 rounded text-[10px] font-bold text-primary mb-1 w-max">
-                              {service.category || "Service"}
-                            </div>
-                            <h3 className="font-bold text-base text-primary-dark leading-tight">{service.name}</h3>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {posMode === "addons" && currentServiceObject && activeService && (
-                <div className="animate-in fade-in duration-200">
-                  <button
-                    onClick={() => { setPosMode("services"); setActiveServiceIndex(null); }}
-                    className="flex items-center gap-2 text-sm font-semibold text-primary mb-8 hover:opacity-80 transition-opacity"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back to Catalog
-                  </button>
-
-                  <div className="mb-8 pb-8 border-b border-primary/10 flex items-center gap-6">
-                    <div className="w-24 h-24 rounded-2xl overflow-hidden bg-primary/10 shrink-0 border border-primary/20">
-                      {currentServiceObject.image ? (
-                        <img src={currentServiceObject.image} alt={currentServiceObject.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-primary/40 font-serif text-xs">Oryx</div>
-                      )}
+                  <h3 className="text-primary mb-4 text-xs font-bold tracking-wider uppercase">
+                    Service Catalog
+                  </h3>
+                  {servicesLoading ? (
+                    <div className="text-text-secondary flex items-center justify-center gap-2 py-10 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                      services...
                     </div>
-                    <div>
-                      <h2 className="text-3xl font-serif text-primary-dark mb-2">{currentServiceObject.name}</h2>
-                      <p className="text-text-secondary text-sm">Enhance this service with premium add-ons.</p>
+                  ) : servicesError ? (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" /> {servicesError}
                     </div>
-                  </div>
-
-                  <h3 className="text-sm font-bold text-primary uppercase tracking-wider mb-4">Available Add-ons</h3>
-                  {currentServiceObject.addons.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {currentServiceObject.addons.map((addon) => {
-                        const isSelected = activeService.addons.includes(addon.name);
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                      {realServices.map((service) => {
+                        const isSelected = booking.services.some(
+                          (s) => s.name === service.name
+                        );
                         return (
                           <div
-                            key={addon.id}
-                            onClick={() => toggleAddon(addon.name, addon.price)}
-                            className={`p-5 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
+                            key={service.id}
+                            onClick={() => toggleService(service.id)}
+                            className={`group flex h-28 cursor-pointer flex-row items-center overflow-hidden rounded-2xl border transition-all ${
                               isSelected
-                                ? "border-primary bg-primary text-white shadow-md ring-1 ring-primary"
-                                : "border-primary/10 hover:border-primary/40 bg-white hover:shadow-sm"
+                                ? "border-primary ring-primary bg-primary/5 ring-2"
+                                : "border-primary/10 hover:border-primary/40 bg-white hover:shadow-md"
                             }`}
                           >
-                            <div>
-                              <h4 className={`font-semibold text-sm ${isSelected ? "text-white" : "text-primary-dark"}`}>{addon.name}</h4>
-                              <span className={`text-xs font-bold ${isSelected ? "text-white" : "text-primary"}`}>+ QAR {addon.price}</span>
+                            <div className="bg-primary/10 relative h-full w-28 shrink-0 overflow-hidden">
+                              {service.image ? (
+                                <img
+                                  src={service.image}
+                                  alt={service.name}
+                                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                              ) : (
+                                <div className="text-primary/40 bg-primary/5 flex h-full w-full items-center justify-center font-serif text-sm opacity-50">
+                                  Oryx
+                                </div>
+                              )}
+                              <div
+                                className={`bg-primary/40 absolute inset-0 flex items-center justify-center backdrop-blur-[1px] transition-opacity ${isSelected ? "opacity-100" : "opacity-0"}`}
+                              >
+                                <div className="text-primary flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+                                  <CheckCircle2 className="h-5 w-5" />
+                                </div>
+                              </div>
                             </div>
-                            <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-white bg-white/20" : "border-primary/20"}`}>
-                              {isSelected && <Check className="w-4 h-4 text-white" />}
+                            <div className="flex flex-1 flex-col justify-center p-4">
+                              <div className="bg-primary/10 text-primary mb-1 inline-block w-max rounded px-2 py-0.5 text-[10px] font-bold">
+                                {service.category || "Service"}
+                              </div>
+                              <h3 className="text-primary-dark text-base leading-tight font-bold">
+                                {service.name}
+                              </h3>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="p-12 text-center border border-primary/10 border-dashed rounded-2xl bg-primary/5">
-                      <p className="text-primary-dark font-medium">No Add-ons Available</p>
-                    </div>
                   )}
                 </div>
               )}
+
+              {posMode === "addons" &&
+                currentServiceObject &&
+                activeService && (
+                  <div className="animate-in fade-in duration-200">
+                    <button
+                      onClick={() => {
+                        setPosMode("services");
+                        setActiveServiceIndex(null);
+                      }}
+                      className="text-primary mb-8 flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80"
+                    >
+                      <ArrowLeft className="h-4 w-4" /> Back to Catalog
+                    </button>
+
+                    <div className="border-primary/10 mb-8 flex items-center gap-6 border-b pb-8">
+                      <div className="bg-primary/10 border-primary/20 h-24 w-24 shrink-0 overflow-hidden rounded-2xl border">
+                        {currentServiceObject.image ? (
+                          <img
+                            src={currentServiceObject.image}
+                            alt={currentServiceObject.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-primary/40 flex h-full w-full items-center justify-center font-serif text-xs">
+                            Oryx
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-primary-dark mb-2 font-serif text-3xl">
+                          {currentServiceObject.name}
+                        </h2>
+                        <p className="text-text-secondary text-sm">
+                          Enhance this service with premium add-ons.
+                        </p>
+                      </div>
+                    </div>
+
+                    <h3 className="text-primary mb-4 text-sm font-bold tracking-wider uppercase">
+                      Available Add-ons
+                    </h3>
+                    {currentServiceObject.addons.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {currentServiceObject.addons.map((addon) => {
+                          const isSelected = activeService.addons.includes(
+                            addon.name
+                          );
+                          return (
+                            <div
+                              key={addon.id}
+                              onClick={() =>
+                                toggleAddon(addon.name, addon.price)
+                              }
+                              className={`flex cursor-pointer items-center justify-between rounded-2xl border p-5 transition-all ${
+                                isSelected
+                                  ? "border-primary bg-primary ring-primary text-white shadow-md ring-1"
+                                  : "border-primary/10 hover:border-primary/40 bg-white hover:shadow-sm"
+                              }`}
+                            >
+                              <div>
+                                <h4
+                                  className={`text-sm font-semibold ${isSelected ? "text-white" : "text-primary-dark"}`}
+                                >
+                                  {addon.name}
+                                </h4>
+                                <span
+                                  className={`text-xs font-bold ${isSelected ? "text-white" : "text-primary"}`}
+                                >
+                                  + QAR {addon.price}
+                                </span>
+                              </div>
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${isSelected ? "border-white bg-white/20" : "border-primary/20"}`}
+                              >
+                                {isSelected && (
+                                  <Check className="h-4 w-4 text-white" />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="border-primary/10 bg-primary/5 rounded-2xl border border-dashed p-12 text-center">
+                        <p className="text-primary-dark font-medium">
+                          No Add-ons Available
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
 
             {/* RIGHT: Cart Summary */}
-            <div className="w-full lg:w-[340px] xl:w-[380px] bg-white rounded-[32px] border border-primary/10 flex flex-col shrink-0 overflow-y-auto scrollbar-hide shadow-sm">
-              <div className="p-6 space-y-6 flex flex-col h-full">
+            <div className="border-primary/10 scrollbar-hide flex w-full shrink-0 flex-col overflow-y-auto rounded-[32px] border bg-white shadow-sm lg:w-[340px] xl:w-[380px]">
+              <div className="flex h-full flex-col space-y-6 p-6">
                 <div>
-                  <h1 className="text-2xl font-serif text-primary-dark mb-1">Session Cart</h1>
-                  <p className="text-text-secondary text-xs">Services added to this booking.</p>
+                  <h1 className="text-primary-dark mb-1 font-serif text-2xl">
+                    Session Cart
+                  </h1>
+                  <p className="text-text-secondary text-xs">
+                    Services added to this booking.
+                  </p>
                 </div>
 
                 <div className="flex-1 space-y-4">
                   {booking.services.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary text-sm italic border border-primary/10 border-dashed rounded-2xl bg-[#fcf4f0]/50">
+                    <div className="text-text-secondary border-primary/10 rounded-2xl border border-dashed bg-[#fcf4f0]/50 py-8 text-center text-sm italic">
                       Cart is empty
                     </div>
                   ) : (
                     booking.services.map((svc, idx) => {
-                      const matchedObj = REAL_SERVICES.find((r) => r.name === svc.name);
+                      const matchedObj = realServices.find(
+                        (r) => r.name === svc.name
+                      );
                       const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
                       const isActive = activeServiceIndex === idx;
 
                       return (
                         <div
                           key={idx}
-                          className={`bg-[#fcf4f0] border rounded-2xl p-4 transition-all ${isActive ? "border-primary ring-1 ring-primary shadow-sm" : "border-primary/10 hover:border-primary/30"}`}
+                          className={`rounded-2xl border bg-[#fcf4f0] p-4 transition-all ${isActive ? "border-primary ring-primary shadow-sm ring-1" : "border-primary/10 hover:border-primary/30"}`}
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="font-semibold text-primary-dark text-sm pr-2">{svc.name}</span>
-                            <span className="font-semibold text-primary-dark text-sm shrink-0">QAR {baseP}</span>
+                          <div className="mb-2 flex items-start justify-between">
+                            <span className="text-primary-dark pr-2 text-sm font-semibold">
+                              {svc.name}
+                            </span>
+                            <span className="text-primary-dark shrink-0 text-sm font-semibold">
+                              QAR {baseP}
+                            </span>
                           </div>
                           {svc.addons.length > 0 ? (
-                            <div className="space-y-1.5 mt-2 pt-2 border-t border-primary/10">
+                            <div className="border-primary/10 mt-2 space-y-1.5 border-t pt-2">
                               {svc.addons.map((addon, aIdx) => {
-                                const matchedAddon = matchedObj?.addons.find((a) => a.name === addon);
+                                const matchedAddon = matchedObj?.addons.find(
+                                  (a) => a.name === addon
+                                );
                                 return (
-                                  <div key={aIdx} className="flex justify-between items-center text-xs">
+                                  <div
+                                    key={aIdx}
+                                    className="flex items-center justify-between text-xs"
+                                  >
                                     <span className="text-text-secondary flex items-center gap-1.5">
-                                      <ChevronRight className="w-3 h-3 text-primary/40" /> {addon}
+                                      <ChevronRight className="text-primary/40 h-3 w-3" />{" "}
+                                      {addon}
                                     </span>
-                                    <span className="text-text-secondary">{matchedAddon ? `+ QAR ${matchedAddon.price}` : "+"}</span>
+                                    <span className="text-text-secondary">
+                                      {matchedAddon
+                                        ? `+ QAR ${matchedAddon.price}`
+                                        : "+"}
+                                    </span>
                                   </div>
                                 );
                               })}
                             </div>
                           ) : (
-                            <div className="text-[10px] text-text-secondary italic mt-1">No add-ons</div>
+                            <div className="text-text-secondary mt-1 text-[10px] italic">
+                              No add-ons
+                            </div>
                           )}
-                          <div className="mt-4 pt-3 border-t border-primary/10 flex justify-end gap-2">
+                          <div className="border-primary/10 mt-4 flex justify-end gap-2 border-t pt-3">
                             <button
                               onClick={() => configureAddonsFor(idx)}
-                              className={`text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider transition-colors ${
-                                isActive ? "bg-primary text-white" : "bg-white border border-primary/20 text-primary hover:bg-primary/5"
+                              className={`rounded-full px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                                isActive
+                                  ? "bg-primary text-white"
+                                  : "border-primary/20 text-primary hover:bg-primary/5 border bg-white"
                               }`}
                             >
                               {isActive ? "Configuring" : "Edit Add-ons"}
@@ -510,19 +765,18 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </div>
 
-                <div className="bg-primary-dark text-white rounded-2xl p-6 shadow-md mt-auto shrink-0">
-                  <div className="flex justify-between items-center mb-2 opacity-80 text-sm">
+                <div className="bg-primary-dark mt-auto shrink-0 rounded-2xl p-6 text-white shadow-md">
+                  <div className="mb-2 flex items-center justify-between text-sm opacity-80">
                     <span>Subtotal</span>
                     <span>QAR {booking.amount}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xl font-bold">
+                  <div className="flex items-center justify-between text-xl font-bold">
                     <span>Total</span>
                     <span>QAR {booking.amount}</span>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
         )}
       </div>

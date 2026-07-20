@@ -56,7 +56,7 @@ export function Sidebar() {
       <aside className="flex flex-col w-64 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl h-full overflow-hidden z-40 shrink-0 shadow-sm">
 
         {/* Logo */}
-        <div className="p-8 flex flex-col items-center justify-center border-b border-primary/10 shrink-0">
+        <div className="bg-white p-8 flex flex-col items-center justify-center border-b border-primary/10 shrink-0">
           <Link href="/">
             <img
               src="/images/oryx-logo.png"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
 import { useCatalog } from "@/features/catalog/use-catalog";
 import { TestimonialCarousel } from "@/features/home/testimonial-carousel";
+import { LotusSeparator } from "@/shared/ui/lotus-separator";
 import { useUserStore } from "@/shared/store";
 import {
   Bath,
@@ -60,30 +61,30 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col overflow-x-hidden">
       {/* Header & Search in a zero-height fixed wrapper to prevent layout shift */}
       <div className="fixed top-0 left-0 z-40 h-0 w-full overflow-visible md:hidden">
-        <div className="rounded-b-[36px] border-b border-[#c29a63]/20 bg-[#f5e6da]/90 px-4 pt-3 pb-3 shadow-sm backdrop-blur-xl">
+        <div className="rounded-b-[36px] bg-[#e8baa0] px-4 pt-3 pb-3">
           <div className="min-h-4xl mb-4 flex items-center justify-center">
             <img
               ref={logoRef}
               src="/images/oryx-logo.png"
               alt="ORYX Logo"
-              className="w-auto object-contain brightness-75 contrast-125 will-change-[height]"
+              className="w-auto object-contain brightness-160 contrast-125 will-change-[height]"
               style={{ height: "100px" }}
             />
           </div>
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[#e8baa0]" />
               <input
                 type="text"
                 placeholder="Search treatments or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="placeholder:text-primary focus:ring-primary w-full rounded-full border border-gray-100 bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none focus:ring-2"
+                className="placeholder:text-[#e8baa0] focus:ring-[#e8baa0] w-full rounded-full border border-[#e5c37a] bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none focus:ring-2"
               />
             </div>
             <Link
               href="/profile"
-              className="text-primary hover:text-primary-dark flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-gray-100 bg-gray-50 transition-colors"
+              className="text-[#e8baa0] hover:text-[#c29a63] flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-[#e5c37a] bg-gray-50 transition-colors"
             >
               {user ? (
                 <span className="text-xl font-semibold">
@@ -102,7 +103,7 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="mt-6 px-3 pb-8 md:mt-0 md:px-0 md:pb-24">
+        <section className="mt-3 px-3 pb-6 md:mt-0 md:px-0 md:pb-24">
           <HeroCarousel />
         </section>
       )}
@@ -111,17 +112,18 @@ export default function HomePage() {
         {/* Categories Section */}
         {!searchQuery && (
           <section>
-            <div className="mb-4 flex items-end justify-between">
-              <h2 className="text-surface font-serif text-xl md:text-3xl">
+            <div className="mb-2 text-center">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Categories
               </h2>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
-            <div className="scrollbar-hide cat-container -mx-3 flex w-full flex-row justify-between overflow-x-auto px-3 pb-4 md:mx-0 md:overflow-visible md:px-0">
+            <div className="scrollbar-hide cat-container flex w-full flex-row justify-between overflow-x-auto px-3 pb-4 md:mx-0 md:overflow-visible md:px-0">
               <style
                 dangerouslySetInnerHTML={{
                   __html: `
                 @media (max-width: 767px) {
-                  .cat-container { gap: 28px !important; }
+                  .cat-container { gap: 16px !important; }
                 }
                 @media (min-width: 768px) {
                   .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }
@@ -174,10 +176,10 @@ export default function HomePage() {
                   key={idx}
                   className="group flex w-[72px] flex-none cursor-pointer flex-col items-center md:w-auto"
                 >
-                  <div className="border-primary text-primary group-hover:bg-primary cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border bg-gray-50 shadow-sm transition-colors group-hover:text-white hover:shadow-md">
+                  <div className="bg-white text-[#d6a488] hover:bg-gray-50 cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#e5c37a] shadow-sm transition-colors hover:shadow-md">
                     {cat.icon}
                   </div>
-                  <span className="text-text-secondary cat-text mt-2 text-center text-[11px] font-medium md:mt-4">
+                  <span className="text-white cat-text mt-2 text-center text-[11px] font-medium md:mt-4">
                     {cat.name}
                   </span>
                 </div>
@@ -191,20 +193,16 @@ export default function HomePage() {
           <section>
             <div className="scrollbar-hide -mx-3 flex space-x-4 overflow-x-auto px-3 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0">
               {/* Card 1 */}
-              <div className="bg-surface border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
-                {/* Edge Cutouts (Ticket holes) */}
-                <div className="absolute top-1/2 -left-3 z-20 h-6 w-6 -translate-y-1/2 rounded-full bg-[#fcf4f0] shadow-inner" />
-                <div className="absolute top-1/2 -right-3 z-20 h-6 w-6 -translate-y-1/2 rounded-full bg-[#fcf4f0] shadow-inner" />
-
+              <div className="bg-white border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
                 {/* Inner Dashed container */}
                 <div className="border-primary/30 relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
                   <div className="bg-primary/20 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-2xl" />
 
                   <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary-dark mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
+                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
                       <Scissors className="h-3.5 w-3.5" /> SPECIAL OFFER
                     </span>
-                    <h3 className="text-primary-dark mb-1 font-serif text-lg leading-tight">
+                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
                       Get 20% Off Your First Visit
                     </h3>
                   </div>
@@ -216,7 +214,7 @@ export default function HomePage() {
                     <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
                       Use Code
                     </p>
-                    <strong className="text-primary-dark border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
+                    <strong className="text-primary border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
                       ORYX20
                     </strong>
                   </div>
@@ -224,20 +222,16 @@ export default function HomePage() {
               </div>
 
               {/* Card 2 */}
-              <div className="bg-surface relative w-[92%] flex-none overflow-hidden rounded-2xl border border-[#c29a63]/20 shadow-md md:w-full">
-                {/* Edge Cutouts (Ticket holes) */}
-                <div className="absolute top-1/2 -left-3 z-20 h-6 w-6 -translate-y-1/2 rounded-full bg-[#fcf4f0] shadow-inner" />
-                <div className="absolute top-1/2 -right-3 z-20 h-6 w-6 -translate-y-1/2 rounded-full bg-[#fcf4f0] shadow-inner" />
-
+              <div className="bg-white relative w-[92%] flex-none overflow-hidden rounded-2xl border border-[#c29a63]/20 shadow-md md:w-full">
                 {/* Inner Dashed container */}
                 <div className="relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed border-[#c29a63]/30 p-4">
                   <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-32 w-32 rounded-full bg-[#c29a63]/20 blur-2xl" />
 
                   <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary-dark mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
+                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
                       <Sparkles className="h-3.5 w-3.5" /> FREE GIFT
                     </span>
-                    <h3 className="text-primary-dark mb-1 font-serif text-lg leading-tight">
+                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
                       Free Polish With Manicure
                     </h3>
                   </div>
@@ -249,7 +243,7 @@ export default function HomePage() {
                     <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
                       Use Code
                     </p>
-                    <strong className="text-primary-dark inline-block rounded-md border border-[#c29a63]/20 bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
+                    <strong className="text-primary inline-block rounded-md border border-[#c29a63]/20 bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
                       GLOWUP
                     </strong>
                   </div>
@@ -257,16 +251,14 @@ export default function HomePage() {
               </div>
 
               {/* Card 3 (Bridal Spa Day) */}
-              <div className="bg-surface border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
-                <div className="absolute top-1/2 -left-3 z-20 h-6 w-6 -translate-y-1/2 rounded-full bg-[#fcf4f0] shadow-inner" />
-                <div className="absolute top-1/2 -right-3 z-20 h-6 w-6 -translate-y-1/2 rounded-full bg-[#fcf4f0] shadow-inner" />
+              <div className="bg-white border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
                 <div className="border-primary/30 relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
                   <div className="bg-primary/20 absolute top-0 left-0 -mt-10 -ml-10 h-32 w-32 rounded-full blur-2xl" />
                   <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary-dark mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
+                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
                       <Flower2 className="h-3.5 w-3.5" /> PACKAGE
                     </span>
-                    <h3 className="text-primary-dark mb-1 font-serif text-lg leading-tight">
+                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
                       Bridal Spa Day
                     </h3>
                   </div>
@@ -275,7 +267,7 @@ export default function HomePage() {
                     <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
                       Use Code
                     </p>
-                    <strong className="text-primary-dark border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
+                    <strong className="text-primary border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
                       BRIDE30
                     </strong>
                   </div>
@@ -287,15 +279,83 @@ export default function HomePage() {
 
         {/* Catalog loading / error */}
         {(loading || error) && !searchQuery && (
-          <section className="py-8 text-center">
-            {loading ? (
-              <div className="text-text-secondary flex items-center justify-center gap-2 text-sm">
-                <Loader2 className="h-5 w-5 animate-spin" /> Loading catalog...
+          <>
+            <section>
+              <div className="mb-2 text-center">
+                <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+                  Featured Services
+                </h2>
+                <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
               </div>
-            ) : (
-              <p className="text-sm text-red-500">{error}</p>
-            )}
-          </section>
+              <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={`service-skeleton-${i}`} className="w-[44%] flex-none md:w-80">
+                    <div className="relative flex h-56 w-full items-center justify-center rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] bg-primary/5 shadow-sm md:h-96 overflow-hidden">
+                      {loading ? (
+                        <>
+                          <div className="absolute inset-0 bg-primary/20" />
+                          <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-4 text-center z-10">
+                          <span className="mb-2 text-[#c8a24a]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                          </span>
+                          <span className="text-xs text-[#c8a24a] md:text-sm">Failed to load</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 flex justify-center">
+                <span className="text-white text-sm font-semibold">
+                  See All
+                </span>
+              </div>
+            </section>
+
+            <section className="mt-8 md:mt-24">
+              <div className="mb-2 text-center">
+                <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+                  Our Products
+                </h2>
+                <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
+              </div>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6 px-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={`product-skeleton-${i}`} className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm">
+                    <div className="relative flex aspect-square items-center justify-center bg-primary/5 overflow-hidden">
+                      {loading ? (
+                        <>
+                          <div className="absolute inset-0 bg-primary/20" />
+                          <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-4 text-center z-10">
+                          <span className="mb-2 text-[#c8a24a]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                          </span>
+                          <span className="text-xs text-[#c8a24a] md:text-sm">Failed to load</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative flex flex-col p-3 md:p-6 overflow-hidden">
+                      <div className="h-4 w-2/3 rounded bg-primary/20" />
+                      {loading && (
+                        <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-8 flex justify-center">
+                <span className="text-white text-sm font-semibold">
+                  Show All
+                </span>
+              </div>
+            </section>
+          </>
         )}
 
         {/* Search Results */}
@@ -341,16 +401,11 @@ export default function HomePage() {
         {/* Featured Services */}
         {!searchQuery && !loading && !error && (
           <section>
-            <div className="mb-4 flex items-end justify-between">
-              <h2 className="text-surface font-serif text-xl md:text-3xl">
+            <div className="mb-2 text-center">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Featured Services
               </h2>
-              <Link
-                href="/services"
-                className="text-primary-dark text-sm font-semibold"
-              >
-                See All
-              </Link>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
             <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
               {filteredItems.filter((item) => !item.isProduct).length === 0 ? (
@@ -366,7 +421,7 @@ export default function HomePage() {
                       key={item.id}
                       className="group block w-[44%] flex-none md:w-80"
                     >
-                      <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#A87434] shadow-sm md:h-96">
+                      <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
                         <img
                           src={item.imageUrl}
                           alt={item.name}
@@ -380,22 +435,25 @@ export default function HomePage() {
                   ))
               )}
             </div>
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="/services"
+                className="text-white text-sm font-semibold"
+              >
+                See All
+              </Link>
+            </div>
           </section>
         )}
 
         {/* Products Section */}
         {!searchQuery && !loading && !error && (
           <section>
-            <div className="mb-4 flex items-end justify-between">
-              <h2 className="text-surface font-serif text-xl md:text-3xl">
+            <div className="mb-2 text-center">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Our Products
               </h2>
-              <Link
-                href="/products"
-                className="text-primary-dark text-sm font-semibold"
-              >
-                Show All
-              </Link>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6">
               {filteredItems.filter((item) => item.isProduct).length === 0 ? (
@@ -428,16 +486,25 @@ export default function HomePage() {
                   ))
               )}
             </div>
+            <div className="mt-8 flex justify-center">
+              <Link
+                href="/products"
+                className="text-white text-sm font-semibold"
+              >
+                Show All
+              </Link>
+            </div>
           </section>
         )}
 
         {/* Testimonials Section */}
         {!searchQuery && (
           <section className="mt-16 md:mt-28">
-            <div className="mb-8 flex items-center justify-center">
-              <h2 className="text-surface font-serif text-2xl md:text-4xl">
-                What Our Clients Say
+            <div className="mb-8 flex flex-col items-center justify-center">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+                Customer Reviews
               </h2>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[160px] md:max-w-[200px]" />
             </div>
 
             <div className="flex w-full justify-center pt-2 pb-8">
@@ -453,7 +520,7 @@ export default function HomePage() {
               <div className="flex gap-4">
                 <a
                   href="#"
-                  className="bg-surface border-primary/20 text-primary-dark hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
+                  className="bg-white border-primary/20 text-[#e8baa0] hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -474,7 +541,7 @@ export default function HomePage() {
                 </a>
                 <a
                   href="#"
-                  className="bg-surface border-primary/20 text-primary-dark hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
+                  className="bg-white border-primary/20 text-[#e8baa0] hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -493,7 +560,7 @@ export default function HomePage() {
                 </a>
                 <a
                   href="#"
-                  className="bg-surface border-primary/20 text-primary-dark hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
+                  className="bg-white border-primary/20 text-[#e8baa0] hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -512,21 +579,21 @@ export default function HomePage() {
                 </a>
               </div>
 
-              <div className="text-text-primary flex gap-4 text-xs font-medium">
-                <Link href="/privacy" className="hover:text-primary-dark">
+              <div className="text-white flex gap-4 text-xs font-medium">
+                <Link href="/privacy" className="hover:text-white/80">
                   Privacy Policy
                 </Link>
                 <span className="text-primary/40">•</span>
-                <Link href="/terms" className="hover:text-primary-dark">
+                <Link href="/terms" className="hover:text-white/80">
                   Terms of Service
                 </Link>
                 <span className="text-primary/40">•</span>
-                <Link href="/contact" className="hover:text-primary-dark">
+                <Link href="/contact" className="hover:text-white/80">
                   Contact
                 </Link>
               </div>
 
-              <p className="text-text-secondary mt-4 text-[10px] md:text-xs">
+              <p className="text-white mt-4 text-[10px] md:text-xs">
                 © {new Date().getFullYear()} ORYX Beauty Spa. All rights
                 reserved.
               </p>

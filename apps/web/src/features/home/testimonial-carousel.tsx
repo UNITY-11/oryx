@@ -28,6 +28,18 @@ const TESTIMONIALS = [
     text: "Highly recommend the hot stone therapy. It melts all the stress away perfectly.",
     initials: "AB",
   },
+  {
+    id: 5,
+    name: "Nour S.",
+    text: "Beautiful spa with excellent staff. The massage therapists really know what they are doing. Will be back!",
+    initials: "NS",
+  },
+  {
+    id: 6,
+    name: "Elena M.",
+    text: "Such a relaxing experience from start to finish. The complimentary tea and foot soak was a lovely touch.",
+    initials: "EM",
+  },
 ];
 
 export function TestimonialCarousel() {
@@ -35,6 +47,14 @@ export function TestimonialCarousel() {
   const [isHovered, setIsHovered] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  useEffect(() => {
+    const checkSize = () => setIsLargeScreen(window.innerWidth >= 768);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
+  }, []);
 
   // Auto-play interval
   useEffect(() => {
@@ -101,29 +121,41 @@ export function TestimonialCarousel() {
           opacity = 1;
           zIndex = 30;
         } else if (offset === 1) {
-          // Right / Next
-          translateX = "80%";
+          // Right 1
+          translateX = isLargeScreen ? "55%" : "80%";
           scale = 0.85;
-          opacity = 0.5;
+          opacity = isLargeScreen ? 0.8 : 0.5;
           zIndex = 20;
         } else if (offset === -1) {
-          // Left / Prev
-          translateX = "-80%";
+          // Left 1
+          translateX = isLargeScreen ? "-55%" : "-80%";
           scale = 0.85;
-          opacity = 0.5;
+          opacity = isLargeScreen ? 0.8 : 0.5;
           zIndex = 20;
+        } else if (offset === 2) {
+          // Right 2
+          translateX = isLargeScreen ? "110%" : "150%";
+          scale = 0.7;
+          opacity = isLargeScreen ? 0.4 : 0;
+          zIndex = 10;
+        } else if (offset === -2) {
+          // Left 2
+          translateX = isLargeScreen ? "-110%" : "-150%";
+          scale = 0.7;
+          opacity = isLargeScreen ? 0.4 : 0;
+          zIndex = 10;
         } else {
           // Hidden
           translateX = offset > 0 ? "150%" : "-150%";
-          scale = 0.7;
+          scale = 0.5;
           opacity = 0;
-          zIndex = 10;
+          zIndex = 0;
         }
 
         return (
           <div
             key={testimonial.id}
-            className="border-primary/10 absolute flex w-full max-w-[340px] cursor-pointer flex-col rounded-[32px] border bg-white p-6 shadow-sm transition-all duration-700 ease-in-out md:max-w-[500px] md:px-8 md:py-5"
+            className="border-primary/10 absolute flex w-full max-w-[340px] cursor-pointer flex-col rounded-[32px] border bg-white p-6 shadow-sm transition-all duration-700 ease-in-out md:max-w-[380px] md:px-8 md:py-5"
             style={{
               transform: `translateX(${translateX}) scale(${scale})`,
               opacity,
@@ -131,15 +163,15 @@ export function TestimonialCarousel() {
             }}
             onClick={() => {
               // Click on prev/next to navigate
-              if (offset === 1) handleNext();
-              if (offset === -1) handlePrev();
+              if (offset === 1 || offset === 2) handleNext();
+              if (offset === -1 || offset === -2) handlePrev();
             }}
           >
             <div className="mb-4 flex gap-1">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className="fill-background text-background h-4 w-4 md:h-5 md:w-5"
+                  className="fill-[#e5c37a] text-[#e5c37a] h-4 w-4 md:h-5 md:w-5"
                 />
               ))}
             </div>

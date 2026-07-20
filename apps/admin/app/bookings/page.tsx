@@ -85,11 +85,10 @@ function BookingsContent() {
   return (
     <div className="flex h-full flex-col space-y-6 md:space-y-8">
       {/* Header Area */}
-      {isAdding ? (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          {isAdding && (
             <button
-              type="button"
               onClick={() => {
                 if (step > 1) {
                   setStep(step - 1);
@@ -97,28 +96,30 @@ function BookingsContent() {
                   router.push("/bookings");
                 }
               }}
-              className="text-text-secondary hover:text-primary transition-colors flex items-center gap-1"
+              className="border-primary/10 hover:border-primary/30 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm transition-colors"
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="text-text-secondary h-5 w-5" />
             </button>
-            <h2 className="text-primary-dark font-serif text-2xl md:text-3xl">
-              {step === 1 ? "Select Service" : step === 2 ? "Choose Date & Time" : "Client Details"}
-            </h2>
-          </div>
-          <div className="text-sm font-medium text-text-secondary">
-            Step {step} of 3
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          )}
           <div>
             <h1 className="text-primary-dark font-serif text-3xl md:text-4xl">
-              Bookings
+              {isAdding
+                ? step === 1
+                  ? "Select Service"
+                  : step === 2
+                    ? "Choose Date & Time"
+                    : "Client Details"
+                : "Bookings"}
             </h1>
             <p className="text-text-secondary mt-2">
-              Manage your customer appointments
+              {isAdding
+                ? `Step ${step} of 3`
+                : "Manage your customer appointments"}
             </p>
           </div>
+        </div>
+
+        {!isAdding && (
           <div className="flex items-center space-x-3">
             <button
               onClick={() => {
@@ -131,8 +132,8 @@ function BookingsContent() {
               <span>New Booking</span>
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Combined Table and Filters */}
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">

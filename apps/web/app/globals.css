@@ -119,3 +119,16 @@ html {
     transform: translateX(100%);
   }
 }
+
+.bg-fluted {
+  background-color: #d5a085;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.12) 0px,
+    rgba(0, 0, 0, 0.12) 1px,
+    rgba(255, 255, 255, 0.4) 1px,
+    rgba(255, 255, 255, 0.4) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+}

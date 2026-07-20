@@ -1,19 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #e1b297;
-  --color-surface: #faf1e9;
-  --color-primary: #b96b4a;
-  --color-primary-dark: #8a4a2e;
-  --color-secondary: #c29a63;
-  --color-text-primary: #452c1e;
-  --color-text-secondary: #86634f;
+  /* High-Contrast Brand Mapping */
+  --color-brand-peach: #e8baa0;
+  /* Main Background */
+  --color-brand-peach-light: #faf1e9;
+  /* Light Surface (White/Cream) */
+
+  --color-brand-dark-brown: #452c1e;
+  /* Highest contrast ink */
+  --color-brand-deep-gold: #9c6b2f;
+  /* Dark Gold/Brown */
+  --color-brand-shadow: #86634f;
+  /* Medium contrast */
+
+  /* Semantic UI Mapping */
+  --color-background: var(--color-brand-peach);
+
+  /* Use a much lighter surface so cards stand out and elements inside them are visible */
+  --color-surface: var(--color-brand-peach-light);
+
+  /* Primary colors must be dark to be visible on the peach background */
+  --color-primary: var(--color-brand-deep-gold);
+  --color-primary-dark: var(--color-brand-dark-brown);
+
+  --color-secondary: var(--color-brand-shadow);
+
+  /* Typography - using the darkest colors for maximum readability */
+  --color-text-primary: var(--color-brand-dark-brown);
+  --color-text-secondary: var(--color-brand-deep-gold);
 
   --font-sans: var(--font-inter), sans-serif;
   --font-serif: var(--font-cinzel), serif;
 
   --radius-soft: 0.5rem;
-  --shadow-spa: 0 4px 20px -2px rgba(138, 74, 46, 0.15);
+  --shadow-spa: 0 4px 20px -2px rgba(69, 44, 30, 0.15);
 }
 
 @layer base {
@@ -39,9 +60,12 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Custom Thin Scrollbar */
@@ -49,13 +73,16 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: var(--color-secondary);
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-primary-dark);
 }
@@ -63,4 +90,32 @@
 html {
   scrollbar-width: thin;
   scrollbar-color: var(--color-secondary) transparent;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-50% - 8px));
+    /* 8px is half of the 16px gap (space-x-4) */
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }

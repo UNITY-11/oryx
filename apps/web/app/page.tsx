@@ -61,30 +61,41 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col overflow-x-hidden">
       {/* Header & Search in a zero-height fixed wrapper to prevent layout shift */}
       <div className="fixed top-0 left-0 z-40 h-0 w-full overflow-visible md:hidden">
-        <div className="rounded-b-[36px] bg-[#e8baa0] px-4 pt-3 pb-3">
-          <div className="min-h-4xl mb-4 flex items-center justify-center">
-            <img
+        <div className="rounded-b-[36px] bg-fluted px-4 pt-3 pb-4 relative overflow-hidden border-x border-b border-[#c8a24a]">
+          {/* Metallic Gold Band */}
+          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] z-0" />
+          <div className="min-h-4xl mb-4 flex items-center justify-center relative z-10 w-full px-4">
+            <div
               ref={logoRef}
-              src="/images/oryx-logo.png"
-              alt="ORYX Logo"
-              className="w-auto object-contain brightness-160 contrast-125 will-change-[height]"
-              style={{ height: "100px" }}
+              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height]"
+              title="ORYX Logo"
+              style={{ 
+                height: "100px",
+                WebkitMaskImage: 'url("/images/oryx-logo.png")',
+                WebkitMaskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskImage: 'url("/images/oryx-logo.png")',
+                maskSize: "contain",
+                maskRepeat: "no-repeat",
+                maskPosition: "center"
+              }}
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="relative z-10 flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[#e8baa0]" />
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[#c8a24a]" />
               <input
                 type="text"
                 placeholder="Search treatments or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="placeholder:text-[#e8baa0] focus:ring-[#e8baa0] w-full rounded-full border border-[#e5c37a] bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none focus:ring-2"
+                className="placeholder:text-[#c8a24a]/70 focus:ring-[#c8a24a] w-full rounded-full border border-[#c8a24a] bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none focus:ring-2"
               />
             </div>
             <Link
               href="/profile"
-              className="text-[#e8baa0] hover:text-[#c29a63] flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-[#e5c37a] bg-gray-50 transition-colors"
+              className="text-[#c8a24a] hover:text-[#b38728] flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-[#c8a24a] bg-gray-50 transition-colors"
             >
               {user ? (
                 <span className="text-xl font-semibold">
@@ -103,7 +114,7 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="mt-3 px-3 pb-6 md:mt-0 md:px-0 md:pb-24">
+        <section className="mt-10 px-3 pb-6 md:mt-0 md:px-0 md:pb-24">
           <HeroCarousel />
         </section>
       )}
@@ -176,7 +187,7 @@ export default function HomePage() {
                   key={idx}
                   className="group flex w-[72px] flex-none cursor-pointer flex-col items-center md:w-auto"
                 >
-                  <div className="bg-white text-[#d6a488] hover:bg-gray-50 cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#e5c37a] shadow-sm transition-colors hover:shadow-md">
+                  <div className="bg-white text-[#c8a24a] hover:bg-gray-50 cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] shadow-sm transition-colors hover:shadow-md">
                     {cat.icon}
                   </div>
                   <span className="text-white cat-text mt-2 text-center text-[11px] font-medium md:mt-4">
@@ -195,7 +206,7 @@ export default function HomePage() {
               {/* Card 1 */}
               <div className="bg-white border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
                 {/* Inner Dashed container */}
-                <div className="border-primary/30 relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
+                <div className="border-[#c8a24a] relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
                   <div className="bg-primary/20 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-2xl" />
 
                   <div className="relative z-10 flex-1 pr-3">
@@ -208,7 +219,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Vertical Dashed separator */}
-                  <div className="border-primary/30 relative z-10 mx-2 h-16 w-px border-l-2 border-dashed" />
+                  <div className="border-[#c8a24a] relative z-10 mx-2 h-16 w-px border-l-2 border-dashed" />
 
                   <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
                     <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">

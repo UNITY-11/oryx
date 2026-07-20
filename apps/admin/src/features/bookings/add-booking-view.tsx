@@ -177,7 +177,7 @@ export function AddBookingView({
   };
 
   return (
-    <div className="flex h-full flex-col w-full max-w-2xl mx-auto bg-white">
+    <div className="flex h-full flex-col w-full bg-white">
       <div className="border-primary/10 flex items-center justify-between border-b p-6 md:p-8 shrink-0">
         <div className="flex items-center space-x-3">
           <button
@@ -202,7 +202,9 @@ export function AddBookingView({
         </div>
       </div>
 
-      <div className="scrollbar-hide flex-1 overflow-y-auto relative">
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+        {/* Left Side: Wizard Forms */}
+        <div className="scrollbar-hide flex-1 overflow-y-auto relative">
         <form
           id="add-booking-form"
           onSubmit={handleSubmit}
@@ -497,100 +499,121 @@ export function AddBookingView({
                   />
                 </div>
               </div>
-
-              <div className="mt-8 border-t border-primary/10 pt-6">
-                <h4 className="text-sm font-medium text-text-secondary uppercase tracking-wider mb-4">
-                  Booking Summary
-                </h4>
-                <div className="space-y-3 bg-gray-50 p-5 rounded-2xl border border-primary/5 shadow-sm">
-                  {selectedServicesList.map((service) => {
-                    const serviceAddons = service.addons.filter(a => selectedAddons.includes(a.id));
-                    return (
-                      <div key={service.id} className="pb-3 border-b border-primary/10 last:border-0 last:pb-0">
-                        <div className="flex justify-between font-medium text-primary-dark text-sm">
-                          <span>{service.name}</span>
-                          <span>QAR {service.pricingTiers[0]?.price || 0}</span>
-                        </div>
-                        {serviceAddons.map(addon => (
-                          <div key={addon.id} className="flex justify-between text-xs text-text-secondary mt-1 pl-2">
-                            <span>+ {addon.name}</span>
-                            <span>QAR {addon.price}</span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           )}
         </form>
       </div>
 
-      <div className="border-primary/10 flex items-center justify-between gap-4 border-t bg-white p-6 md:p-8 shrink-0">
-        <div className="min-w-0">
-          {submitError ? (
-            <p className="flex items-center gap-1.5 text-sm text-red-500 bg-red-50 p-2 rounded-lg">
-              <AlertCircle className="h-4 w-4 shrink-0" /> {submitError}
-            </p>
-          ) : (
-            <>
-              <p className="text-text-secondary text-sm">
-                Total Estimated Amount
-              </p>
-              <p className="text-primary-dark font-serif text-2xl">
-                QAR{" "}
-                {basePrice +
-                  selectedServicesList.reduce((sum, service) => {
-                    return (
-                      sum +
-                      service.addons
-                        .filter((a) => selectedAddons.includes(a.id))
-                        .reduce((s, a) => s + a.price, 0)
-                    );
-                  }, 0)}
-              </p>
-            </>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {step < 3 ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (step === 1 && selectedServiceIds.length === 0) {
-                  setSubmitError("Please select at least one service.");
-                  return;
-                }
-                if (step === 2 && !selectedTime) {
-                  setSubmitError("Please select a time slot.");
-                  return;
-                }
-                setSubmitError(null);
-                setStep(step + 1);
-              }}
-              className="bg-[#e8baa0] flex shrink-0 items-center space-x-2 rounded-full px-8 py-3 font-medium text-white shadow-sm transition-opacity hover:opacity-90"
-            >
-              <span>Next Step</span>
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          ) : (
-            <button
-              form="add-booking-form"
-              type="submit"
-              disabled={submitting}
-              className="bg-[#e8baa0] flex shrink-0 items-center space-x-2 rounded-full px-8 py-3 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {submitting ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Plus className="h-5 w-5" />
+        {/* Right Side: Summary & Actions */}
+        <div className="border-primary/10 bg-gray-50 flex w-full flex-col border-t md:border-t-0 md:border-l md:w-[350px] lg:w-[400px] shrink-0">
+          {/* Summary Scrollable Area */}
+          <div className="scrollbar-hide flex-1 overflow-y-auto p-6 space-y-6">
+            <div>
+              <h4 className="text-primary-dark font-serif text-lg mb-4">Summary</h4>
+              
+              {/* Date & Time */}
+              {selectedTime && selectedDate && (
+                <div className="bg-white p-4 rounded-2xl border border-primary/10 shadow-sm mb-4">
+                  <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold mb-1">Date & Time</p>
+                  <p className="text-sm font-medium text-primary-dark">{selectedDate.toDateString()} at {selectedTime}</p>
+                </div>
               )}
-              <span>{submitting ? "Booking..." : "Confirm"}</span>
-            </button>
-          )}
+
+              {/* Selected Items */}
+              {selectedServicesList.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Services</p>
+                  <div className="space-y-3 bg-white p-4 rounded-2xl border border-primary/10 shadow-sm">
+                    {selectedServicesList.map((service) => {
+                      const serviceAddons = service.addons.filter(a => selectedAddons.includes(a.id));
+                      return (
+                        <div key={service.id} className="pb-3 border-b border-primary/10 last:border-0 last:pb-0">
+                          <div className="flex justify-between font-medium text-primary-dark text-sm">
+                            <span>{service.name}</span>
+                            <span>QAR {service.pricingTiers[0]?.price || 0}</span>
+                          </div>
+                          {serviceAddons.map(addon => (
+                            <div key={addon.id} className="flex justify-between text-xs text-text-secondary mt-1 pl-2">
+                              <span>+ {addon.name}</span>
+                              <span>QAR {addon.price}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-text-secondary">No services selected yet.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Area inside right bar */}
+          <div className="bg-white p-6 border-t border-primary/10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+            <div className="mb-4">
+              {submitError ? (
+                <p className="flex items-center gap-1.5 text-sm text-red-500 bg-red-50 p-2 rounded-lg">
+                  <AlertCircle className="h-4 w-4 shrink-0" /> {submitError}
+                </p>
+              ) : (
+                <>
+                  <p className="text-text-secondary text-sm">Total Estimated Amount</p>
+                  <p className="text-primary-dark font-serif text-2xl">
+                    QAR{" "}
+                    {basePrice +
+                      selectedServicesList.reduce((sum, service) => {
+                        return (
+                          sum +
+                          service.addons
+                            .filter((a) => selectedAddons.includes(a.id))
+                            .reduce((s, a) => s + a.price, 0)
+                        );
+                      }, 0)}
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            {step < 3 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (step === 1 && selectedServiceIds.length === 0) {
+                    setSubmitError("Please select at least one service.");
+                    return;
+                  }
+                  if (step === 2 && !selectedTime) {
+                    setSubmitError("Please select a time slot.");
+                    return;
+                  }
+                  setSubmitError(null);
+                  setStep(step + 1);
+                }}
+                className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+              >
+                <span>Next Step</span>
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            ) : (
+              <button
+                form="add-booking-form"
+                type="submit"
+                disabled={submitting}
+                className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {submitting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Plus className="h-5 w-5" />
+                )}
+                <span>{submitting ? "Booking..." : "Confirm Booking"}</span>
+              </button>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );

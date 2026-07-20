@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowUpDown,
+  ChevronLeft,
   Filter,
   Loader2,
   Plus,
@@ -19,6 +20,7 @@ function BookingsContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
   const searchParams = useSearchParams();
   const router = useRouter();
   const isAdding = searchParams.get("action") === "add";
@@ -83,6 +85,54 @@ function BookingsContent() {
   return (
     <div className="flex h-full flex-col space-y-6 md:space-y-8">
       {/* Header Area */}
+      {isAdding ? (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (step > 1) {
+                  setStep(step - 1);
+                } else {
+                  router.push("/bookings");
+                }
+              }}
+              className="text-text-secondary hover:text-primary transition-colors flex items-center gap-1"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <h2 className="text-primary-dark font-serif text-2xl md:text-3xl">
+              {step === 1 ? "Select Service" : step === 2 ? "Choose Date & Time" : "Client Details"}
+            </h2>
+          </div>
+          <div className="text-sm font-medium text-text-secondary">
+            Step {step} of 3
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-primary-dark font-serif text-3xl md:text-4xl">
+              Bookings
+            </h1>
+            <p className="text-text-secondary mt-2">
+              Manage your customer appointments
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => {
+                setStep(1);
+                router.push("?action=add");
+              }}
+              className="bg-[#e8baa0] flex items-center space-x-2 rounded-full px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Booking</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Combined Table and Filters */}
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
@@ -90,6 +140,8 @@ function BookingsContent() {
           <AddBookingView 
             onAddBooking={handleAddBooking} 
             onCancel={() => router.push("/bookings")} 
+            step={step}
+            setStep={setStep}
           />
         ) : (
           <>

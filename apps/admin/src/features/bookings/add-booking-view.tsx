@@ -11,11 +11,14 @@ import { Booking } from "./mock-data";
 export function AddBookingView({
   onAddBooking,
   onCancel,
+  step,
+  setStep,
 }: {
   onAddBooking: (booking: Booking) => void;
   onCancel: () => void;
+  step: number;
+  setStep: (step: number) => void;
 }) {
-  const [step, setStep] = useState(1); // Wizard step
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
@@ -178,29 +181,6 @@ export function AddBookingView({
 
   return (
     <div className="flex h-full flex-col w-full bg-white">
-      <div className="border-primary/10 flex items-center justify-between border-b p-6 md:p-8 shrink-0">
-        <div className="flex items-center space-x-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (step > 1) {
-                setStep(step - 1);
-              } else {
-                onCancel();
-              }
-            }}
-            className="text-text-secondary hover:text-primary transition-colors flex items-center gap-1"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-          <h2 className="text-primary-dark font-serif text-2xl">
-            {step === 1 ? "Select Service" : step === 2 ? "Choose Date & Time" : "Client Details"}
-          </h2>
-        </div>
-        <div className="text-sm font-medium text-text-secondary">
-          Step {step} of 3
-        </div>
-      </div>
 
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left Side: Wizard Forms */}

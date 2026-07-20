@@ -56,9 +56,17 @@ export function BottomNav() {
 
   return (
     <nav
-      className="w-full rounded-t-4xl bg-white/90 backdrop-blur-xl md:flex md:h-full md:flex-col md:rounded-none md:bg-transparent md:pt-12"
+      className="relative w-full rounded-t-4xl bg-white backdrop-blur-xl md:flex md:h-full md:flex-col md:rounded-none md:bg-transparent md:pt-12"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
+      {/* Flawless S-curve hump that merges with the button's border */}
+      <svg
+        className="absolute -top-[14px] left-1/2 -translate-x-1/2 w-[100px] h-[16px] text-white pointer-events-none md:hidden"
+        viewBox="0 0 110 16"
+        fill="white"
+      >
+        <path d="M0 16 Q 15 16 25 8 T 55 0 T 85 8 T 110 16 Z" />
+      </svg>
       {/* Desktop Logo */}
       <div className="mb-12 hidden flex-col items-center justify-center md:flex">
         <h1 className="text-surface font-serif text-4xl">ORYX</h1>
@@ -74,23 +82,24 @@ export function BottomNav() {
 
           if (item.isCenter) {
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="relative -top-4 flex flex-col items-center justify-center focus:outline-none md:relative md:top-0 md:w-full"
-              >
-                <div
-                  className={`shadow-spa flex h-14 w-14 items-center justify-center rounded-full transition-colors md:h-12 md:w-full md:rounded-2xl ${isActive ? "bg-primary md:bg-primary-dark" : "bg-primary md:bg-primary"} md:space-x-3`}
+              <div key={item.href} className="relative -top-4 flex flex-col items-center justify-center md:top-0 md:w-full shrink-0">
+                <Link
+                  href={item.href}
+                  className="relative flex flex-col items-center justify-center focus:outline-none rounded-full border-[6px] border-white bg-white md:border-none md:bg-transparent z-10"
                 >
-                  <Icon
-                    className="text-surface h-6 w-6 md:h-5 md:w-5"
-                    strokeWidth={2.5}
-                  />
-                  <span className="text-surface hidden text-sm font-medium md:block">
-                    {item.name}
-                  </span>
-                </div>
-              </Link>
+                  <div
+                    className={`shadow-spa flex h-14 w-14 items-center justify-center rounded-full transition-colors md:h-12 md:w-full md:rounded-2xl ${isActive ? "bg-[#e8baa0] md:bg-[#c29a63]" : "bg-[#e8baa0] md:bg-[#e8baa0]"} md:space-x-3`}
+                  >
+                    <Icon
+                      className="text-white h-6 w-6 md:h-5 md:w-5"
+                      strokeWidth={2.5}
+                    />
+                    <span className="text-white hidden text-sm font-medium md:block">
+                      {item.name}
+                    </span>
+                  </div>
+                </Link>
+              </div>
             );
           }
 
@@ -98,7 +107,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex w-12 flex-col items-center justify-center space-y-1 transition-colors focus:outline-none md:w-full md:flex-row md:justify-start md:space-y-0 md:space-x-4 md:rounded-2xl md:px-4 md:py-3 ${isActive ? "text-primary md:bg-primary/10" : "text-text-secondary hover:text-primary-dark md:hover:bg-primary/5"}`}
+              className={`flex w-12 flex-col items-center justify-center space-y-1 transition-colors focus:outline-none md:w-full md:flex-row md:justify-start md:space-y-0 md:space-x-4 md:rounded-2xl md:px-4 md:py-3 ${isActive ? "text-[#c8a24a] md:bg-[#e8baa0]/10" : "text-[#e8baa0] hover:text-[#c8a24a] md:hover:bg-[#e8baa0]/5"}`}
             >
               <Icon
                 className="h-6 w-6 transition-transform hover:scale-110 md:h-5 md:w-5 md:hover:scale-100"

@@ -49,7 +49,7 @@ export default function RootLayout({
         className="bg-background text-text-primary min-h-screen overflow-x-hidden antialiased"
       >
         {/* App Layout Wrapper */}
-        <div className="bg-background relative mx-auto flex h-[100dvh] w-full max-w-[1920px] flex-col overflow-x-hidden shadow-2xl">
+        <div className="relative mx-auto flex h-[100dvh] w-full flex-col overflow-x-hidden shadow-2xl">
           <div className="pointer-events-none absolute top-4 right-4 left-4 z-50 md:pointer-events-auto">
             <TopNav />
           </div>

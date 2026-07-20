@@ -31,11 +31,10 @@ export function TopNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors text-[#e8baa0] ${
-                isActive 
-                  ? 'border-[#e8baa0] bg-[#e8baa0]/5' 
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors text-[#e8baa0] ${isActive
+                  ? 'border-[#e8baa0] bg-[#e8baa0]/5'
                   : 'border-transparent hover:border-[#e8baa0]/30 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <Icon className="w-4 h-4" />
               <span className="text-sm font-medium">{item.name}</span>
@@ -61,7 +60,7 @@ export function TopNav() {
             className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder:text-[#e8baa0] focus:ring-2 focus:ring-[#e8baa0] outline-none transition-shadow"
           />
         </div>
-        
+
         <div className="flex items-center space-x-2 shrink-0">
 
           <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-[#e8baa0] hover:text-[#c29a63] transition-colors">

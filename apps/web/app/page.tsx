@@ -69,7 +69,7 @@ export default function HomePage() {
               ref={logoRef}
               className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height]"
               title="ORYX Logo"
-              style={{ 
+              style={{
                 height: "100px",
                 WebkitMaskImage: 'url("/images/oryx-logo.png")',
                 WebkitMaskSize: "contain",
@@ -333,25 +333,27 @@ export default function HomePage() {
                 </h2>
                 <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
               </div>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6 px-4">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={`product-skeleton-${i}`} className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm">
-                    <div className="relative flex aspect-square items-center justify-center bg-primary/5 overflow-hidden">
-                      {loading ? (
-                        <>
-                          <div className="absolute inset-0 bg-primary/20" />
-                          <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center p-4 text-center z-10">
-                          <span className="mb-2 text-[#c8a24a]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
-                          </span>
-                          <span className="text-xs text-[#c8a24a] md:text-sm">Failed to load</span>
-                        </div>
-                      )}
+              <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 lg:grid-cols-4 md:gap-6 px-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div key={`product-skeleton-${i}`} className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm p-2 md:p-3">
+                    <div className="relative flex aspect-square items-center justify-center rounded-xl bg-primary/5 overflow-hidden">
+                      <div className="h-full w-full relative">
+                        {loading ? (
+                          <>
+                            <div className="absolute inset-0 bg-primary/20" />
+                            <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full p-4 text-center z-10">
+                            <span className="mb-2 text-[#c8a24a]">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                            </span>
+                            <span className="text-xs text-[#c8a24a] md:text-sm">Failed to load</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="relative flex flex-col p-3 md:p-6 overflow-hidden">
+                    <div className="relative flex flex-col pt-3 md:pt-4 px-1 md:px-2 overflow-hidden">
                       <div className="h-4 w-2/3 rounded bg-primary/20" />
                       {loading && (
                         <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
@@ -466,29 +468,29 @@ export default function HomePage() {
               </h2>
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
               {filteredItems.filter((item) => item.isProduct).length === 0 ? (
-                <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3">
+                <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3 lg:col-span-4">
                   No products available yet.
                 </p>
               ) : (
                 filteredItems
                   .filter((item) => item.isProduct)
-                  .slice(0, 6)
+                  .slice(0, 8)
                   .map((item) => (
                     <Link
                       href={`/service/${item.id}`}
                       key={item.id}
-                      className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1"
+                      className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1 p-2 md:p-3"
                     >
-                      <div className="relative aspect-square">
+                      <div className="relative aspect-square overflow-hidden rounded-xl">
                         <img
                           src={item.imageUrl}
                           alt={item.name}
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <div className="flex flex-col p-3 md:p-6">
+                      <div className="flex flex-col pt-3 md:pt-4 px-1 md:px-2">
                         <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
                           {item.name}
                         </h3>

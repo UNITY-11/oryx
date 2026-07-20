@@ -11,7 +11,7 @@ import {
   Search,
 } from "lucide-react";
 
-import { AddBookingModal } from "../../src/features/bookings/add-booking-modal";
+import { AddBookingView } from "../../src/features/bookings/add-booking-view";
 import { fetchBookings } from "../../src/features/bookings/api";
 import { Booking, BookingStatus } from "../../src/features/bookings/mock-data";
 
@@ -19,9 +19,9 @@ function BookingsContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isAdding = searchParams.get("action") === "add";
 
   useEffect(() => {
     fetchBookings()
@@ -30,13 +30,7 @@ function BookingsContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (searchParams.get("action") === "add") {
-      setIsModalOpen(true);
-    } else {
-      setIsModalOpen(false);
-    }
-  }, [searchParams]);
+
   // Filter & Sort State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">(
@@ -92,8 +86,15 @@ function BookingsContent() {
 
       {/* Combined Table and Filters */}
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
-        {/* Filters and Search Bar */}
-        <div className="border-primary/10 z-10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
+        {isAdding ? (
+          <AddBookingView 
+            onAddBooking={handleAddBooking} 
+            onCancel={() => router.push("/bookings")} 
+          />
+        ) : (
+          <>
+            {/* Filters and Search Bar */}
+            <div className="border-primary/10 z-10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
           <div className="relative w-full shrink-0 md:w-96">
             <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
             <input
@@ -286,13 +287,9 @@ function BookingsContent() {
             </tbody>
           </table>
         </div>
+          </>
+        )}
       </div>
-
-      <AddBookingModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddBooking={handleAddBooking}
-      />
     </div>
   );
 }

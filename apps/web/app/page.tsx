@@ -74,7 +74,7 @@ export default function HomePage() {
           <div className="min-h-4xl relative z-10 mb-4 flex w-full items-center justify-center px-4">
             <div
               ref={logoRef}
-              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height]"
+              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height] drop-shadow-md"
               title="ORYX Logo"
               style={{
                 height: "100px",
@@ -117,11 +117,11 @@ export default function HomePage() {
       </div>
 
       {/* Static spacer to push content below the large header initially */}
-      <div className="pt-[190px] md:hidden" />
+      <div className="pt-[200px] md:hidden" />
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="pb-4 pt-0 md:p-0">
+        <section className="pb-4 pt-4 px-4 md:p-0">
           {heroLoading ? (
             <div className="w-full h-64 md:h-[100vh] bg-gray-200 animate-pulse rounded-3xl md:rounded-none"></div>
           ) : (
@@ -130,11 +130,11 @@ export default function HomePage() {
         </section>
       )}
 
-      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-8 pb-6 md:px-8 md:pt-16 md:pb-24 lg:px-12 xl:px-16">
+      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-0 pb-0 md:px-8 md:pt-16 md:pb-24 lg:px-12 xl:px-16">
         {/* Categories Section */}
         {!searchQuery && (
-          <section className="section-padding">
-            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
+          <section className="pt-4 pb-2 md:py-16">
+            <div className="mb-4 flex flex-col items-center justify-center text-center md:mb-12">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Categories
               </h2>
@@ -153,9 +153,14 @@ export default function HomePage() {
                   .cat-text { font-size: clamp(12px, 1.2vw, 15px) !important; }
                 }
                 @media (min-width: 1024px) {
-                  .cat-circle { width: clamp(100px, 9vw, 130px) !important; height: clamp(100px, 9vw, 130px) !important; }
-                  .cat-icon { width: clamp(50px, 4.5vw, 65px) !important; height: clamp(50px, 4.5vw, 65px) !important; }
+                  .cat-circle { width: clamp(100px, 10vw, 130px) !important; height: clamp(100px, 10vw, 130px) !important; }
+                  .cat-icon { width: clamp(50px, 5vw, 65px) !important; height: clamp(50px, 5vw, 65px) !important; }
                   .cat-text { font-size: clamp(14px, 1.2vw, 17px) !important; }
+                }
+                @media (min-width: 1024px) {
+                  .cat-circle { width: clamp(120px, 11vw, 150px) !important; height: clamp(120px, 11vw, 150px) !important; }
+                  .cat-icon { width: clamp(60px, 5.5vw, 80px) !important; height: clamp(60px, 5.5vw, 80px) !important; }
+                  .cat-text { font-size: clamp(16px, 1.4vw, 19px) !important; }
                 }
               `,
                 }}
@@ -166,17 +171,17 @@ export default function HomePage() {
                     items.filter((i) => !i.isProduct).map((i) => i.category)
                   )
                 ).filter(Boolean);
-                const defaultIcon = <Flower2 className="cat-icon h-6 w-6" />;
+                const defaultIcon = <Flower2 className="cat-icon h-8 w-8 md:h-12 md:w-12" />;
                 const iconMap: Record<string, React.ReactNode> = {
-                  Massage: <Flower2 className="cat-icon h-6 w-6" />,
-                  Facial: <Sparkles className="cat-icon h-6 w-6" />,
-                  "Body Treatment": <Droplets className="cat-icon h-6 w-6" />,
-                  Hair: <Wind className="cat-icon h-6 w-6" />,
-                  Nails: <Scissors className="cat-icon h-6 w-6" />,
-                  Package: <Heart className="cat-icon h-6 w-6" />,
-                  Makeup: <Brush className="cat-icon h-6 w-6" />,
-                  Bath: <Bath className="cat-icon h-6 w-6" />,
-                  Bridal: <User className="cat-icon h-6 w-6" />,
+                  Massage: <Flower2 className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Facial: <Sparkles className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  "Body Treatment": <Droplets className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Hair: <Wind className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Nails: <Scissors className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Package: <Heart className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Makeup: <Brush className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Bath: <Bath className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Bridal: <User className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
                 };
 
                 const defaults = ["Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package", "Makeup", "Bath", "Bridal"];
@@ -193,7 +198,7 @@ export default function HomePage() {
                     key={idx}
                     className="group flex w-[72px] flex-none cursor-pointer flex-col items-center md:w-auto"
                   >
-                    <div className="cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] bg-white text-[#c8a24a] shadow-sm transition-colors hover:bg-gray-50 hover:shadow-md">
+                    <div className="cat-circle flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] bg-white text-[#c8a24a] shadow-sm transition-colors hover:bg-gray-50 hover:shadow-md">
                       {iconMap[catName as string] || defaultIcon}
                     </div>
                     <span className="cat-text mt-2 text-center text-[11px] font-medium text-white md:mt-4 whitespace-nowrap">
@@ -208,7 +213,7 @@ export default function HomePage() {
 
         {/* Promotional Banner */}
         {!searchQuery && coupons.length > 0 && (
-          <section className="section-padding">
+          <section className="pb-8 pt-2 md:py-16">
             <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Special Offers
@@ -464,7 +469,7 @@ export default function HomePage() {
                         <Link
                           href={isLast ? "/services" : `/service/${item.id}`}
                           key={item.id}
-                          className="group flex flex-col w-[44%] flex-none md:w-80"
+                          className="group flex flex-col w-[65%] flex-none md:w-80"
                         >
                           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-full rounded-b-2xl border-[3px] border-[#c8a24a] shadow-sm">
                             <img
@@ -474,7 +479,7 @@ export default function HomePage() {
                             />
                             {!isLast && (
                               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[95%] drop-shadow-md md:bottom-5 md:w-[90%]">
-                                <h3 
+                                <h3
                                   className="animate-shine bg-[#c8a24a] text-white px-6 py-1.5 text-center line-clamp-1 font-serif text-[11px] font-medium md:text-sm"
                                   style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%)' }}
                                 >

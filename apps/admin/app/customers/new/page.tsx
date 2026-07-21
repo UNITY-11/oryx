@@ -101,39 +101,24 @@ function TierDropdown({
 
 export default function NewCustomerPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [customer, setCustomer] = useState<NewCustomerState>(DEFAULT_STATE);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   const update = <K extends keyof NewCustomerState>(
     key: K,
     value: NewCustomerState[K]
   ) => setCustomer((prev) => ({ ...prev, [key]: value }));
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingAvatarFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => update("avatar", reader.result as string);
-    reader.readAsDataURL(file);
-  };
-
   const handleCreate = async () => {
     if (!customer.name.trim()) return;
     setSaving(true);
     setSaveError(null);
     try {
-      let avatarUrl = customer.avatar;
-      if (pendingAvatarFile) {
-        avatarUrl = await uploadCustomerAvatar(pendingAvatarFile);
-      }
       await createCustomer({
         ...customer,
-        avatar: avatarUrl,
+        avatar: null,
         totalSpent: 0,
         lastVisit: new Date().toISOString().slice(0, 10),
       });
@@ -204,43 +189,8 @@ export default function NewCustomerPage() {
               {saveError}
             </div>
           )}
-          <div className="mx-auto flex max-w-3xl flex-col gap-8 lg:flex-row">
-            {/* LEFT — Avatar */}
-            <div className="flex shrink-0 flex-col items-center gap-4 lg:w-48">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-primary/5 group relative h-40 w-40 cursor-pointer overflow-hidden rounded-full border-4 border-white shadow-md"
-              >
-                {customer.avatar ? (
-                  <>
-                    <img
-                      src={customer.avatar}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="bg-primary-dark/40 absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Upload className="h-6 w-6 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-primary/40 group-hover:text-primary absolute inset-0 flex flex-col items-center justify-center gap-2 transition-colors">
-                    <UserCircle2 className="h-12 w-12" />
-                    <span className="text-[10px] font-medium tracking-wider uppercase">
-                      Upload
-                    </span>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-            </div>
-
-            {/* RIGHT — Details */}
+          <div className="mx-auto flex max-w-3xl flex-col gap-8">
+            {/* Details */}
             <div className="min-w-0 flex-1 space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>

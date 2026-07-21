@@ -130,7 +130,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pb-6 md:px-8 md:pb-24 lg:px-12 xl:px-16">
+      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-8 pb-6 md:px-8 md:pt-16 md:pb-24 lg:px-12 xl:px-16">
         {/* Categories Section */}
         {!searchQuery && (
           <section className="section-padding">
@@ -472,6 +472,16 @@ export default function HomePage() {
                               alt={item.name}
                               className="h-full w-full object-cover"
                             />
+                            {!isLast && (
+                              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[95%] drop-shadow-md md:bottom-5 md:w-[90%]">
+                                <h3 
+                                  className="animate-shine bg-[#c8a24a] text-white px-6 py-1.5 text-center line-clamp-1 font-serif text-[11px] font-medium md:text-sm"
+                                  style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%)' }}
+                                >
+                                  {item.name}
+                                </h3>
+                              </div>
+                            )}
                             {isLast && (
                               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
                                 <span className="text-primary-dark font-serif text-xl font-bold group-hover:underline">
@@ -480,13 +490,6 @@ export default function HomePage() {
                               </div>
                             )}
                           </div>
-                          {!isLast && (
-                            <div className="flex flex-col pt-3 md:pt-4">
-                              <h3 className="bg-[#fff9f6] text-[#c8a24a] border border-[#c8a24a]/50 shadow-sm px-3 py-1.5 rounded-full text-center line-clamp-1 font-serif text-sm font-medium md:text-base">
-                                {item.name}
-                              </h3>
-                            </div>
-                          )}
                         </Link>
                       );
                     })}

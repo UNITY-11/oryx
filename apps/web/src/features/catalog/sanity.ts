@@ -47,6 +47,9 @@ export const ACTIVE_PRODUCTS_QUERY = `*[_type == "product" && status == "Active"
 export const SERVICE_BY_ID_QUERY = `*[_type == "service" && _id == $id][0] ${SERVICE_PROJECTION}`;
 export const PRODUCT_BY_ID_QUERY = `*[_type == "product" && _id == $id][0] ${PRODUCT_PROJECTION}`;
 
+import { HERO_PROJECTION } from "@repo/sanity";
+export const HERO_LIST_QUERY = `*[_type == "hero"] | order(order asc) ${HERO_PROJECTION}`;
+
 function asCategory(value: string | undefined, fallback: Category): Category {
   return (value as Category) || fallback;
 }
@@ -136,4 +139,17 @@ export async function fetchItemById(id: string): Promise<Item | null> {
   if (service) return mapServiceToItem(service);
   if (product) return mapProductToItem(product);
   return null;
+}
+
+export type HeroItem = {
+  id: string;
+  type: "image" | "video";
+  src: string;
+  title: string;
+  order: number;
+};
+
+export async function fetchHeroItems(): Promise<HeroItem[]> {
+  const items = await sanityClient.fetch<HeroItem[]>(HERO_LIST_QUERY);
+  return items ?? [];
 }

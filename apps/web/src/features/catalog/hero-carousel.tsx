@@ -3,38 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const SLIDES = [
-  {
-    id: 1,
-    type: "video",
-    src: "/videos/animate-video.mp4",
-    title: "Welcome to ORYX",
-    subtitle: "The ultimate relaxation experience.",
-  },
-  {
-    id: 2,
-    type: "image",
-    src: "/images/hero/image.png",
-    title: "Relax & Rejuvenate",
-    subtitle: "Experience our signature massages.",
-  },
-  {
-    id: 3,
-    type: "image",
-    src: "/images/hero/image%20copy.png",
-    title: "Glowing Skin",
-    subtitle: "Discover our premium facials.",
-  },
-  {
-    id: 4,
-    type: "image",
-    src: "/images/hero/image%20copy%202.png",
-    title: "Luxury Products",
-    subtitle: "Take the spa experience home.",
-  },
-];
+import { HeroItem } from "./sanity";
 
-export function HeroCarousel() {
+interface HeroCarouselProps {
+  slides: HeroItem[];
+}
+
+export function HeroCarousel({ slides }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -43,8 +18,8 @@ export function HeroCarousel() {
   // Minimum swipe distance (in px) to trigger slide change
   const minSwipeDistance = 50;
 
-  const next = useCallback(() => setCurrent((prev) => (prev + 1) % SLIDES.length), []);
-  const prev = useCallback(() => setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length), []);
+  const next = useCallback(() => setCurrent((prev) => slides.length ? (prev + 1) % slides.length : 0), [slides.length]);
+  const prev = useCallback(() => setCurrent((prev) => slides.length ? (prev - 1 + slides.length) % slides.length : 0), [slides.length]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null); // Reset touch end to avoid stale values
@@ -71,6 +46,8 @@ export function HeroCarousel() {
   };
 
   useEffect(() => {
+    if (!slides.length) return;
+    
     // Handle video play/pause based on current slide
     videoRefs.current.forEach((video, idx) => {
       if (video) {
@@ -83,7 +60,7 @@ export function HeroCarousel() {
       }
     });
 
-    if (SLIDES[current]?.type === "video") {
+    if (slides[current]?.type === "video") {
       // Don't auto-advance via timer; rely on video's onEnded event
       return;
     }
@@ -92,7 +69,9 @@ export function HeroCarousel() {
       next();
     }, 5000);
     return () => clearInterval(timer);
-  }, [current, next]);
+  }, [current, next, slides]);
+
+  if (!slides || slides.length === 0) return null;
 
   return (
     <div 
@@ -105,7 +84,7 @@ export function HeroCarousel() {
         className="flex h-full transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
-        {SLIDES.map((slide, idx) => (
+        {slides.map((slide, idx) => (
           <div key={slide.id} className="min-w-full h-full relative">
             {slide.type === "video" ? (
               <video 
@@ -119,24 +98,22 @@ export function HeroCarousel() {
                 }}
               />
             ) : (
-              <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
+              <img src={slide.src} alt={slide.title || "Slide image"} className="w-full h-full object-cover" />
             )}
-            <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
-              <h2 className="font-serif text-3xl font-medium drop-shadow-md">{slide.title}</h2>
-              <p className="font-sans text-sm mt-1 opacity-90 drop-shadow-md">{slide.subtitle}</p>
-            </div>
           </div>
         ))}
       </div>
       
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-        {SLIDES.map((_, idx) => (
-          <div 
-            key={idx} 
-            className={`w-2 h-2 rounded-full transition-colors ${idx === current ? "bg-white" : "bg-white/40"}`}
-          />
-        ))}
-      </div>
+      {slides.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+          {slides.map((_, idx) => (
+            <div 
+              key={idx} 
+              className={`w-2 h-2 rounded-full transition-colors ${idx === current ? "bg-white" : "bg-white/40"}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

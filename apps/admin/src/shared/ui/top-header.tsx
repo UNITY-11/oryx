@@ -30,6 +30,8 @@ export function TopHeader() {
         if (pathname.startsWith('/products/')) return 'Product Details';
         if (pathname.startsWith('/customers/')) return 'Customer Details';
         if (pathname.startsWith('/reviews/')) return 'Review Details';
+        if (pathname === '/hero') return 'Hero Section';
+        if (pathname.startsWith('/hero/')) return 'Hero Slide Details';
         return 'Admin Portal';
     }
   };
@@ -125,6 +127,16 @@ export function TopHeader() {
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Review</span>
+              </Link>
+            )}
+
+            {pathname === '/hero' && (
+              <Link
+                href="/hero/new"
+                className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity flex items-center space-x-2 whitespace-nowrap text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Slide</span>
               </Link>
             )}
           </div>

@@ -34,3 +34,12 @@ export const PRODUCT_PROJECTION = `{
   image,
   status
 }`;
+
+export const HERO_PROJECTION = `{
+  "id": _id,
+  type,
+  src,
+  title,
+  order,
+  createdAt
+}`;

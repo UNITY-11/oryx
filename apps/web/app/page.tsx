@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
 import { useCatalog } from "@/features/catalog/use-catalog";
+import { useHero } from "@/features/catalog/use-hero";
 import { TestimonialCarousel } from "@/features/home/testimonial-carousel";
 import { useUserStore } from "@/shared/store";
 import { LotusSeparator } from "@/shared/ui/lotus-separator";
@@ -26,6 +27,7 @@ export default function HomePage() {
   const logoRef = useRef<HTMLImageElement>(null);
   const user = useUserStore((state) => state.user);
   const { items, loading, error } = useCatalog();
+  const { slides, loading: heroLoading } = useHero();
 
   useEffect(() => {
     const mainArea = document.getElementById("main-scroll-container");
@@ -115,7 +117,11 @@ export default function HomePage() {
       {/* Hero Carousel */}
       {!searchQuery && (
         <section className="section-padding px-3 md:px-0 md:pt-0">
-          <HeroCarousel />
+          {heroLoading ? (
+             <div className="w-full h-64 md:h-[100vh] bg-gray-200 animate-pulse rounded-3xl md:rounded-none"></div>
+          ) : (
+            <HeroCarousel slides={slides} />
+          )}
         </section>
       )}
 

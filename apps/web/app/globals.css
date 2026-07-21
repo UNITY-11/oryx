@@ -1,96 +1,11 @@
 @import "tailwindcss";
+@import "@repo/design-tokens/tokens.css";
 
-@theme {
-  /* High-Contrast Brand Mapping */
-  --color-brand-peach: #e8baa0;
-  /* Main Background */
-  --color-brand-peach-light: #faf1e9;
-  /* Light Surface (White/Cream) */
-
-  --color-brand-dark-brown: #452c1e;
-  /* Highest contrast ink */
-  --color-brand-deep-gold: #9c6b2f;
-  /* Dark Gold/Brown */
-  --color-brand-shadow: #86634f;
-  /* Medium contrast */
-
-  /* Semantic UI Mapping */
-  --color-background: var(--color-brand-peach);
-
-  /* Use a much lighter surface so cards stand out and elements inside them are visible */
-  --color-surface: var(--color-brand-peach-light);
-
-  /* Primary colors must be dark to be visible on the peach background */
-  --color-primary: var(--color-brand-deep-gold);
-  --color-primary-dark: var(--color-brand-dark-brown);
-
-  --color-secondary: var(--color-brand-shadow);
-
-  /* Typography - using the darkest colors for maximum readability */
-  --color-text-primary: var(--color-brand-dark-brown);
-  --color-text-secondary: var(--color-brand-deep-gold);
-
-  --font-sans: var(--font-inter), sans-serif;
-  --font-serif: var(--font-cinzel), serif;
-
-  --radius-soft: 0.5rem;
-  --shadow-spa: 0 4px 20px -2px rgba(69, 44, 30, 0.15);
-}
-
-@layer base {
-  body {
-    background-color: var(--color-background);
-    color: var(--color-text-primary);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-serif);
-  }
-}
-
-/* Utility to hide scrollbar but keep functionality */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
-}
-
-/* Custom Thin Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-secondary);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-primary-dark);
-}
-
-html {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-secondary) transparent;
-}
+/*
+ * Web-specific overrides and animations.
+ * All shared tokens, base styles, and scrollbar utilities
+ * come from @repo/design-tokens.
+ */
 
 @keyframes marquee {
   0% {

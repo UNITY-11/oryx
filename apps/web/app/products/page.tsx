@@ -24,9 +24,9 @@ export default async function ProductsPage() {
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 px-6 pb-6 md:mt-12 md:grid-cols-3 md:gap-4 md:px-12 lg:px-16">
+      <div className="mt-4 grid grid-cols-2 gap-2 px-6 pb-6 md:mt-12 md:grid-cols-3 md:gap-4 md:px-12 lg:grid-cols-4 lg:px-16">
         {error && (
-          <p className="col-span-2 py-8 text-center text-red-500 md:col-span-3">
+          <p className="col-span-2 py-8 text-center text-red-500 md:col-span-3 lg:col-span-4">
             {error}
           </p>
         )}
@@ -52,7 +52,7 @@ export default async function ProductsPage() {
             </Link>
           ))}
         {!error && products.length === 0 && (
-          <p className="text-text-secondary col-span-2 py-8 text-center md:col-span-3">
+          <p className="text-text-secondary col-span-2 py-8 text-center md:col-span-3 lg:col-span-4">
             No products available.
           </p>
         )}

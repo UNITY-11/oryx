@@ -45,7 +45,7 @@ export function TopHeader() {
             >
               <ChevronLeft className="text-text-secondary h-5 w-5" />
             </Link>
-            <h1 className="font-serif text-2xl font-medium text-primary-dark">
+            <h1 className="font-serif text-2xl font-medium text-primary">
               {bookingStep === 1 ? "Select Service" : bookingStep === 2 ? "Choose Date & Time" : "Client Details"}
             </h1>
           </div>
@@ -65,7 +65,7 @@ export function TopHeader() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="hidden md:flex">
-            <h1 className="font-serif text-2xl font-medium text-primary-dark">{getPageTitle()}</h1>
+            <h1 className="font-serif text-2xl font-medium text-primary">{getPageTitle()}</h1>
           </div>
         </div>
 

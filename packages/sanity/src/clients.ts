@@ -1,6 +1,7 @@
 import { createClient } from "@sanity/client";
 import { sanityConfig } from "./config";
 
+
 /**
  * Public read client — safe for server components and CDN-cached fetches.
  * Use in both web and admin for read-only data fetching.

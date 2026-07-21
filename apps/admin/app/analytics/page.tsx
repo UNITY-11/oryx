@@ -41,7 +41,7 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d");
 
   return (
-    <div className="flex flex-col h-full bg-[#fcf4f0] pt-4 overflow-hidden">
+    <div className="flex flex-col h-full bg-transparent pt-4 overflow-hidden">
       {/* Header Bar */}
       <div className="shrink-0 pb-4">
         <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
@@ -50,12 +50,12 @@ export default function AnalyticsPage() {
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden md:flex">
-              <h1 className="font-serif text-2xl font-medium text-primary-dark">Analytics & Insights</h1>
+              <h1 className="font-serif text-2xl font-medium text-primary">Analytics & Insights</h1>
             </div>
           </div>
 
           <div className="flex items-center space-x-3 shrink-0">
-            <div className="flex bg-[#fcf4f0] rounded-xl p-1 border border-primary/10">
+            <div className="flex bg-surface rounded-xl p-1 border border-primary/10">
               <button
                 className={`px-5 py-2 text-xs font-semibold rounded-lg transition-all ${timeRange === '7d' ? 'bg-white text-primary-dark shadow-sm' : 'text-text-secondary hover:text-primary-dark hover:bg-primary/5'}`}
                 onClick={() => setTimeRange('7d')}
@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
           {/* Total Revenue */}
           <div className="bg-white rounded-[32px] p-8 border border-primary/10 shadow-sm flex flex-col justify-between hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 rounded-full bg-[#fcf4f0] flex items-center justify-center border border-primary/20">
+              <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center border border-primary/20">
                 <CreditCard className="w-6 h-6 text-primary" />
               </div>
               <span className="flex items-center text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full">
@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
           {/* Total Bookings */}
           <div className="bg-white rounded-[32px] p-8 border border-primary/10 shadow-sm flex flex-col justify-between hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 rounded-full bg-[#fcf4f0] flex items-center justify-center border border-primary/20">
+              <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center border border-primary/20">
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <span className="flex items-center text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full">
@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
           {/* Avg Session Value */}
           <div className="bg-white rounded-[32px] p-8 border border-primary/10 shadow-sm flex flex-col justify-between hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 rounded-full bg-[#fcf4f0] flex items-center justify-center border border-primary/20">
+              <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center border border-primary/20">
                 <TrendingUp className="w-6 h-6 text-primary" />
               </div>
               <span className="flex items-center text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full">
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
           {/* Top Service */}
           <div className="bg-white rounded-[32px] p-8 border border-primary/10 shadow-sm flex flex-col justify-between hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 rounded-full bg-[#fcf4f0] flex items-center justify-center border border-primary/20">
+              <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center border border-primary/20">
                 <Award className="w-6 h-6 text-primary" />
               </div>
             </div>
@@ -239,7 +239,7 @@ export default function AnalyticsPage() {
             {/* Custom Legend */}
             <div className="mt-6 space-y-4">
               {MOCK_CATEGORY_DATA.map((category: ServiceCategoryStats, index: number) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-2xl bg-[#fcf4f0]/50 border border-primary/5">
+                <div key={index} className="flex items-center justify-between p-3 rounded-2xl bg-surface/50 border border-primary/5">
                   <div className="flex items-center gap-3">
                     <div className="w-4 h-4 rounded-full shadow-inner" style={{ backgroundColor: category.fill }} />
                     <span className="text-sm font-semibold text-text-secondary">{category.name}</span>
@@ -301,7 +301,7 @@ export default function AnalyticsPage() {
               {MOCK_STAFF_PERFORMANCE.map((staff, idx) => (
                 <div key={idx} className="flex items-center justify-between p-4 rounded-2xl border border-primary/10 hover:border-primary/30 hover:shadow-sm transition-all bg-white">
                   <div className="flex items-center gap-4">
-                    <img src={staff.avatar} alt={staff.name} className="w-12 h-12 rounded-full border-2 border-[#fcf4f0] object-cover" />
+                    <img src={staff.avatar} alt={staff.name} className="w-12 h-12 rounded-full border-2 border-surface object-cover" />
                     <div>
                       <h4 className="font-bold text-primary-dark text-sm">{staff.name}</h4>
                       <div className="flex items-center text-xs font-semibold text-yellow-500 mt-1">

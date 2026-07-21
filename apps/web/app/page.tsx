@@ -203,6 +203,12 @@ export default function HomePage() {
         {/* Promotional Banner */}
         {!searchQuery && coupons.length > 0 && (
           <section className="section-padding">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+                Special Offers
+              </h2>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
+            </div>
             <div className="scrollbar-hide -mx-3 flex space-x-4 overflow-x-auto px-3 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0">
               {couponsLoading ? (
                 // Loading Skeletons

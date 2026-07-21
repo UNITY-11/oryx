@@ -184,7 +184,7 @@ export function AddBookingView({
 
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left Side: Wizard Forms */}
-        <div className="scrollbar-hide flex-1 overflow-y-auto relative">
+        <div className="scrollbar-hide w-full md:w-[60%] overflow-y-auto relative shrink-0">
         <form
           id="add-booking-form"
           onSubmit={handleSubmit}
@@ -460,7 +460,10 @@ export function AddBookingView({
                     required
                     type="text"
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[0-9]/g, "");
+                      setCustomerName(val);
+                    }}
                     className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 px-4 py-3 transition-colors focus:outline-none focus:bg-white shadow-sm"
                     placeholder="e.g. Sarah Smith"
                   />
@@ -473,7 +476,10 @@ export function AddBookingView({
                     required
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[a-zA-Z]/g, "");
+                      setPhone(val);
+                    }}
                     className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 px-4 py-3 transition-colors focus:outline-none focus:bg-white shadow-sm"
                     placeholder="+974 5555 0000"
                   />
@@ -485,7 +491,7 @@ export function AddBookingView({
       </div>
 
         {/* Right Side: Summary & Actions */}
-        <div className="border-primary/10 bg-gray-50 flex w-full flex-col border-t md:border-t-0 md:border-l md:w-[350px] lg:w-[400px] shrink-0">
+        <div className="border-primary/10 bg-gray-50 flex w-full md:w-[40%] flex-col border-t md:border-t-0 md:border-l shrink-0">
           {/* Summary Area */}
           <div className="flex flex-1 flex-col p-6 space-y-6 min-h-0">
             <h4 className="text-primary-dark font-serif text-lg shrink-0">Summary</h4>

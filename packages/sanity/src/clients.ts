@@ -1,5 +1,5 @@
 import { createClient } from "@sanity/client";
-import { sanityConfig } from "./config";
+import { sanityConfig } from "./config.js";
 
 /**
  * Public read client — safe for server components and CDN-cached fetches.

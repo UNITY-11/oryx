@@ -486,24 +486,23 @@ export function AddBookingView({
 
         {/* Right Side: Summary & Actions */}
         <div className="border-primary/10 bg-gray-50 flex w-full flex-col border-t md:border-t-0 md:border-l md:w-[350px] lg:w-[400px] shrink-0">
-          {/* Summary Scrollable Area */}
-          <div className="scrollbar-hide flex-1 overflow-y-auto p-6 space-y-6">
-            <div>
-              <h4 className="text-primary-dark font-serif text-lg mb-4">Summary</h4>
+          {/* Summary Area */}
+          <div className="flex flex-1 flex-col p-6 space-y-6 min-h-0">
+            <h4 className="text-primary-dark font-serif text-lg shrink-0">Summary</h4>
               
-              {/* Date & Time */}
-              {selectedTime && selectedDate && (
-                <div className="bg-white p-4 rounded-2xl border border-primary/10 shadow-sm mb-4">
-                  <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold mb-1">Date & Time</p>
-                  <p className="text-sm font-medium text-primary-dark">{selectedDate.toDateString()} at {selectedTime}</p>
-                </div>
-              )}
+            {/* Date & Time */}
+            {selectedTime && selectedDate && (
+              <div className="bg-white p-4 rounded-2xl border border-primary/10 shadow-sm shrink-0">
+                <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold mb-1">Date & Time</p>
+                <p className="text-sm font-medium text-primary-dark">{selectedDate.toDateString()} at {selectedTime}</p>
+              </div>
+            )}
 
-              {/* Selected Items */}
-              {selectedServicesList.length > 0 ? (
-                <div className="space-y-3">
-                  <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Services</p>
-                  <div className="space-y-3 bg-white p-4 rounded-2xl border border-primary/10 shadow-sm">
+            {/* Selected Items */}
+            {selectedServicesList.length > 0 ? (
+              <div className="flex flex-col flex-1 min-h-0 space-y-3">
+                <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold shrink-0">Services</p>
+                <div className="bg-white p-4 rounded-2xl border border-primary/10 shadow-sm flex-1 overflow-y-auto scrollbar-hide space-y-3">
                     {selectedServicesList.map((service) => {
                       const serviceAddons = service.addons.filter(a => selectedAddons.includes(a.id));
                       return (
@@ -521,12 +520,11 @@ export function AddBookingView({
                         </div>
                       );
                     })}
-                  </div>
                 </div>
-              ) : (
-                <div className="text-sm text-text-secondary">No services selected yet.</div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="text-sm text-text-secondary shrink-0">No services selected yet.</div>
+            )}
           </div>
 
           {/* Footer Area inside right bar */}

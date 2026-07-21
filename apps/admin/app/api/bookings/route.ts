@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { BOOKINGS_LIST_QUERY } from "@/features/bookings/sanity-queries";
+import type { BookingService } from "@/features/bookings/types";
+import { sanityClient } from "@/shared/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
-import type { BookingService } from "@/features/bookings/mock-data";
-import { BOOKINGS_LIST_QUERY } from "@/features/bookings/sanity-queries";
-import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys(services: BookingService[] | undefined) {
   return (services ?? []).map((svc, i) => ({

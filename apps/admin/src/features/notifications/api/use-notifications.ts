@@ -1,18 +1,21 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
+
+import { updateBooking } from "../../bookings/api";
 import {
   fetchNotifications,
   markAllNotificationsRead,
   updateNotification,
 } from "../api";
-import { updateBooking } from "../../bookings/api";
-import { Notification, NotificationType } from "../mock-data";
+import { Notification, NotificationType } from "../types";
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<NotificationType | "All" | "Starred">("All");
+  const [filter, setFilter] = useState<NotificationType | "All" | "Starred">(
+    "All"
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const reloadNotifications = () => {
@@ -84,8 +87,8 @@ export function useNotifications() {
       );
       try {
         await updateNotification(id, updatedFields);
-        if (notif.actionUrl && notif.actionUrl.includes('/bookings/')) {
-          const bookingId = notif.actionUrl.split('/').pop();
+        if (notif.actionUrl && notif.actionUrl.includes("/bookings/")) {
+          const bookingId = notif.actionUrl.split("/").pop();
           if (bookingId) {
             await updateBooking(bookingId, { status: "Confirmed" });
           }
@@ -109,8 +112,8 @@ export function useNotifications() {
     );
     try {
       await updateNotification(id, updatedFields);
-      if (notif.actionUrl && notif.actionUrl.includes('/bookings/')) {
-        const bookingId = notif.actionUrl.split('/').pop();
+      if (notif.actionUrl && notif.actionUrl.includes("/bookings/")) {
+        const bookingId = notif.actionUrl.split("/").pop();
         if (bookingId) {
           await updateBooking(bookingId, { status: "Cancelled" });
         }
@@ -148,6 +151,6 @@ export function useNotifications() {
     handleSelect,
     confirmBooking,
     declineBooking,
-    toggleStar
+    toggleStar,
   };
 }

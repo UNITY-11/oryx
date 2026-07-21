@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { fetchBookings, createBooking } from "../api";
-import { Booking, BookingStatus } from "../mock-data";
+import { useEffect, useState } from "react";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
+
+import { createBooking, fetchBookings } from "../api";
+import { Booking, BookingStatus } from "../types";
 
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -23,8 +24,12 @@ export function useBookings() {
 
   // Filter & Sort State
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">("All");
-  const [sortField, setSortField] = useState<"id" | "date" | "amount" | "customerName">("id");
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">(
+    "All"
+  );
+  const [sortField, setSortField] = useState<
+    "id" | "date" | "amount" | "customerName"
+  >("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Handlers
@@ -77,6 +82,6 @@ export function useBookings() {
     toggleSort,
     filteredAndSortedBookings,
     handleAddBooking,
-    createBooking
+    createBooking,
   };
 }

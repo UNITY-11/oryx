@@ -2,6 +2,16 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createBooking, fetchBookings } from "@features/bookings/api";
+import { Booking } from "@features/bookings/types";
+import {
+  fetchCustomer,
+  updateCustomer,
+  uploadCustomerAvatar,
+} from "@features/customers/api";
+import { Customer, CustomerTier } from "@features/customers/types";
+import { fetchServices } from "@features/services/api";
+import { Addon, PricingTier, Service } from "@features/services/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -19,27 +29,6 @@ import {
   UserCircle2,
   X,
 } from "lucide-react";
-
-import {
-  createBooking,
-  fetchBookings,
-} from "@features/bookings/api";
-import { Booking } from "@features/bookings/mock-data";
-import {
-  fetchCustomer,
-  updateCustomer,
-  uploadCustomerAvatar,
-} from "@features/customers/api";
-import {
-  Customer,
-  CustomerTier,
-} from "@features/customers/mock-data";
-import { fetchServices } from "@features/services/api";
-import {
-  Addon,
-  PricingTier,
-  Service,
-} from "@features/services/mock-data";
 
 const TIERS: CustomerTier[] = ["Bronze", "Silver", "Gold", "Platinum"];
 

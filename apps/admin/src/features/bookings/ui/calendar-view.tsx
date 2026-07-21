@@ -10,7 +10,8 @@ import {
   Menu,
   User,
 } from "lucide-react";
-import { Booking } from "../mock-data";
+
+import { Booking } from "../types";
 
 const START_HOUR = 8;
 const END_HOUR = 20; // 8:00 PM
@@ -283,7 +284,7 @@ export function CalendarView({
                         ` (+${booking.services.length - 1} more)`}
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-bold text-white tracking-wider uppercase">
+                  <span className="shrink-0 rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
                     {booking.status}
                   </span>
                 </div>
@@ -297,7 +298,7 @@ export function CalendarView({
             ))}
 
             {loading && (
-               <div className="text-text-secondary absolute inset-0 flex items-center justify-center gap-2">
+              <div className="text-text-secondary absolute inset-0 flex items-center justify-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" /> Loading bookings...
               </div>
             )}

@@ -1,5 +1,6 @@
-import type { Booking } from "./mock-data";
 import { parseOrThrow } from "@/shared/lib/api-helpers";
+
+import type { Booking } from "./types";
 
 export async function fetchBookings(): Promise<Booking[]> {
   const res = await fetch("/api/bookings", { cache: "no-store" });

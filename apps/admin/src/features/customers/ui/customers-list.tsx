@@ -7,8 +7,9 @@ import {
   Search,
   UserCircle2,
 } from "lucide-react";
-import { Customer, CustomerTier } from "../mock-data";
+
 import { TIER_FILTERS } from "../api/use-customers";
+import { Customer, CustomerTier } from "../types";
 
 interface CustomersListProps {
   loading: boolean;

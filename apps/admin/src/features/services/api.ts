@@ -1,5 +1,6 @@
-import type { Service } from "./mock-data";
 import { parseOrThrow, uploadImage } from "@/shared/lib/api-helpers";
+
+import type { Service } from "./types";
 
 export async function fetchServices(): Promise<Service[]> {
   const res = await fetch("/api/services", { cache: "no-store" });

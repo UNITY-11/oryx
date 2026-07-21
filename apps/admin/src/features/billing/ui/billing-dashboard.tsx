@@ -9,9 +9,15 @@ import {
   Printer,
   Search,
 } from "lucide-react";
+
+import { Service } from "../../services/types";
+import {
+  BillingBooking,
+  FilterStatus,
+  getServiceLineItems,
+  getTotal,
+} from "../api/use-billing-data";
 import { PrintModal } from "./print-modal";
-import { FilterStatus, BillingBooking, getTotal, getServiceLineItems } from "../api/use-billing-data";
-import { Service } from "../../services/mock-data";
 
 interface BillingDashboardProps {
   search: string;
@@ -131,7 +137,7 @@ export function BillingDashboard({
             ))}
           </div>
 
-          <div className="border-primary/10 overflow-hidden rounded-[32px] border bg-white shadow-sm flex flex-col min-h-0 flex-1">
+          <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
             <div className="border-primary/5 flex shrink-0 items-center gap-2 border-b p-4 md:px-6">
               {(["All", "Started", "Completed"] as FilterStatus[]).map((f) => (
                 <button
@@ -180,18 +186,18 @@ export function BillingDashboard({
                     {billable.map((booking) => {
                       const total = getTotal(booking, services);
                       const isStarted = booking.status === "Started";
-                      
+
                       return (
                         <div
                           key={booking.id}
                           onClick={() => router.push(`/bookings/${booking.id}`)}
-                          className="hover:bg-primary/5 cursor-pointer grid grid-cols-1 items-center gap-4 px-6 py-4 transition-colors md:grid-cols-[1.5fr_2fr_100px_100px_180px]"
+                          className="hover:bg-primary/5 grid cursor-pointer grid-cols-1 items-center gap-4 px-6 py-4 transition-colors md:grid-cols-[1.5fr_2fr_100px_100px_180px]"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-[#fcf4f0] font-serif text-lg text-primary">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="border-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-[#fcf4f0] font-serif text-lg">
                               {booking.customerName.charAt(0)}
                             </div>
-                            <div className="flex flex-col min-w-0">
+                            <div className="flex min-w-0 flex-col">
                               <span className="text-primary-dark truncate text-sm font-semibold">
                                 {booking.customerName}
                               </span>
@@ -207,8 +213,8 @@ export function BillingDashboard({
                             </span>
                           </div>
 
-                          <div className="hidden md:flex justify-center items-center">
-                            <span className="text-primary-dark font-bold text-sm">
+                          <div className="hidden items-center justify-center md:flex">
+                            <span className="text-primary-dark text-sm font-bold">
                               QAR {total}
                             </span>
                           </div>
@@ -216,16 +222,14 @@ export function BillingDashboard({
                           <div className="hidden text-center md:block">
                             <span
                               className={`inline-block shrink-0 text-[10px] font-bold tracking-wider uppercase ${
-                                isStarted
-                                  ? "text-primary-dark"
-                                  : "text-primary"
+                                isStarted ? "text-primary-dark" : "text-primary"
                               }`}
                             >
                               {booking.status}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 justify-end">
+                          <div className="flex items-center justify-end gap-2">
                             {isStarted ? (
                               <button
                                 onClick={(e) => {

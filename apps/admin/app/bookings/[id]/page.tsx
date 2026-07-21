@@ -3,6 +3,15 @@
 import { use, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  deleteBooking,
+  fetchBooking,
+  updateBooking,
+} from "@features/bookings/api";
+import { BookingWizard } from "@features/bookings/booking-wizard";
+import { Booking, BookingStatus } from "@features/bookings/types";
+import { fetchServices } from "@features/services/api";
+import { Service } from "@features/services/types";
+import {
   AlertCircle,
   ArrowLeft,
   Calendar,
@@ -15,24 +24,11 @@ import {
   Loader2,
   Play,
   Save,
+  Trash2,
   User,
   X,
-  Trash2,
   XCircle,
 } from "lucide-react";
-
-import {
-  fetchBooking,
-  updateBooking,
-  deleteBooking,
-} from "@features/bookings/api";
-import { BookingWizard } from "@features/bookings/booking-wizard";
-import {
-  Booking,
-  BookingStatus,
-} from "@features/bookings/mock-data";
-import { fetchServices } from "@features/services/api";
-import { Service } from "@features/services/mock-data";
 
 export default function BookingDetailPage({
   params,
@@ -48,9 +44,10 @@ export default function BookingDetailPage({
   const [loadError, setLoadError] = useState<string | null>(null);
   // Editing wizard state derived from URL query
   const searchParams = useSearchParams();
-  const isEditingWizard = searchParams.get('action') === 'edit';
-  const step = Number(searchParams.get('step')) || 1;
-  const setStep = (newStep: number) => router.push(`?action=edit&step=${newStep}`);
+  const isEditingWizard = searchParams.get("action") === "edit";
+  const step = Number(searchParams.get("step")) || 1;
+  const setStep = (newStep: number) =>
+    router.push(`?action=edit&step=${newStep}`);
   const [isEditing, setIsEditing] = useState(false); // keep for legacy view mode
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -162,7 +159,8 @@ export default function BookingDetailPage({
   };
 
   const handleCancelSession = async () => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+    if (!window.confirm("Are you sure you want to cancel this booking?"))
+      return;
     try {
       const result = await updateBooking(id, { status: "Cancelled" });
       setBooking(result);
@@ -275,15 +273,15 @@ export default function BookingDetailPage({
           <div className="flex flex-1 items-center gap-4">
             <button
               onClick={() => {
-                  if (isEditingWizard) {
-                    router.push(`/bookings/${id}`);
-                  } else if (isEditing) {
-                    setIsEditing(false);
-                    setBooking(savedBooking);
-                  } else {
-                    router.back();
-                  }
-                }}
+                if (isEditingWizard) {
+                  router.push(`/bookings/${id}`);
+                } else if (isEditing) {
+                  setIsEditing(false);
+                  setBooking(savedBooking);
+                } else {
+                  router.back();
+                }
+              }}
               className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border bg-[#fcf4f0] transition-all hover:-translate-x-0.5"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -305,20 +303,28 @@ export default function BookingDetailPage({
                 <button
                   onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                   disabled={saving}
-                  className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="border-primary text-primary hover:bg-primary/5 focus:ring-primary/20 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors focus:ring-2 focus:outline-none"
                 >
                   {booking.status}
-                  <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
+                  <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
                 </button>
 
                 {statusMenuOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setStatusMenuOpen(false)} 
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setStatusMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-primary/10 rounded-2xl shadow-xl z-50 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
-                      {(["Pending", "Confirmed", "Started", "Completed", "Cancelled"] as BookingStatus[]).map((s) => (
+                    <div className="border-primary/10 animate-in fade-in slide-in-from-top-2 absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border bg-white py-2 shadow-xl">
+                      {(
+                        [
+                          "Pending",
+                          "Confirmed",
+                          "Started",
+                          "Completed",
+                          "Cancelled",
+                        ] as BookingStatus[]
+                      ).map((s) => (
                         <button
                           key={s}
                           onClick={async () => {
@@ -326,16 +332,22 @@ export default function BookingDetailPage({
                             if (s === booking.status) return;
                             try {
                               setSaving(true);
-                              const result = await updateBooking(id, { status: s });
+                              const result = await updateBooking(id, {
+                                status: s,
+                              });
                               setBooking(result);
                               setSavedBooking(result);
                             } catch (err) {
-                              setSaveError(err instanceof Error ? err.message : "Failed to update status");
+                              setSaveError(
+                                err instanceof Error
+                                  ? err.message
+                                  : "Failed to update status"
+                              );
                             } finally {
                               setSaving(false);
                             }
                           }}
-                          className={`w-full text-left px-5 py-2.5 text-sm transition-colors hover:bg-primary/5 flex items-center gap-3 ${booking.status === s ? 'text-primary font-bold bg-primary/5' : 'text-text-secondary font-medium'}`}
+                          className={`hover:bg-primary/5 flex w-full items-center gap-3 px-5 py-2.5 text-left text-sm transition-colors ${booking.status === s ? "text-primary bg-primary/5 font-bold" : "text-text-secondary font-medium"}`}
                         >
                           {s}
                         </button>
@@ -355,8 +367,6 @@ export default function BookingDetailPage({
                 Delete
               </button>
             )}
-
-
 
             {!isCompleted && !isEditing && !isEditingWizard && (
               <button
@@ -417,8 +427,6 @@ export default function BookingDetailPage({
         {!isEditing && !isEditingWizard && (
           <div className="border-primary/10 scrollbar-hide h-full overflow-y-auto rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
             <div className="mx-auto max-w-4xl space-y-8">
-
-
               {/* Customer & Schedule */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="border-primary/10 rounded-3xl border bg-[#fcf4f0] p-6 shadow-sm">
@@ -537,20 +545,20 @@ export default function BookingDetailPage({
 
         {/* ── EDIT MODE ── */}
         {isEditingWizard && (
-            <BookingWizard
-              initialData={booking}
-              step={step}
-              setStep={setStep}
-              onCancel={() => router.push(`/bookings/${id}`)}
-              onSubmit={async (payload) => {
-                const updated = await updateBooking(id, payload);
-                setBooking(updated);
-                setSavedBooking(updated);
-                router.push(`/bookings/${id}`);
-                setIsEditing(false);
-              }}
-            />
-          )}
+          <BookingWizard
+            initialData={booking}
+            step={step}
+            setStep={setStep}
+            onCancel={() => router.push(`/bookings/${id}`)}
+            onSubmit={async (payload) => {
+              const updated = await updateBooking(id, payload);
+              setBooking(updated);
+              setSavedBooking(updated);
+              router.push(`/bookings/${id}`);
+              setIsEditing(false);
+            }}
+          />
+        )}
 
         {isEditing && (
           <div className="flex h-full w-full gap-4">
@@ -871,21 +879,24 @@ export default function BookingDetailPage({
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-primary/10 p-3 rounded-full text-primary">
+        <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm duration-200">
+          <div className="animate-in zoom-in-95 w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl duration-200 md:p-8">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="bg-primary/10 text-primary rounded-full p-3">
                 <Trash2 className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-serif text-primary-dark font-semibold">Delete Booking</h3>
+              <h3 className="text-primary-dark font-serif text-xl font-semibold">
+                Delete Booking
+              </h3>
             </div>
             <p className="text-text-secondary mb-8">
-              Are you sure you want to completely delete this booking? This action cannot be undone.
+              Are you sure you want to completely delete this booking? This
+              action cannot be undone.
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-5 py-2.5 rounded-full border border-primary/20 text-primary font-medium hover:bg-primary/5 transition-colors"
+                className="border-primary/20 text-primary hover:bg-primary/5 rounded-full border px-5 py-2.5 font-medium transition-colors"
                 disabled={saving}
               >
                 Cancel
@@ -893,7 +904,7 @@ export default function BookingDetailPage({
               <button
                 onClick={confirmDeleteSession}
                 disabled={saving}
-                className="px-5 py-2.5 rounded-full bg-primary text-white font-medium hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-full px-5 py-2.5 font-medium text-white shadow-sm transition-colors disabled:opacity-50"
               >
                 {saving ? (
                   <>

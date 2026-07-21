@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import type { Addon, PricingTier } from "@/features/services/mock-data";
 import { SERVICES_LIST_QUERY } from "@/features/services/sanity-queries";
+import type { Addon, PricingTier } from "@/features/services/types";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys<T extends { id: string }>(

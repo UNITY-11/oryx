@@ -3,30 +3,26 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  deleteProduct,
+  fetchProduct,
+  updateProduct,
+  uploadProductImage,
+} from "@features/products/api";
+import { Product, ProductCategory } from "@features/products/types";
+import {
   AlertCircle,
   ArrowLeft,
+  Ban,
   Check,
+  CheckCircle,
   ChevronDown,
   ImageIcon,
   Loader2,
   Package,
   Save,
   Trash2,
-  Ban,
-  CheckCircle,
   Upload,
 } from "lucide-react";
-
-import {
-  fetchProduct,
-  updateProduct,
-  uploadProductImage,
-  deleteProduct,
-} from "@features/products/api";
-import {
-  Product,
-  ProductCategory,
-} from "@features/products/mock-data";
 
 const CATEGORIES: ProductCategory[] = [
   "Skincare",
@@ -236,7 +232,7 @@ export default function ProductDetailPage({
                   product.status === "Active" ? "Inactive" : "Active"
                 )
               }
-              className="text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold transition-colors"
+              className="text-primary hover:bg-primary/5 border-primary flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
             >
               {product.status === "Active" ? (
                 <>
@@ -253,7 +249,7 @@ export default function ProductDetailPage({
 
             <button
               onClick={handleDelete}
-              className="text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold transition-colors"
+              className="text-primary hover:bg-primary/5 border-primary flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
             >
               <Trash2 className="h-4 w-4" />
               Delete
@@ -434,21 +430,24 @@ export default function ProductDetailPage({
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-primary/10 p-3 rounded-full text-primary">
+        <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm duration-200">
+          <div className="animate-in zoom-in-95 w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl duration-200 md:p-8">
+            <div className="mb-4 flex items-center gap-4">
+              <div className="bg-primary/10 text-primary rounded-full p-3">
                 <Trash2 className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-serif text-primary-dark font-semibold">Delete Product</h3>
+              <h3 className="text-primary-dark font-serif text-xl font-semibold">
+                Delete Product
+              </h3>
             </div>
             <p className="text-text-secondary mb-8">
-              Are you sure you want to completely delete this product? This action cannot be undone.
+              Are you sure you want to completely delete this product? This
+              action cannot be undone.
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-5 py-2.5 rounded-full border border-primary/20 text-primary font-medium hover:bg-primary/5 transition-colors"
+                className="border-primary/20 text-primary hover:bg-primary/5 rounded-full border px-5 py-2.5 font-medium transition-colors"
                 disabled={saving}
               >
                 Cancel
@@ -456,7 +455,7 @@ export default function ProductDetailPage({
               <button
                 onClick={confirmDelete}
                 disabled={saving}
-                className="px-5 py-2.5 rounded-full bg-primary text-white font-medium hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-full px-5 py-2.5 font-medium text-white shadow-sm transition-colors disabled:opacity-50"
               >
                 {saving ? (
                   <>

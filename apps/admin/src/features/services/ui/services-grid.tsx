@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { AlertCircle, ImageIcon, Loader2, Search, Star } from "lucide-react";
-import { Service, ServiceCategory } from "../mock-data";
+
 import { CATEGORY_FILTERS } from "../api/use-services";
+import { Service, ServiceCategory } from "../types";
 
 interface ServicesGridProps {
   loading: boolean;
@@ -128,9 +129,7 @@ export function ServicesGrid({
             <Star className="text-primary h-3 w-3" />
             {activeCount} Active
           </span>
-          <span>
-            {inactiveCount} Inactive
-          </span>
+          <span>{inactiveCount} Inactive</span>
           <span className="ml-auto">{filtered.length} shown</span>
         </div>
       </div>

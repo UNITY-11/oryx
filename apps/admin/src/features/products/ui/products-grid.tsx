@@ -6,8 +6,9 @@ import {
   Package,
   Search,
 } from "lucide-react";
-import { Product, ProductCategory } from "../mock-data";
+
 import { CATEGORY_FILTERS, SORT_OPTIONS } from "../api/use-products";
+import { Product, ProductCategory } from "../types";
 
 interface ProductsGridProps {
   loading: boolean;

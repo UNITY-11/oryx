@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createCustomer, uploadCustomerAvatar } from "@features/customers/api";
+import { CustomerTier } from "@features/customers/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -12,12 +14,6 @@ import {
   Upload,
   UserCircle2,
 } from "lucide-react";
-
-import {
-  createCustomer,
-  uploadCustomerAvatar,
-} from "@features/customers/api";
-import { CustomerTier } from "@features/customers/mock-data";
 
 const TIERS: CustomerTier[] = ["Bronze", "Silver", "Gold", "Platinum"];
 

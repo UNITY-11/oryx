@@ -140,12 +140,12 @@ export default function HomePage() {
               </h2>
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
-            <div className="scrollbar-hide cat-container flex w-full flex-row justify-between overflow-x-auto px-3 pb-4 md:mx-0 md:overflow-visible md:px-0">
+            <div className="scrollbar-hide cat-container flex w-full flex-row gap-6 overflow-x-auto px-4 pb-4 md:gap-12">
               <style
                 dangerouslySetInnerHTML={{
                   __html: `
                 @media (max-width: 767px) {
-                  .cat-container { gap: 16px !important; }
+                  .cat-container { gap: 24px !important; padding-right: 24px; padding-left: 16px; }
                 }
                 @media (min-width: 768px) {
                   .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }
@@ -174,13 +174,19 @@ export default function HomePage() {
                   Hair: <Wind className="cat-icon h-6 w-6" />,
                   Nails: <Scissors className="cat-icon h-6 w-6" />,
                   Package: <Heart className="cat-icon h-6 w-6" />,
+                  Makeup: <Brush className="cat-icon h-6 w-6" />,
+                  Bath: <Bath className="cat-icon h-6 w-6" />,
+                  Bridal: <User className="cat-icon h-6 w-6" />,
                 };
 
-                // fallback if empty
-                const displayCategories =
-                  uniqueCategories.length > 0
-                    ? uniqueCategories
-                    : ["Massage", "Facial", "Nails", "Body Treatment"];
+                const defaults = ["Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package", "Makeup", "Bath", "Bridal"];
+                
+                let displayCategories = [...uniqueCategories];
+                
+                if (displayCategories.length < 8) {
+                   const toAdd = defaults.filter(c => !displayCategories.includes(c));
+                   displayCategories = [...displayCategories, ...toAdd];
+                }
 
                 return displayCategories.map((catName, idx) => (
                   <div
@@ -190,7 +196,7 @@ export default function HomePage() {
                     <div className="cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] bg-white text-[#c8a24a] shadow-sm transition-colors hover:bg-gray-50 hover:shadow-md">
                       {iconMap[catName as string] || defaultIcon}
                     </div>
-                    <span className="cat-text mt-2 text-center text-[11px] font-medium text-white md:mt-4">
+                    <span className="cat-text mt-2 text-center text-[11px] font-medium text-white md:mt-4 whitespace-nowrap">
                       {catName as string}
                     </span>
                   </div>

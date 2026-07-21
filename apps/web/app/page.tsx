@@ -566,7 +566,7 @@ export default function HomePage() {
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Customer Reviews
               </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[160px] md:max-w-[200px]" />
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
 
             <div className="flex w-full justify-center">

@@ -1,6 +1,12 @@
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { Category, Item } from "@/shared/types";
-import { SERVICE_PROJECTION, PRODUCT_PROJECTION } from "@repo/sanity";
+import { 
+  PRODUCT_PROJECTION, 
+  SERVICE_PROJECTION, 
+  HERO_PROJECTION, 
+  COUPON_PROJECTION,
+  REVIEW_PROJECTION
+} from "@repo/sanity";
 
 const PLACEHOLDER_IMAGE = "/images/services/image.png";
 
@@ -47,7 +53,7 @@ export const ACTIVE_PRODUCTS_QUERY = `*[_type == "product" && status == "Active"
 export const SERVICE_BY_ID_QUERY = `*[_type == "service" && _id == $id][0] ${SERVICE_PROJECTION}`;
 export const PRODUCT_BY_ID_QUERY = `*[_type == "product" && _id == $id][0] ${PRODUCT_PROJECTION}`;
 
-import { HERO_PROJECTION } from "@repo/sanity";
+
 export const HERO_LIST_QUERY = `*[_type == "hero"] | order(order asc) ${HERO_PROJECTION}`;
 
 function asCategory(value: string | undefined, fallback: Category): Category {
@@ -154,7 +160,7 @@ export async function fetchHeroItems(): Promise<HeroItem[]> {
   return items ?? [];
 }
 
-import { COUPON_PROJECTION } from "@repo/sanity";
+
 
 export const COUPON_LIST_QUERY = `*[_type == "coupon"] | order(_createdAt desc) ${COUPON_PROJECTION}`;
 
@@ -172,3 +178,22 @@ export async function fetchCoupons(): Promise<Coupon[]> {
   return items ?? [];
 }
 
+
+
+export const REVIEW_LIST_QUERY = `*[_type == "review" && status == "Active"] | order(createdAt desc) ${REVIEW_PROJECTION}`;
+
+export type Review = {
+  id: string;
+  name: string;
+  text: string;
+  rating: number;
+  status: string;
+  initials: string;
+  avatar: string | null;
+  createdAt: string;
+};
+
+export async function fetchReviews(): Promise<Review[]> {
+  const items = await sanityClient.fetch<Review[]>(REVIEW_LIST_QUERY);
+  return items ?? [];
+}

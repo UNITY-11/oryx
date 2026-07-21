@@ -52,3 +52,14 @@ export const COUPON_PROJECTION = `{
   icon,
   createdAt
 }`;
+
+export const REVIEW_PROJECTION = `{
+  "id": _id,
+  name,
+  text,
+  rating,
+  status,
+  initials,
+  avatar,
+  createdAt
+}`;

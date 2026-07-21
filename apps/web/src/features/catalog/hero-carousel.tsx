@@ -83,7 +83,7 @@ export function HeroCarousel() {
       }
     });
 
-    if (SLIDES[current].type === "video") {
+    if (SLIDES[current]?.type === "video") {
       // Don't auto-advance via timer; rely on video's onEnded event
       return;
     }

@@ -20,10 +20,13 @@ function BookingsContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState(1);
   const searchParams = useSearchParams();
   const router = useRouter();
   const isAdding = searchParams.get("action") === "add";
+  const step = Number(searchParams.get("step")) || 1;
+  const setStep = (newStep: number) => {
+    router.push(`?action=add&step=${newStep}`);
+  };
 
   useEffect(() => {
     fetchBookings()
@@ -84,57 +87,6 @@ function BookingsContent() {
 
   return (
     <div className="flex h-full flex-col space-y-6 md:space-y-8">
-      {/* Header Area */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          {isAdding && (
-            <button
-              onClick={() => {
-                if (step > 1) {
-                  setStep(step - 1);
-                } else {
-                  router.push("/bookings");
-                }
-              }}
-              className="border-primary/10 hover:border-primary/30 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm transition-colors"
-            >
-              <ChevronLeft className="text-text-secondary h-5 w-5" />
-            </button>
-          )}
-          <div>
-            <h1 className="text-primary-dark font-serif text-3xl md:text-4xl">
-              {isAdding
-                ? step === 1
-                  ? "Select Service"
-                  : step === 2
-                    ? "Choose Date & Time"
-                    : "Client Details"
-                : "Bookings"}
-            </h1>
-            <p className="text-text-secondary mt-2">
-              {isAdding
-                ? `Step ${step} of 3`
-                : "Manage your customer appointments"}
-            </p>
-          </div>
-        </div>
-
-        {!isAdding && (
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => {
-                setStep(1);
-                router.push("?action=add");
-              }}
-              className="bg-[#e8baa0] flex items-center space-x-2 rounded-full px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Booking</span>
-            </button>
-          </div>
-        )}
-      </div>
-
       {/* Combined Table and Filters */}
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {isAdding ? (

@@ -43,3 +43,12 @@ export const HERO_PROJECTION = `{
   order,
   createdAt
 }`;
+
+export const COUPON_PROJECTION = `{
+  "id": _id,
+  title,
+  type,
+  code,
+  icon,
+  createdAt
+}`;

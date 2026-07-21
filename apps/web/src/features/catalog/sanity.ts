@@ -153,3 +153,22 @@ export async function fetchHeroItems(): Promise<HeroItem[]> {
   const items = await sanityClient.fetch<HeroItem[]>(HERO_LIST_QUERY);
   return items ?? [];
 }
+
+import { COUPON_PROJECTION } from "@repo/sanity";
+
+export const COUPON_LIST_QUERY = `*[_type == "coupon"] | order(_createdAt desc) ${COUPON_PROJECTION}`;
+
+export type Coupon = {
+  id: string;
+  title: string;
+  type: string;
+  code: string;
+  icon: string;
+  createdAt: string;
+};
+
+export async function fetchCoupons(): Promise<Coupon[]> {
+  const items = await sanityClient.fetch<Coupon[]>(COUPON_LIST_QUERY);
+  return items ?? [];
+}
+

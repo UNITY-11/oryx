@@ -18,9 +18,13 @@ import {
   Scissors,
   Search,
   Sparkles,
+  Star,
   User,
+  Gift,
+  Ticket,
   Wind,
 } from "lucide-react";
+import { useCoupons } from "@/features/home/use-coupons";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,6 +32,7 @@ export default function HomePage() {
   const user = useUserStore((state) => state.user);
   const { items, loading, error } = useCatalog();
   const { slides, loading: heroLoading } = useHero();
+  const { coupons, loading: couponsLoading } = useCoupons();
 
   useEffect(() => {
     const mainArea = document.getElementById("main-scroll-container");
@@ -196,90 +201,59 @@ export default function HomePage() {
         )}
 
         {/* Promotional Banner */}
-        {!searchQuery && (
+        {!searchQuery && coupons.length > 0 && (
           <section className="section-padding">
             <div className="scrollbar-hide -mx-3 flex space-x-4 overflow-x-auto px-3 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0">
-              {/* Card 1 */}
-              <div className="border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border bg-white shadow-md md:w-full">
-                {/* Inner Dashed container */}
-                <div className="relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed border-[#c8a24a] p-4">
-                  <div className="bg-primary/20 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-2xl" />
+              {couponsLoading ? (
+                // Loading Skeletons
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-primary/5 rounded-2xl animate-pulse w-[92%] md:w-full flex-none" />
+                ))
+              ) : (
+                coupons.map((coupon, idx) => {
+                  // Alternate some subtle border/background styles for variety just like the original hardcoded ones
+                  const isGold = idx % 2 === 1;
+                  const getIcon = (iconName: string) => {
+                    switch (iconName) {
+                      case "Scissors": return <Scissors className="h-3.5 w-3.5" />;
+                      case "Flower2": return <Flower2 className="h-3.5 w-3.5" />;
+                      case "Heart": return <Heart className="h-3.5 w-3.5" />;
+                      case "Star": return <Star className="h-3.5 w-3.5" />;
+                      case "Gift": return <Gift className="h-3.5 w-3.5" />;
+                      case "Ticket": return <Ticket className="h-3.5 w-3.5" />;
+                      default: return <Sparkles className="h-3.5 w-3.5" />;
+                    }
+                  };
 
-                  <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                      <Scissors className="h-3.5 w-3.5" /> SPECIAL OFFER
-                    </span>
-                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
-                      Get 20% Off Your First Visit
-                    </h3>
-                  </div>
+                  return (
+                    <div key={coupon.id} className={`relative w-[92%] flex-none overflow-hidden rounded-2xl border bg-white shadow-md md:w-full ${isGold ? 'border-[#c29a63]/20' : 'border-primary/15'}`}>
+                      <div className={`relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4 ${isGold ? 'border-[#c29a63]/30' : 'border-[#c8a24a]'}`}>
+                        <div className={`absolute h-32 w-32 rounded-full blur-2xl ${isGold ? 'bottom-0 left-0 -mb-10 -ml-10 bg-[#c29a63]/20' : 'top-0 right-0 -mt-10 -mr-10 bg-primary/20'}`} />
 
-                  {/* Vertical Dashed separator */}
-                  <div className="relative z-10 mx-2 h-16 w-px border-l-2 border-dashed border-[#c8a24a]" />
+                        <div className="relative z-10 flex-1 pr-3">
+                          <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
+                            {getIcon(coupon.icon)} {coupon.type}
+                          </span>
+                          <h3 className="text-primary mb-1 font-serif text-lg leading-tight line-clamp-2">
+                            {coupon.title}
+                          </h3>
+                        </div>
 
-                  <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
-                    <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                      Use Code
-                    </p>
-                    <strong className="text-primary border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
-                      ORYX20
-                    </strong>
-                  </div>
-                </div>
-              </div>
+                        <div className={`relative z-10 mx-2 h-16 w-px border-l-2 border-dashed ${isGold ? 'border-[#c29a63]/30' : 'border-[#c8a24a]'}`} />
 
-              {/* Card 2 */}
-              <div className="relative w-[92%] flex-none overflow-hidden rounded-2xl border border-[#c29a63]/20 bg-white shadow-md md:w-full">
-                {/* Inner Dashed container */}
-                <div className="relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed border-[#c29a63]/30 p-4">
-                  <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-32 w-32 rounded-full bg-[#c29a63]/20 blur-2xl" />
-
-                  <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                      <Sparkles className="h-3.5 w-3.5" /> FREE GIFT
-                    </span>
-                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
-                      Free Polish With Manicure
-                    </h3>
-                  </div>
-
-                  {/* Vertical Dashed separator */}
-                  <div className="relative z-10 mx-2 h-16 w-px border-l-2 border-dashed border-[#c29a63]/30" />
-
-                  <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
-                    <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                      Use Code
-                    </p>
-                    <strong className="text-primary inline-block rounded-md border border-[#c29a63]/20 bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
-                      GLOWUP
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3 (Bridal Spa Day) */}
-              <div className="border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border bg-white shadow-md md:w-full">
-                <div className="border-primary/30 relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
-                  <div className="bg-primary/20 absolute top-0 left-0 -mt-10 -ml-10 h-32 w-32 rounded-full blur-2xl" />
-                  <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                      <Flower2 className="h-3.5 w-3.5" /> PACKAGE
-                    </span>
-                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
-                      Bridal Spa Day
-                    </h3>
-                  </div>
-                  <div className="border-primary/30 relative z-10 mx-2 h-16 w-px border-l-2 border-dashed" />
-                  <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
-                    <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                      Use Code
-                    </p>
-                    <strong className="text-primary border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
-                      BRIDE30
-                    </strong>
-                  </div>
-                </div>
-              </div>
+                        <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center min-w-[80px]">
+                          <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
+                            Use Code
+                          </p>
+                          <strong className={`text-primary inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm truncate max-w-[90px] ${isGold ? 'border-[#c29a63]/20' : 'border-primary/20'}`}>
+                            {coupon.code}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </section>
         )}

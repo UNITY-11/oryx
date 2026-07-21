@@ -117,13 +117,13 @@ export default function HomePage() {
       </div>
 
       {/* Static spacer to push content below the large header initially */}
-      <div className="pt-[190px] md:pt-0" />
+      <div className="pt-[190px] md:hidden" />
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="section-padding px-3 md:px-0 md:pt-0">
+        <section className="pb-4 pt-0 md:p-0">
           {heroLoading ? (
-             <div className="w-full h-64 md:h-[100vh] bg-gray-200 animate-pulse rounded-3xl md:rounded-none"></div>
+            <div className="w-full h-64 md:h-[100vh] bg-gray-200 animate-pulse rounded-3xl md:rounded-none"></div>
           ) : (
             <HeroCarousel slides={slides} />
           )}
@@ -180,12 +180,12 @@ export default function HomePage() {
                 };
 
                 const defaults = ["Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package", "Makeup", "Bath", "Bridal"];
-                
+
                 let displayCategories = [...uniqueCategories];
-                
+
                 if (displayCategories.length < 8) {
-                   const toAdd = defaults.filter(c => !displayCategories.includes(c));
-                   displayCategories = [...displayCategories, ...toAdd];
+                  const toAdd = defaults.filter(c => !displayCategories.includes(c));
+                  displayCategories = [...displayCategories, ...toAdd];
                 }
 
                 return displayCategories.map((catName, idx) => (

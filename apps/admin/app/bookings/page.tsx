@@ -141,17 +141,6 @@ function BookingsContent() {
               <tr className="border-primary/10 text-text-secondary border-b text-xs tracking-wider uppercase">
                 <th
                   className="group cursor-pointer py-4 pl-6 font-medium md:pl-8"
-                  onClick={() => toggleSort("id")}
-                >
-                  <div className="flex items-center">
-                    ID
-                    <ArrowUpDown
-                      className={`ml-1 h-3 w-3 transition-opacity ${sortField === "id" ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
-                    />
-                  </div>
-                </th>
-                <th
-                  className="group cursor-pointer py-4 font-medium"
                   onClick={() => toggleSort("customerName")}
                 >
                   <div className="flex items-center">
@@ -191,7 +180,7 @@ function BookingsContent() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="text-text-secondary py-12 text-center"
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -202,7 +191,7 @@ function BookingsContent() {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-red-500">
+                  <td colSpan={5} className="py-12 text-center text-red-500">
                     <div className="flex items-center justify-center gap-2">
                       <AlertCircle className="h-5 w-5" /> {error}
                     </div>
@@ -211,7 +200,7 @@ function BookingsContent() {
               ) : filteredAndSortedBookings.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="text-text-secondary py-12 text-center"
                   >
                     No bookings found matching your filters.
@@ -224,10 +213,7 @@ function BookingsContent() {
                     onClick={() => router.push(`/bookings/${booking.id}`)}
                     className="hover:bg-primary/5 group cursor-pointer transition-colors"
                   >
-                    <td className="text-text-secondary py-5 pl-6 font-mono text-xs md:pl-8">
-                      {booking.id}
-                    </td>
-                    <td className="py-5">
+                    <td className="py-5 pl-6 md:pl-8">
                       <p className="text-primary-dark font-medium">
                         {booking.customerName}
                       </p>

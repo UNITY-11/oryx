@@ -16,11 +16,14 @@ import {
   Save,
   User,
   X,
+  Trash2,
+  XCircle,
 } from "lucide-react";
 
 import {
   fetchBooking,
   updateBooking,
+  deleteBooking,
 } from "../../../src/features/bookings/api";
 import {
   Booking,
@@ -149,6 +152,31 @@ export default function BookingDetailPage({
     }
   };
 
+  const handleCancelSession = async () => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+    try {
+      const result = await updateBooking(id, { status: "Cancelled" });
+      setBooking(result);
+      setSavedBooking(result);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to cancel session"
+      );
+    }
+  };
+
+  const handleDeleteSession = async () => {
+    if (!window.confirm("Are you sure you want to completely delete this booking?")) return;
+    try {
+      await deleteBooking(id);
+      router.push("/bookings");
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to delete session"
+      );
+    }
+  };
+
   const toggleService = (serviceId: string) => {
     const serviceObj = realServices.find((s) => s.id === serviceId);
     if (!serviceObj) return;
@@ -253,6 +281,26 @@ export default function BookingDetailPage({
 
           {/* Right: action buttons */}
           <div className="flex shrink-0 items-center gap-3">
+            {!isCompleted && !isEditing && (
+              <button
+                onClick={handleCancelSession}
+                className="border-red-200 text-red-500 hover:bg-red-50 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
+              >
+                <XCircle className="h-4 w-4" />
+                Cancel
+              </button>
+            )}
+
+            {!isEditing && (
+              <button
+                onClick={handleDeleteSession}
+                className="border-red-200 text-red-500 hover:bg-red-50 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </button>
+            )}
+
             {!isCompleted && !isEditing && canStart && (
               <button
                 onClick={handleStartSession}

@@ -9,6 +9,7 @@ type BookingServiceInput = {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    console.log("POST /api/bookings payload:", body);
 
     if (
       !body.customerName ||
@@ -42,9 +43,41 @@ export async function POST(request: Request) {
     };
 
     const created = await sanityWriteClient.create(doc);
+
+    // Create corresponding notification document in Sanity
+    const serviceNames = services.map((s) => s.name).join(", ");
+    const notificationDoc = {
+      _type: "notification",
+      type: "Booking",
+      title: "New Booking Request",
+      message: `${body.customerName.trim()} requested a booking for ${serviceNames} on ${body.date ?? new Date().toISOString().slice(0, 10)} at ${body.time ?? "10:00"}.`,
+      timestamp: "Just now",
+      status: "Unread",
+      isStarred: false,
+      bookingData: {
+        customerId: `cust-${created._id.slice(-5)}`,
+        customerName: body.customerName.trim(),
+        customerPhone: body.phone ?? "",
+        serviceName: serviceNames,
+        duration: "60 mins",
+        addons: services.flatMap((s) => s.addons ?? []),
+        price: body.amount ?? 0,
+        date: body.date ?? new Date().toISOString().slice(0, 10),
+        time: body.time ?? "10:00",
+        staffName: "Emma",
+        status: "Pending",
+      },
+    };
+    try {
+      await sanityWriteClient.create(notificationDoc);
+    } catch (notifErr) {
+      console.error("Failed to create booking notification in Sanity:", notifErr);
+      // Don't fail the booking request if only the notification creation fails
+    }
+
     return NextResponse.json({ ...doc, id: created._id }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create booking:", error);
+    console.error("Failed to create booking error details:", error);
     return NextResponse.json(
       { error: "Failed to create booking" },
       { status: 500 }

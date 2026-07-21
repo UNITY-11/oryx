@@ -38,10 +38,35 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1. Check if customer exists by phone
+    const existingCustomer = await sanityClient.fetch(
+      `*[_type == "customer" && phone == $phone][0]`,
+      { phone: body.phone || "" }
+    );
+
+    let customerId = existingCustomer?._id;
+
+    // 2. If not, create a new customer
+    if (!customerId && body.phone) {
+      const newCustomer = await sanityClient.create({
+        _type: "customer",
+        name: body.customerName,
+        phone: body.phone,
+        email: "",
+        tier: "Bronze",
+        totalSpent: body.amount ?? 0,
+        lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
+        status: "Active",
+      });
+      customerId = newCustomer._id;
+    }
+
+    // 3. Create the booking
     const doc = {
       _type: "booking",
       customerName: body.customerName,
       phone: body.phone ?? "",
+      customerId: customerId ?? null, // link the booking to the customer
       services: withKeys(body.services),
       date: body.date ?? new Date().toISOString().slice(0, 10),
       time: body.time ?? "10:00",

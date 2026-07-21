@@ -26,6 +26,7 @@ import {
   markAllNotificationsRead,
   updateNotification,
 } from "../../src/features/notifications/api";
+import { updateBooking } from "../../src/features/bookings/api";
 import {
   Notification,
   NotificationType,
@@ -102,6 +103,12 @@ export default function NotificationsPage() {
       );
       try {
         await updateNotification(id, updatedFields);
+        if (notif.actionUrl && notif.actionUrl.includes('/bookings/')) {
+          const bookingId = notif.actionUrl.split('/').pop();
+          if (bookingId) {
+            await updateBooking(bookingId, { status: "Confirmed" });
+          }
+        }
       } catch {
         // best-effort
       }
@@ -121,6 +128,12 @@ export default function NotificationsPage() {
     );
     try {
       await updateNotification(id, updatedFields);
+      if (notif.actionUrl && notif.actionUrl.includes('/bookings/')) {
+        const bookingId = notif.actionUrl.split('/').pop();
+        if (bookingId) {
+          await updateBooking(bookingId, { status: "Cancelled" });
+        }
+      }
     } catch {
       // best-effort
     }

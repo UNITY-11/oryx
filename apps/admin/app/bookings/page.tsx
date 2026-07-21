@@ -12,8 +12,8 @@ import {
   Search,
 } from "lucide-react";
 
-import { AddBookingView } from "../../src/features/bookings/add-booking-view";
-import { fetchBookings } from "../../src/features/bookings/api";
+import { BookingWizard } from "../../src/features/bookings/booking-wizard";
+import { fetchBookings, createBooking } from "../../src/features/bookings/api";
 import { Booking, BookingStatus } from "../../src/features/bookings/mock-data";
 
 function BookingsContent() {
@@ -90,11 +90,15 @@ function BookingsContent() {
       {/* Combined Table and Filters */}
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {isAdding ? (
-          <AddBookingView 
-            onAddBooking={handleAddBooking} 
-            onCancel={() => router.push("/bookings")} 
+          <BookingWizard
             step={step}
             setStep={setStep}
+            onCancel={() => router.push("/bookings")}
+            onSubmit={async (payload) => {
+              const created = await createBooking(payload);
+              handleAddBooking(created);
+              router.push("/bookings");
+            }}
           />
         ) : (
           <>

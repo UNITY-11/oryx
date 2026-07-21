@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,6 +25,7 @@ import {
   updateBooking,
   deleteBooking,
 } from "../../../src/features/bookings/api";
+import { BookingWizard } from "../../../src/features/bookings/booking-wizard";
 import {
   Booking,
   BookingStatus,
@@ -44,10 +45,16 @@ export default function BookingDetailPage({
   const [savedBooking, setSavedBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  // Editing wizard state derived from URL query
+  const searchParams = useSearchParams();
+  const isEditingWizard = searchParams.get('action') === 'edit';
+  const step = Number(searchParams.get('step')) || 1;
+  const setStep = (newStep: number) => router.push(`?action=edit&step=${newStep}`);
+  const [isEditing, setIsEditing] = useState(false); // keep for legacy view mode
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [realServices, setRealServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
@@ -165,15 +172,21 @@ export default function BookingDetailPage({
     }
   };
 
-  const handleDeleteSession = async () => {
-    if (!window.confirm("Are you sure you want to completely delete this booking?")) return;
+  const handleDeleteSession = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteSession = async () => {
     try {
+      setSaving(true);
       await deleteBooking(id);
       router.push("/bookings");
     } catch (err) {
       setSaveError(
         err instanceof Error ? err.message : "Failed to delete session"
       );
+      setSaving(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -260,11 +273,15 @@ export default function BookingDetailPage({
           <div className="flex flex-1 items-center gap-4">
             <button
               onClick={() => {
-                if (isEditing) {
-                  setIsEditing(false);
-                  setBooking(savedBooking);
-                } else router.back();
-              }}
+                  if (isEditingWizard) {
+                    router.push(`/bookings/${id}`);
+                  } else if (isEditing) {
+                    setIsEditing(false);
+                    setBooking(savedBooking);
+                  } else {
+                    router.back();
+                  }
+                }}
               className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border bg-[#fcf4f0] transition-all hover:-translate-x-0.5"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -281,7 +298,7 @@ export default function BookingDetailPage({
 
           {/* Right: action buttons */}
           <div className="flex shrink-0 items-center gap-3">
-            {!isCompleted && !isEditing && (
+            {!isCompleted && !isEditing && !isEditingWizard && (
               <button
                 onClick={handleCancelSession}
                 className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
@@ -291,7 +308,7 @@ export default function BookingDetailPage({
               </button>
             )}
 
-            {!isEditing && (
+            {!isEditing && !isEditingWizard && (
               <button
                 onClick={handleDeleteSession}
                 className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
@@ -301,7 +318,7 @@ export default function BookingDetailPage({
               </button>
             )}
 
-            {!isCompleted && !isEditing && canStart && (
+            {!isCompleted && !isEditing && !isEditingWizard && canStart && (
               <button
                 onClick={handleStartSession}
                 className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
@@ -311,9 +328,9 @@ export default function BookingDetailPage({
               </button>
             )}
 
-            {!isCompleted && !isEditing && (
+            {!isCompleted && !isEditing && !isEditingWizard && (
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={() => router.push(`?action=edit&step=1`)}
                 className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
               >
                 <Edit3 className="h-4 w-4" />
@@ -367,7 +384,7 @@ export default function BookingDetailPage({
       {/* ── Main Content ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* ── VIEW / EDIT DETAILS ── */}
-        {!isEditing && (
+        {!isEditing && !isEditingWizard && (
           <div className="border-primary/10 scrollbar-hide h-full overflow-y-auto rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
             <div className="mx-auto max-w-4xl space-y-8">
               {/* Status badge */}
@@ -511,6 +528,22 @@ export default function BookingDetailPage({
         )}
 
         {/* ── EDIT MODE ── */}
+        {isEditingWizard && (
+            <BookingWizard
+              initialData={booking}
+              step={step}
+              setStep={setStep}
+              onCancel={() => router.push(`/bookings/${id}`)}
+              onSubmit={async (payload) => {
+                const updated = await updateBooking(id, payload);
+                setBooking(updated);
+                setSavedBooking(updated);
+                router.push(`/bookings/${id}`);
+                setIsEditing(false);
+              }}
+            />
+          )}
+
         {isEditing && (
           <div className="flex h-full w-full gap-4">
             {/* LEFT: Service Catalog / Add-ons */}
@@ -828,6 +861,44 @@ export default function BookingDetailPage({
           </div>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="bg-primary/10 p-3 rounded-full text-primary">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-serif text-primary-dark font-semibold">Delete Booking</h3>
+            </div>
+            <p className="text-text-secondary mb-8">
+              Are you sure you want to completely delete this booking? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-5 py-2.5 rounded-full border border-primary/20 text-primary font-medium hover:bg-primary/5 transition-colors"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteSession}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-full bg-primary text-white font-medium hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  "Delete Booking"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

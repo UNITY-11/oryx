@@ -571,7 +571,7 @@ export function AddBookingView({
               <button
                 form="add-booking-form"
                 type="submit"
-                disabled={submitting || !customerName.trim() || !phone.trim()}
+                disabled={submitting || customerName.trim().length < 4 || phone.trim().length < 8}
                 className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (

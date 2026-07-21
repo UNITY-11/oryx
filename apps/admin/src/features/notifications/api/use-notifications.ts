@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSanityListener } from "../../../shared/hooks/use-sanity-listener";
+import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 import {
   fetchNotifications,
   markAllNotificationsRead,

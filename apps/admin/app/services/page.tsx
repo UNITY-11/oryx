@@ -1,7 +1,7 @@
 "use client";
 
-import { useServices } from "../../src/features/services/api/use-services";
-import { ServicesGrid } from "../../src/features/services/ui/services-grid";
+import { useServices } from "@features/services/api/use-services";
+import { ServicesGrid } from "@features/services/ui/services-grid";
 
 export default function ServicesPage() {
   const {

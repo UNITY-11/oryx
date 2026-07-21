@@ -23,23 +23,23 @@ import {
 import {
   createBooking,
   fetchBookings,
-} from "../../../src/features/bookings/api";
-import { Booking } from "../../../src/features/bookings/mock-data";
+} from "@features/bookings/api";
+import { Booking } from "@features/bookings/mock-data";
 import {
   fetchCustomer,
   updateCustomer,
   uploadCustomerAvatar,
-} from "../../../src/features/customers/api";
+} from "@features/customers/api";
 import {
   Customer,
   CustomerTier,
-} from "../../../src/features/customers/mock-data";
-import { fetchServices } from "../../../src/features/services/api";
+} from "@features/customers/mock-data";
+import { fetchServices } from "@features/services/api";
 import {
   Addon,
   PricingTier,
   Service,
-} from "../../../src/features/services/mock-data";
+} from "@features/services/mock-data";
 
 const TIERS: CustomerTier[] = ["Bronze", "Silver", "Gold", "Platinum"];
 

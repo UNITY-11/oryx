@@ -1,7 +1,7 @@
 "use client";
 
-import { useReviews } from "../../src/features/reviews/api/use-reviews";
-import { ReviewsList } from "../../src/features/reviews/ui/reviews-list";
+import { useReviews } from "@features/reviews/api/use-reviews";
+import { ReviewsList } from "@features/reviews/ui/reviews-list";
 
 export default function ReviewsPage() {
   const {

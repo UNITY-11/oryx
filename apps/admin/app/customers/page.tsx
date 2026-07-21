@@ -1,7 +1,7 @@
 "use client";
 
-import { useCustomers } from "../../src/features/customers/api/use-customers";
-import { CustomersList } from "../../src/features/customers/ui/customers-list";
+import { useCustomers } from "@features/customers/api/use-customers";
+import { CustomersList } from "@features/customers/ui/customers-list";
 
 export default function CustomersPage() {
   const {

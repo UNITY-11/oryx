@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchBookings, createBooking } from "../api";
 import { Booking, BookingStatus } from "../mock-data";
-import { useSanityListener } from "../../../shared/hooks/use-sanity-listener";
+import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);

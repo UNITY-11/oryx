@@ -3,7 +3,7 @@ import { fetchBookings, updateBooking } from "../../bookings/api";
 import { Booking } from "../../bookings/mock-data";
 import { fetchServices } from "../../services/api";
 import { Service } from "../../services/mock-data";
-import { useSanityListener } from "../../../shared/hooks/use-sanity-listener";
+import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
 export type FilterStatus = "All" | "Started" | "Completed";
 export type BillingBooking = Booking;

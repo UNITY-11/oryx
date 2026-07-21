@@ -10,10 +10,10 @@ import {
   Users,
 } from "lucide-react";
 
-import { fetchBookings } from "../src/features/bookings/api";
-import { Booking } from "../src/features/bookings/mock-data";
-import { fetchCustomers } from "../src/features/customers/api";
-import { fetchProducts } from "../src/features/products/api";
+import { fetchBookings } from "@features/bookings/api";
+import { Booking } from "@features/bookings/mock-data";
+import { fetchCustomers } from "@features/customers/api";
+import { fetchProducts } from "@features/products/api";
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);

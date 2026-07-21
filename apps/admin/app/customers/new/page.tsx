@@ -16,8 +16,8 @@ import {
 import {
   createCustomer,
   uploadCustomerAvatar,
-} from "../../../src/features/customers/api";
-import { CustomerTier } from "../../../src/features/customers/mock-data";
+} from "@features/customers/api";
+import { CustomerTier } from "@features/customers/mock-data";
 
 const TIERS: CustomerTier[] = ["Bronze", "Silver", "Gold", "Platinum"];
 

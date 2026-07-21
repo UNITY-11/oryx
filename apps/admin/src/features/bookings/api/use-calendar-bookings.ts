@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchBookings } from "../api";
 import { Booking } from "../mock-data";
-import { useSanityListener } from "../../../shared/hooks/use-sanity-listener";
+import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
 export function useCalendarBookings() {
   const [currentDate, setCurrentDate] = useState(new Date());

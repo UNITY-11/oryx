@@ -25,14 +25,14 @@ import {
   fetchBooking,
   updateBooking,
   deleteBooking,
-} from "../../../src/features/bookings/api";
-import { BookingWizard } from "../../../src/features/bookings/booking-wizard";
+} from "@features/bookings/api";
+import { BookingWizard } from "@features/bookings/booking-wizard";
 import {
   Booking,
   BookingStatus,
-} from "../../../src/features/bookings/mock-data";
-import { fetchServices } from "../../../src/features/services/api";
-import { Service } from "../../../src/features/services/mock-data";
+} from "@features/bookings/mock-data";
+import { fetchServices } from "@features/services/api";
+import { Service } from "@features/services/mock-data";
 
 export default function BookingDetailPage({
   params,

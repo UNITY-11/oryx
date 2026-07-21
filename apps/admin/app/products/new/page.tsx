@@ -17,8 +17,8 @@ import {
 import {
   createProduct,
   uploadProductImage,
-} from "../../../src/features/products/api";
-import { ProductCategory } from "../../../src/features/products/mock-data";
+} from "@features/products/api";
+import { ProductCategory } from "@features/products/mock-data";
 
 const CATEGORIES: ProductCategory[] = [
   "Skincare",

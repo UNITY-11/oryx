@@ -1,7 +1,7 @@
 "use client";
 
-import { useNotifications } from "../../src/features/notifications/api/use-notifications";
-import { NotificationsPanel } from "../../src/features/notifications/ui/notifications-panel";
+import { useNotifications } from "@features/notifications/api/use-notifications";
+import { NotificationsPanel } from "@features/notifications/ui/notifications-panel";
 
 export default function NotificationsPage() {
   const {

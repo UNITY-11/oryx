@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { useBookings } from "../../src/features/bookings/api/use-bookings";
-import { BookingsList } from "../../src/features/bookings/ui/bookings-list";
+import { useBookings } from "@features/bookings/api/use-bookings";
+import { BookingsList } from "@features/bookings/ui/bookings-list";
 
 function BookingsContent() {
   const {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useProducts } from "../../src/features/products/api/use-products";
-import { ProductsGrid } from "../../src/features/products/ui/products-grid";
+import { useProducts } from "@features/products/api/use-products";
+import { ProductsGrid } from "@features/products/ui/products-grid";
 
 export default function ProductsPage() {
   const {

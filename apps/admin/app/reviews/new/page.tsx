@@ -10,7 +10,7 @@ import {
   Star,
 } from "lucide-react";
 
-import { createReview, Review } from "../../../src/features/reviews/api";
+import { createReview, Review } from "@features/reviews/api";
 
 interface NewReviewState {
   name: string;

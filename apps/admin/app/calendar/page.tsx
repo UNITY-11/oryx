@@ -1,7 +1,7 @@
 "use client";
 
-import { useCalendarBookings } from "../../src/features/bookings/api/use-calendar-bookings";
-import { CalendarView } from "../../src/features/bookings/ui/calendar-view";
+import { useCalendarBookings } from "@features/bookings/api/use-calendar-bookings";
+import { CalendarView } from "@features/bookings/ui/calendar-view";
 
 export default function CalendarPage() {
   const {

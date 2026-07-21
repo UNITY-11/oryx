@@ -22,11 +22,11 @@ import {
   updateProduct,
   uploadProductImage,
   deleteProduct,
-} from "../../../src/features/products/api";
+} from "@features/products/api";
 import {
   Product,
   ProductCategory,
-} from "../../../src/features/products/mock-data";
+} from "@features/products/mock-data";
 
 const CATEGORIES: ProductCategory[] = [
   "Skincare",

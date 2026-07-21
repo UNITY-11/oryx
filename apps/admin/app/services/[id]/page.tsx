@@ -25,13 +25,13 @@ import {
   updateService,
   uploadServiceImage,
   deleteService,
-} from "../../../src/features/services/api";
+} from "@features/services/api";
 import {
   Addon,
   PricingTier,
   Service,
   ServiceCategory,
-} from "../../../src/features/services/mock-data";
+} from "@features/services/mock-data";
 
 const CATEGORIES: ServiceCategory[] = [
   "Massage",

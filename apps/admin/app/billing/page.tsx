@@ -1,7 +1,7 @@
 "use client";
 
-import { useBillingData } from "../../src/features/billing/api/use-billing-data";
-import { BillingDashboard } from "../../src/features/billing/ui/billing-dashboard";
+import { useBillingData } from "@features/billing/api/use-billing-data";
+import { BillingDashboard } from "@features/billing/ui/billing-dashboard";
 
 export default function BillingPage() {
   const {

@@ -557,19 +557,12 @@ export function AddBookingView({
             {step < 3 ? (
               <button
                 type="button"
+                disabled={(step === 1 && selectedServiceIds.length === 0) || (step === 2 && !selectedTime)}
                 onClick={() => {
-                  if (step === 1 && selectedServiceIds.length === 0) {
-                    setSubmitError("Please select at least one service.");
-                    return;
-                  }
-                  if (step === 2 && !selectedTime) {
-                    setSubmitError("Please select a time slot.");
-                    return;
-                  }
                   setSubmitError(null);
                   setStep(step + 1);
                 }}
-                className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>Next Step</span>
                 <ChevronRight className="h-5 w-5" />

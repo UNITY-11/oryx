@@ -31,10 +31,34 @@ export async function POST(request: Request) {
       addons: svc.addons ?? [],
     }));
 
+    // 1. Check if customer exists by phone
+    const existingCustomer = await sanityWriteClient.fetch(
+      `*[_type == "customer" && phone == $phone][0]`,
+      { phone: body.phone || "" }
+    );
+
+    let customerId = existingCustomer?._id;
+
+    // 2. If not, create a new customer
+    if (!customerId && body.phone) {
+      const newCustomer = await sanityWriteClient.create({
+        _type: "customer",
+        name: body.customerName.trim(),
+        phone: body.phone,
+        email: "",
+        tier: "Bronze",
+        totalSpent: body.amount ?? 0,
+        lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
+        status: "Active",
+      });
+      customerId = newCustomer._id;
+    }
+
     const doc = {
       _type: "booking",
       customerName: body.customerName.trim(),
       phone: body.phone ?? "",
+      customerId: customerId ?? null,
       services: servicesWithKeys,
       date: body.date ?? new Date().toISOString().slice(0, 10),
       time: body.time ?? "10:00",
@@ -54,8 +78,9 @@ export async function POST(request: Request) {
       timestamp: "Just now",
       status: "Unread",
       isStarred: false,
+      actionUrl: `/bookings/${created._id}`,
       bookingData: {
-        customerId: `cust-${created._id.slice(-5)}`,
+        customerId: customerId ?? `cust-${created._id.slice(-5)}`,
         customerName: body.customerName.trim(),
         customerPhone: body.phone ?? "",
         serviceName: serviceNames,

@@ -3,6 +3,7 @@ import { Cinzel, Inter } from "next/font/google";
 
 import "./globals.css";
 
+import { Suspense } from "react";
 import { Sidebar } from "@/shared/ui/sidebar";
 import { TopHeader } from "@/shared/ui/top-header";
 
@@ -47,7 +48,9 @@ export default function RootLayout({
           <Sidebar />
 
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <TopHeader />
+            <Suspense fallback={<div className="h-16" />}>
+              <TopHeader />
+            </Suspense>
             {/* Main Scrollable Content */}
             <main
               id="admin-main-container"

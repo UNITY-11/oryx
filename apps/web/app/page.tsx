@@ -412,7 +412,7 @@ export default function HomePage() {
                     key={item.id}
                     className="group block w-44 flex-none"
                   >
-                    <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm transition-transform group-hover:scale-[1.02]">
+                    <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
@@ -443,37 +443,35 @@ export default function HomePage() {
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
             <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
-              {filteredItems.filter((item) => !item.isProduct).length === 0 ? (
-                <p className="text-text-secondary w-full py-8 text-center text-sm">
-                  No services available yet.
-                </p>
-              ) : (
-                <>
-                  {filteredItems
-                    .filter((item) => !item.isProduct)
-                    .slice(0, 6)
-                    .map((item, index, arr) => {
-                      const isLast = index === arr.length - 1;
+              {(() => {
+                const services = filteredItems.filter((item) => !item.isProduct);
+                if (services.length === 0) {
+                  return (
+                    <p className="text-text-secondary w-full py-8 text-center text-sm">
+                      No services available yet.
+                    </p>
+                  );
+                }
+
+                const hasMoreServices = services.length > 6;
+                const displayServices = services.slice(0, 6);
+
+                return (
+                  <>
+                    {displayServices.map((item, index) => {
+                      const isLast = hasMoreServices && index === displayServices.length - 1;
                       return (
                         <Link
                           href={isLast ? "/services" : `/service/${item.id}`}
                           key={item.id}
-                          className="group block w-[44%] flex-none md:w-80"
+                          className="group flex flex-col w-[44%] flex-none md:w-80"
                         >
-                          <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
+                          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-full rounded-b-2xl border-[3px] border-[#c8a24a] shadow-sm">
                             <img
                               src={item.imageUrl}
                               alt={item.name}
-                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                              className="h-full w-full object-cover"
                             />
-                            {!isLast && (
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            )}
-                            {!isLast && (
-                              <h3 className="absolute right-4 bottom-4 left-4 text-center font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
-                                {item.name}
-                              </h3>
-                            )}
                             {isLast && (
                               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
                                 <span className="text-primary-dark font-serif text-xl font-bold group-hover:underline">
@@ -482,11 +480,19 @@ export default function HomePage() {
                               </div>
                             )}
                           </div>
+                          {!isLast && (
+                            <div className="flex flex-col pt-3 md:pt-4">
+                              <h3 className="bg-[#fff9f6] text-[#c8a24a] border border-[#c8a24a]/50 shadow-sm px-3 py-1.5 rounded-full text-center line-clamp-1 font-serif text-sm font-medium md:text-base">
+                                {item.name}
+                              </h3>
+                            </div>
+                          )}
                         </Link>
                       );
                     })}
-                </>
-              )}
+                  </>
+                );
+              })()}
             </div>
           </section>
         )}
@@ -501,28 +507,34 @@ export default function HomePage() {
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
-              {filteredItems.filter((item) => item.isProduct).length === 0 ? (
-                <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3 lg:col-span-4">
-                  No products available yet.
-                </p>
-              ) : (
-                <>
-                  {filteredItems
-                    .filter((item) => item.isProduct)
-                    .slice(0, 8)
-                    .map((item, index, arr) => {
-                      const isLast = index === arr.length - 1;
+              {(() => {
+                const products = filteredItems.filter((item) => item.isProduct);
+                if (products.length === 0) {
+                  return (
+                    <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3 lg:col-span-4">
+                      No products available yet.
+                    </p>
+                  );
+                }
+
+                const hasMoreProducts = products.length > 8;
+                const displayProducts = products.slice(0, 8);
+
+                return (
+                  <>
+                    {displayProducts.map((item, index) => {
+                      const isLast = hasMoreProducts && index === displayProducts.length - 1;
                       return (
                         <Link
                           href={isLast ? "/products" : `/service/${item.id}`}
                           key={item.id}
-                          className="bg-surface group relative flex flex-col overflow-hidden rounded-2xl p-2 shadow-sm transition-transform hover:-translate-y-1 md:p-3"
+                          className="bg-surface group relative flex flex-col overflow-hidden rounded-2xl p-2 shadow-sm md:p-3"
                         >
                           <div className="relative aspect-square overflow-hidden rounded-xl">
                             <img
                               src={item.imageUrl}
                               alt={item.name}
-                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                              className="h-full w-full object-cover"
                             />
                           </div>
                           <div className="flex flex-col px-1 pt-3 md:px-2 md:pt-4">
@@ -540,8 +552,9 @@ export default function HomePage() {
                         </Link>
                       );
                     })}
-                </>
-              )}
+                  </>
+                );
+              })()}
             </div>
           </section>
         )}

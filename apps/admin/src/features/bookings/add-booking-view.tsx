@@ -450,10 +450,10 @@ export function AddBookingView({
 
           {/* STEP 3: Client Details */}
           {step === 3 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="grid grid-cols-1 gap-4">
+            <div className="flex flex-col justify-center min-h-[300px] animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="mx-auto w-full max-w-sm space-y-5">
                 <div>
-                  <label className="text-primary-dark mb-1 block text-sm font-medium">
+                  <label className="text-primary-dark mb-1.5 block text-sm font-medium">
                     Customer Name
                   </label>
                   <input
@@ -466,7 +466,7 @@ export function AddBookingView({
                   />
                 </div>
                 <div>
-                  <label className="text-primary-dark mb-1 block text-sm font-medium">
+                  <label className="text-primary-dark mb-1.5 block text-sm font-medium">
                     Phone Number
                   </label>
                   <input
@@ -571,8 +571,8 @@ export function AddBookingView({
               <button
                 form="add-booking-form"
                 type="submit"
-                disabled={submitting}
-                className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+                disabled={submitting || !customerName.trim() || !phone.trim()}
+                className="bg-[#e8baa0] w-full justify-center flex items-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <Loader2 className="h-5 w-5 animate-spin" />

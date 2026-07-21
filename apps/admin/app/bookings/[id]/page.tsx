@@ -8,6 +8,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   Edit3,
@@ -55,6 +56,7 @@ export default function BookingDetailPage({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
   const [realServices, setRealServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
@@ -298,14 +300,50 @@ export default function BookingDetailPage({
 
           {/* Right: action buttons */}
           <div className="flex shrink-0 items-center gap-3">
-            {!isCompleted && !isEditing && !isEditingWizard && (
-              <button
-                onClick={handleCancelSession}
-                className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
-              >
-                <XCircle className="h-4 w-4" />
-                Cancel
-              </button>
+            {!isEditing && !isEditingWizard && (
+              <div className="relative">
+                <button
+                  onClick={() => setStatusMenuOpen(!statusMenuOpen)}
+                  disabled={saving}
+                  className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  {booking.status}
+                  <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
+                </button>
+
+                {statusMenuOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setStatusMenuOpen(false)} 
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-primary/10 rounded-2xl shadow-xl z-50 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                      {(["Pending", "Confirmed", "Started", "Completed", "Cancelled"] as BookingStatus[]).map((s) => (
+                        <button
+                          key={s}
+                          onClick={async () => {
+                            setStatusMenuOpen(false);
+                            if (s === booking.status) return;
+                            try {
+                              setSaving(true);
+                              const result = await updateBooking(id, { status: s });
+                              setBooking(result);
+                              setSavedBooking(result);
+                            } catch (err) {
+                              setSaveError(err instanceof Error ? err.message : "Failed to update status");
+                            } finally {
+                              setSaving(false);
+                            }
+                          }}
+                          className={`w-full text-left px-5 py-2.5 text-sm transition-colors hover:bg-primary/5 flex items-center gap-3 ${booking.status === s ? 'text-primary font-bold bg-primary/5' : 'text-text-secondary font-medium'}`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
             {!isEditing && !isEditingWizard && (
@@ -318,15 +356,7 @@ export default function BookingDetailPage({
               </button>
             )}
 
-            {!isCompleted && !isEditing && !isEditingWizard && canStart && (
-              <button
-                onClick={handleStartSession}
-                className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
-              >
-                <Play className="h-4 w-4 fill-white" />
-                Start Session
-              </button>
-            )}
+
 
             {!isCompleted && !isEditing && !isEditingWizard && (
               <button
@@ -387,29 +417,7 @@ export default function BookingDetailPage({
         {!isEditing && !isEditingWizard && (
           <div className="border-primary/10 scrollbar-hide h-full overflow-y-auto rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
             <div className="mx-auto max-w-4xl space-y-8">
-              {/* Status badge */}
-              <div className="flex items-center gap-3">
-                <span
-                  className={`rounded-full border px-4 py-1.5 text-xs font-bold tracking-wider uppercase ${
-                    booking.status === "Confirmed"
-                      ? "bg-primary/20 border-primary text-primary-dark"
-                      : booking.status === "Pending"
-                        ? "bg-primary/5 border-primary/40 text-primary-dark border-dashed"
-                        : booking.status === "Started"
-                          ? "bg-primary-dark border-primary-dark text-white"
-                          : booking.status === "Completed"
-                            ? "bg-primary border-primary-dark text-white"
-                            : "border-primary/20 text-text-secondary bg-white opacity-70"
-                  }`}
-                >
-                  {booking.status}
-                </span>
-                {isCompleted && (
-                  <span className="text-text-secondary text-xs italic">
-                    This session is closed and cannot be edited.
-                  </span>
-                )}
-              </div>
+
 
               {/* Customer & Schedule */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

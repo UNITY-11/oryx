@@ -144,15 +144,17 @@ export default function CalendarPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Confirmed":
-        return "bg-primary/20 border-primary text-primary-dark shadow-sm";
+        return "bg-primary border-primary-dark text-white shadow-sm";
       case "Pending":
-        return "bg-primary/5 border-primary/40 text-primary-dark border-dashed";
+        return "bg-background border-primary text-primary-dark shadow-sm";
       case "Completed":
-        return "bg-primary border-primary-dark text-white";
+        return "bg-primary-dark border-black/20 text-white shadow-sm";
+      case "Started":
+        return "bg-secondary border-primary-dark text-white shadow-sm";
       case "Cancelled":
-        return "bg-white border-primary/20 text-text-secondary opacity-70";
+        return "bg-surface border-background text-text-secondary shadow-sm opacity-90";
       default:
-        return "bg-white border-primary/20 text-primary-dark";
+        return "bg-surface border-primary text-primary-dark shadow-sm";
     }
   };
 
@@ -217,13 +219,13 @@ export default function CalendarPage() {
 
       <div
         ref={scrollContainerRef}
-        className="scrollbar-hide border-primary/10 relative flex-1 overflow-auto rounded-[32px] border bg-white shadow-sm"
+        className="scrollbar-hide border-primary/10 relative flex-1 overflow-x-auto overflow-y-hidden rounded-[32px] border bg-white shadow-sm"
       >
         <div
-          className="relative min-h-[400px]"
+          className="relative min-h-full"
           style={{
             width: `${(END_HOUR - START_HOUR + 1) * HOUR_WIDTH}px`,
-            height: `${Math.max(400, Math.max(1, laneEndTimes.length) * ROW_HEIGHT + 64)}px`,
+            minHeight: `${Math.max(1, laneEndTimes.length) * ROW_HEIGHT + 64}px`,
           }}
         >
           {/* Top Time Header (Sticky) */}
@@ -297,7 +299,7 @@ export default function CalendarPage() {
                         ` (+${booking.services.length - 1} more)`}
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-md bg-white/50 px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                  <span className="shrink-0 rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-bold text-white tracking-wider uppercase">
                     {booking.status}
                   </span>
                 </div>
@@ -305,10 +307,6 @@ export default function CalendarPage() {
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {booking.time} (1h)
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="h-3 w-3" />
-                    {booking.id}
                   </div>
                 </div>
               </div>

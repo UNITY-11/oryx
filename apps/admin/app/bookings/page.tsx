@@ -128,7 +128,7 @@ function BookingsContent() {
                   className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                     statusFilter === status
                       ? "bg-primary border-primary text-white shadow-sm"
-                      : "text-text-secondary border-primary/10 bg-white hover:bg-gray-50"
+                      : "text-primary-dark border-primary/10 hover:bg-primary/10 bg-primary/5"
                   }`}
                 >
                   {status}

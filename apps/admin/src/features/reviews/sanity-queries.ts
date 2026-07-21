@@ -1,11 +1,4 @@
-export const REVIEW_PROJECTION = `{
-  "id": _id,
-  name,
-  text,
-  rating,
-  status,
-  avatar
-}`;
+import { REVIEW_PROJECTION } from "@repo/sanity";
 
 export const REVIEWS_LIST_QUERY = `*[_type == "review"] | order(_createdAt desc) ${REVIEW_PROJECTION}`;
 

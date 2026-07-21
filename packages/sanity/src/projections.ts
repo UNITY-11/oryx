@@ -34,3 +34,32 @@ export const PRODUCT_PROJECTION = `{
   image,
   status
 }`;
+
+export const HERO_PROJECTION = `{
+  "id": _id,
+  type,
+  src,
+  title,
+  order,
+  createdAt
+}`;
+
+export const COUPON_PROJECTION = `{
+  "id": _id,
+  title,
+  type,
+  code,
+  icon,
+  createdAt
+}`;
+
+export const REVIEW_PROJECTION = `{
+  "id": _id,
+  name,
+  text,
+  rating,
+  status,
+  initials,
+  avatar,
+  createdAt
+}`;

@@ -13,17 +13,19 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const filename = file instanceof File ? file.name : "upload";
+    const contentType = file.type || "application/octet-stream";
+    const assetType = contentType.startsWith("image/") ? "image" : "file";
 
-    const asset = await sanityClient.assets.upload("image", buffer, {
+    const asset = await sanityClient.assets.upload(assetType, buffer, {
       filename,
-      contentType: file.type || "image/jpeg",
+      contentType,
     });
 
     return NextResponse.json({ url: asset.url, assetId: asset._id });
   } catch (error) {
-    console.error("Failed to upload image:", error);
+    console.error("Failed to upload asset:", error);
     return NextResponse.json(
-      { error: "Failed to upload image" },
+      { error: "Failed to upload asset" },
       { status: 500 }
     );
   }

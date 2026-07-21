@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { fetchServices } from "../api";
-import { Service, ServiceCategory } from "../mock-data";
+import { Service, ServiceCategory } from "../types";
 
 export const CATEGORY_FILTERS: Array<ServiceCategory | "All"> = [
   "All",
@@ -17,7 +18,9 @@ export function useServices() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<ServiceCategory | "All">("All");
+  const [categoryFilter, setCategoryFilter] = useState<ServiceCategory | "All">(
+    "All"
+  );
 
   useEffect(() => {
     fetchServices()

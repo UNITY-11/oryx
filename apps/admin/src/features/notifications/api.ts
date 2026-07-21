@@ -1,5 +1,6 @@
-import type { Notification } from "./mock-data";
 import { parseOrThrow } from "@/shared/lib/api-helpers";
+
+import type { Notification } from "./types";
 
 export async function fetchNotifications(): Promise<Notification[]> {
   const res = await fetch("/api/notifications", { cache: "no-store" });

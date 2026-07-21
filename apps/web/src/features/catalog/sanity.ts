@@ -1,6 +1,12 @@
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { Category, Item } from "@/shared/types";
-import { SERVICE_PROJECTION, PRODUCT_PROJECTION } from "@repo/sanity";
+import { 
+  PRODUCT_PROJECTION, 
+  SERVICE_PROJECTION, 
+  HERO_PROJECTION, 
+  COUPON_PROJECTION,
+  REVIEW_PROJECTION
+} from "@repo/sanity";
 
 const PLACEHOLDER_IMAGE = "/images/services/image.png";
 
@@ -46,6 +52,9 @@ export const ACTIVE_SERVICES_QUERY = `*[_type == "service" && status == "Active"
 export const ACTIVE_PRODUCTS_QUERY = `*[_type == "product" && status == "Active"] | order(name asc) ${PRODUCT_PROJECTION}`;
 export const SERVICE_BY_ID_QUERY = `*[_type == "service" && _id == $id][0] ${SERVICE_PROJECTION}`;
 export const PRODUCT_BY_ID_QUERY = `*[_type == "product" && _id == $id][0] ${PRODUCT_PROJECTION}`;
+
+
+export const HERO_LIST_QUERY = `*[_type == "hero"] | order(order asc) ${HERO_PROJECTION}`;
 
 function asCategory(value: string | undefined, fallback: Category): Category {
   return (value as Category) || fallback;
@@ -136,4 +145,55 @@ export async function fetchItemById(id: string): Promise<Item | null> {
   if (service) return mapServiceToItem(service);
   if (product) return mapProductToItem(product);
   return null;
+}
+
+export type HeroItem = {
+  id: string;
+  type: "image" | "video";
+  src: string;
+  title: string;
+  order: number;
+};
+
+export async function fetchHeroItems(): Promise<HeroItem[]> {
+  const items = await sanityClient.fetch<HeroItem[]>(HERO_LIST_QUERY);
+  return items ?? [];
+}
+
+
+
+export const COUPON_LIST_QUERY = `*[_type == "coupon"] | order(_createdAt desc) ${COUPON_PROJECTION}`;
+
+export type Coupon = {
+  id: string;
+  title: string;
+  type: string;
+  code: string;
+  icon: string;
+  createdAt: string;
+};
+
+export async function fetchCoupons(): Promise<Coupon[]> {
+  const items = await sanityClient.fetch<Coupon[]>(COUPON_LIST_QUERY);
+  return items ?? [];
+}
+
+
+
+export const REVIEW_LIST_QUERY = `*[_type == "review" && status == "Active"] | order(createdAt desc) ${REVIEW_PROJECTION}`;
+
+export type Review = {
+  id: string;
+  name: string;
+  text: string;
+  rating: number;
+  status: string;
+  initials: string;
+  avatar: string | null;
+  createdAt: string;
+};
+
+export async function fetchReviews(): Promise<Review[]> {
+  const items = await sanityClient.fetch<Review[]>(REVIEW_LIST_QUERY);
+  return items ?? [];
 }

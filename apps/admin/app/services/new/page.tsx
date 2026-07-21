@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createService, uploadServiceImage } from "@features/services/api";
+import { Addon, PricingTier, ServiceCategory } from "@features/services/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -16,16 +18,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-
-import {
-  createService,
-  uploadServiceImage,
-} from "@features/services/api";
-import {
-  Addon,
-  PricingTier,
-  ServiceCategory,
-} from "@features/services/mock-data";
 
 const CATEGORIES: ServiceCategory[] = [
   "Massage",

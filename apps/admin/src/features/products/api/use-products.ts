@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { fetchProducts } from "../api";
-import { Product, ProductCategory } from "../mock-data";
+import { Product, ProductCategory } from "../types";
 
 export const CATEGORY_FILTERS: Array<ProductCategory | "All"> = [
   "All",
@@ -23,7 +24,9 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "All">("All");
+  const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "All">(
+    "All"
+  );
   const [sortBy, setSortBy] = useState("Default");
   const [isSortOpen, setIsSortOpen] = useState(false);
 

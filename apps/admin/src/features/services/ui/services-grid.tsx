@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { AlertCircle, ImageIcon, Loader2, Search, Star } from "lucide-react";
-import { Service, ServiceCategory } from "../mock-data";
+
 import { CATEGORY_FILTERS } from "../api/use-services";
+import { Service, ServiceCategory } from "../types";
 
 interface ServicesGridProps {
   loading: boolean;
@@ -93,14 +94,14 @@ export function ServicesGrid({
                 <Link
                   key={service.id}
                   href={`/services/${service.id}`}
-                  className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                  className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md"
                   style={{ aspectRatio: "3/4" }}
                 >
                   {service.image ? (
                     <img
                       src={service.image}
                       alt={service.name}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -128,9 +129,7 @@ export function ServicesGrid({
             <Star className="text-primary h-3 w-3" />
             {activeCount} Active
           </span>
-          <span>
-            {inactiveCount} Inactive
-          </span>
+          <span>{inactiveCount} Inactive</span>
           <span className="ml-auto">{filtered.length} shown</span>
         </div>
       </div>

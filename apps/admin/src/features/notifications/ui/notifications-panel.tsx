@@ -15,7 +15,8 @@ import {
   Phone,
   Star,
 } from "lucide-react";
-import { NotificationType, Notification } from "../mock-data";
+
+import { Notification, NotificationType } from "../types";
 
 interface NotificationsPanelProps {
   loading: boolean;

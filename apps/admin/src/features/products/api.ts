@@ -1,5 +1,6 @@
-import type { Product } from "./mock-data";
 import { parseOrThrow, uploadImage } from "@/shared/lib/api-helpers";
+
+import type { Product } from "./types";
 
 export async function fetchProducts(): Promise<Product[]> {
   const res = await fetch("/api/products", { cache: "no-store" });

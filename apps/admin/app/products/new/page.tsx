@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createProduct, uploadProductImage } from "@features/products/api";
+import { ProductCategory } from "@features/products/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -13,12 +15,6 @@ import {
   Save,
   Upload,
 } from "lucide-react";
-
-import {
-  createProduct,
-  uploadProductImage,
-} from "@features/products/api";
-import { ProductCategory } from "@features/products/mock-data";
 
 const CATEGORIES: ProductCategory[] = [
   "Skincare",

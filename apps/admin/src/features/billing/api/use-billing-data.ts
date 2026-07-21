@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
-import { fetchBookings, updateBooking } from "../../bookings/api";
-import { Booking } from "../../bookings/mock-data";
-import { fetchServices } from "../../services/api";
-import { Service } from "../../services/mock-data";
+import { useEffect, useState } from "react";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
+
+import { fetchBookings, updateBooking } from "../../bookings/api";
+import { Booking } from "../../bookings/types";
+import { fetchServices } from "../../services/api";
+import { Service } from "../../services/types";
 
 export type FilterStatus = "All" | "Started" | "Completed";
 export type BillingBooking = Booking;
 export type ThermalSize = "58mm" | "80mm" | "110mm";
 
-export function getServiceLineItems(booking: BillingBooking, catalog: Service[]) {
+export function getServiceLineItems(
+  booking: BillingBooking,
+  catalog: Service[]
+) {
   return booking.services.map((svc) => {
     const obj = catalog.find((r) => r.name === svc.name);
     const base = obj?.pricingTiers?.[0]?.price || 0;
@@ -239,6 +243,6 @@ export function useBillingData() {
     startedCount,
     completedCount,
     selectedLines,
-    selectedTotal
+    selectedTotal,
   };
 }

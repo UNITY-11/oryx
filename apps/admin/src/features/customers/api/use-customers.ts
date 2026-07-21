@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { fetchCustomers } from "../api";
-import { Customer, CustomerTier } from "../mock-data";
+import { Customer, CustomerTier } from "../types";
 
 export const TIER_FILTERS: Array<CustomerTier | "All"> = [
   "All",

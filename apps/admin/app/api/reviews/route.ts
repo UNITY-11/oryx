@@ -5,7 +5,7 @@ import { sanityClient } from "@/shared/lib/sanity/client";
 export async function GET() {
   try {
     const reviews = await sanityClient.fetch(REVIEWS_LIST_QUERY);
-    return NextResponse.json(reviews);
+    return NextResponse.json(reviews ?? []);
   } catch (error) {
     console.error("Failed to fetch reviews:", error);
     return NextResponse.json(
@@ -32,6 +32,17 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    
+    // Auto-generate initials if not provided
+    let initials = body.initials;
+    if (!initials && body.name) {
+      initials = body.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
 
     const doc = {
       _type: "review",
@@ -39,7 +50,9 @@ export async function POST(request: Request) {
       text: body.text,
       rating: body.rating ?? 5,
       status: body.status ?? "Active",
+      initials: initials,
       avatar: body.avatar ?? null,
+      createdAt: new Date().toISOString(),
     };
 
     const created = await sanityClient.create(doc);

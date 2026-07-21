@@ -6,8 +6,9 @@ import {
   Package,
   Search,
 } from "lucide-react";
-import { Product, ProductCategory } from "../mock-data";
+
 import { CATEGORY_FILTERS, SORT_OPTIONS } from "../api/use-products";
+import { Product, ProductCategory } from "../types";
 
 interface ProductsGridProps {
   loading: boolean;
@@ -153,14 +154,14 @@ export function ProductsGrid({
                 <Link
                   key={product.id}
                   href={`/products/${product.id}`}
-                  className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                  className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md"
                   style={{ aspectRatio: "1/1" }}
                 >
                   {product.image ? (
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">

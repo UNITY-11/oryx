@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import type { BookingService } from "@/features/bookings/mock-data";
 import { BOOKING_BY_ID_QUERY } from "@/features/bookings/sanity-queries";
+import type { BookingService } from "@/features/bookings/types";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys(services: BookingService[] | undefined) {

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
 import { useCatalog } from "@/features/catalog/use-catalog";
+import { useHero } from "@/features/catalog/use-hero";
 import { TestimonialCarousel } from "@/features/home/testimonial-carousel";
-import { LotusSeparator } from "@/shared/ui/lotus-separator";
 import { useUserStore } from "@/shared/store";
+import { LotusSeparator } from "@/shared/ui/lotus-separator";
 import {
   Bath,
   Brush,
@@ -17,15 +18,21 @@ import {
   Scissors,
   Search,
   Sparkles,
+  Star,
   User,
+  Gift,
+  Ticket,
   Wind,
 } from "lucide-react";
+import { useCoupons } from "@/features/home/use-coupons";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const logoRef = useRef<HTMLImageElement>(null);
   const user = useUserStore((state) => state.user);
   const { items, loading, error } = useCatalog();
+  const { slides, loading: heroLoading } = useHero();
+  const { coupons, loading: couponsLoading } = useCoupons();
 
   useEffect(() => {
     const mainArea = document.getElementById("main-scroll-container");
@@ -61,13 +68,13 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col overflow-x-hidden">
       {/* Header & Search in a zero-height fixed wrapper to prevent layout shift */}
       <div className="fixed top-0 left-0 z-40 h-0 w-full overflow-visible md:hidden">
-        <div className="rounded-b-[36px] bg-fluted px-4 pt-3 pb-4 relative overflow-hidden border-x border-b border-[#c8a24a]">
+        <div className="bg-fluted relative overflow-hidden rounded-b-[36px] border-x border-b border-[#c8a24a] px-4 pt-3 pb-4">
           {/* Metallic Gold Band */}
-          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] z-0" />
-          <div className="min-h-4xl mb-4 flex items-center justify-center relative z-10 w-full px-4">
+          <div className="absolute right-0 bottom-0 left-0 z-0 h-1.5 bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728]" />
+          <div className="min-h-4xl relative z-10 mb-4 flex w-full items-center justify-center px-4">
             <div
               ref={logoRef}
-              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height]"
+              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height] drop-shadow-md"
               title="ORYX Logo"
               style={{
                 height: "100px",
@@ -78,7 +85,7 @@ export default function HomePage() {
                 maskImage: 'url("/images/oryx-logo.png")',
                 maskSize: "contain",
                 maskRepeat: "no-repeat",
-                maskPosition: "center"
+                maskPosition: "center",
               }}
             />
           </div>
@@ -90,12 +97,12 @@ export default function HomePage() {
                 placeholder="Search treatments or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="placeholder:text-[#c8a24a]/70 focus:ring-[#c8a24a] w-full rounded-full border border-[#c8a24a] bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none focus:ring-2"
+                className="w-full rounded-full border border-[#c8a24a] bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none placeholder:text-[#c8a24a]/70 focus:ring-2 focus:ring-[#c8a24a]"
               />
             </div>
             <Link
               href="/profile"
-              className="text-[#c8a24a] hover:text-[#b38728] flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-[#c8a24a] bg-gray-50 transition-colors"
+              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-[#c8a24a] bg-gray-50 text-[#c8a24a] transition-colors hover:text-[#b38728]"
             >
               {user ? (
                 <span className="text-xl font-semibold">
@@ -110,31 +117,35 @@ export default function HomePage() {
       </div>
 
       {/* Static spacer to push content below the large header initially */}
-      <div className="pt-[190px] md:pt-0" />
+      <div className="pt-[200px] md:hidden" />
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="section-padding px-3 md:px-0 md:pt-0">
-          <HeroCarousel />
+        <section className="pb-4 pt-4 px-4 md:p-0">
+          {heroLoading ? (
+            <div className="w-full h-64 md:h-[100vh] bg-gray-200 animate-pulse rounded-3xl md:rounded-none"></div>
+          ) : (
+            <HeroCarousel slides={slides} />
+          )}
         </section>
       )}
 
-      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pb-6 md:px-8 md:pb-24 lg:px-12 xl:px-16">
+      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-0 pb-0 md:px-8 md:pt-16 md:pb-24 lg:px-12 xl:px-16">
         {/* Categories Section */}
         {!searchQuery && (
-          <section className="section-padding">
-            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
+          <section className="pt-4 pb-2 md:py-16">
+            <div className="mb-4 flex flex-col items-center justify-center text-center md:mb-12">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Categories
               </h2>
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
-            <div className="scrollbar-hide cat-container flex w-full flex-row justify-between overflow-x-auto px-3 pb-4 md:mx-0 md:overflow-visible md:px-0">
+            <div className="scrollbar-hide cat-container flex w-full flex-row gap-6 overflow-x-auto px-4 pb-4 md:gap-12">
               <style
                 dangerouslySetInnerHTML={{
                   __html: `
                 @media (max-width: 767px) {
-                  .cat-container { gap: 16px !important; }
+                  .cat-container { gap: 24px !important; padding-right: 24px; padding-left: 16px; }
                 }
                 @media (min-width: 768px) {
                   .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }
@@ -142,148 +153,124 @@ export default function HomePage() {
                   .cat-text { font-size: clamp(12px, 1.2vw, 15px) !important; }
                 }
                 @media (min-width: 1024px) {
-                  .cat-circle { width: clamp(100px, 9vw, 130px) !important; height: clamp(100px, 9vw, 130px) !important; }
-                  .cat-icon { width: clamp(50px, 4.5vw, 65px) !important; height: clamp(50px, 4.5vw, 65px) !important; }
+                  .cat-circle { width: clamp(100px, 10vw, 130px) !important; height: clamp(100px, 10vw, 130px) !important; }
+                  .cat-icon { width: clamp(50px, 5vw, 65px) !important; height: clamp(50px, 5vw, 65px) !important; }
                   .cat-text { font-size: clamp(14px, 1.2vw, 17px) !important; }
+                }
+                @media (min-width: 1024px) {
+                  .cat-circle { width: clamp(120px, 11vw, 150px) !important; height: clamp(120px, 11vw, 150px) !important; }
+                  .cat-icon { width: clamp(60px, 5.5vw, 80px) !important; height: clamp(60px, 5.5vw, 80px) !important; }
+                  .cat-text { font-size: clamp(16px, 1.4vw, 19px) !important; }
                 }
               `,
                 }}
               />
-              {[
-                {
-                  name: "Massage",
-                  icon: <Flower2 className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Facial",
-                  icon: <Sparkles className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Nails",
-                  icon: <Scissors className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Therapy",
-                  icon: <Droplets className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Hair Care",
-                  icon: <Wind className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Makeup",
-                  icon: <Brush className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Wellness",
-                  icon: <Heart className="cat-icon h-6 w-6" />,
-                },
-                {
-                  name: "Spa Bath",
-                  icon: <Bath className="cat-icon h-6 w-6" />,
-                },
-              ].map((cat, idx) => (
-                <div
-                  key={idx}
-                  className="group flex w-[72px] flex-none cursor-pointer flex-col items-center md:w-auto"
-                >
-                  <div className="bg-white text-[#c8a24a] hover:bg-gray-50 cat-circle flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] shadow-sm transition-colors hover:shadow-md">
-                    {cat.icon}
+              {(() => {
+                const uniqueCategories = Array.from(
+                  new Set(
+                    items.filter((i) => !i.isProduct).map((i) => i.category)
+                  )
+                ).filter(Boolean);
+                const defaultIcon = <Flower2 className="cat-icon h-8 w-8 md:h-12 md:w-12" />;
+                const iconMap: Record<string, React.ReactNode> = {
+                  Massage: <Flower2 className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Facial: <Sparkles className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  "Body Treatment": <Droplets className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Hair: <Wind className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Nails: <Scissors className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Package: <Heart className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Makeup: <Brush className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Bath: <Bath className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                  Bridal: <User className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
+                };
+
+                const defaults = ["Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package", "Makeup", "Bath", "Bridal"];
+
+                let displayCategories = [...uniqueCategories];
+
+                if (displayCategories.length < 8) {
+                  const toAdd = defaults.filter(c => !displayCategories.includes(c));
+                  displayCategories = [...displayCategories, ...toAdd];
+                }
+
+                return displayCategories.map((catName, idx) => (
+                  <div
+                    key={idx}
+                    className="group flex w-[72px] flex-none cursor-pointer flex-col items-center md:w-auto"
+                  >
+                    <div className="cat-circle flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] bg-white text-[#c8a24a] shadow-sm transition-colors hover:bg-gray-50 hover:shadow-md">
+                      {iconMap[catName as string] || defaultIcon}
+                    </div>
+                    <span className="cat-text mt-2 text-center text-[11px] font-medium text-white md:mt-4 whitespace-nowrap">
+                      {catName as string}
+                    </span>
                   </div>
-                  <span className="text-white cat-text mt-2 text-center text-[11px] font-medium md:mt-4">
-                    {cat.name}
-                  </span>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </section>
         )}
 
         {/* Promotional Banner */}
-        {!searchQuery && (
-          <section className="section-padding">
+        {!searchQuery && coupons.length > 0 && (
+          <section className="pb-8 pt-2 md:py-16">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+                Special Offers
+              </h2>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
+            </div>
             <div className="scrollbar-hide -mx-3 flex space-x-4 overflow-x-auto px-3 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0">
-              {/* Card 1 */}
-              <div className="bg-white border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
-                {/* Inner Dashed container */}
-                <div className="border-[#c8a24a] relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
-                  <div className="bg-primary/20 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-2xl" />
+              {couponsLoading ? (
+                // Loading Skeletons
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-primary/5 rounded-2xl animate-pulse w-[92%] md:w-full flex-none" />
+                ))
+              ) : (
+                coupons.map((coupon, idx) => {
+                  // Alternate some subtle border/background styles for variety just like the original hardcoded ones
+                  const isGold = idx % 2 === 1;
+                  const getIcon = (iconName: string) => {
+                    switch (iconName) {
+                      case "Scissors": return <Scissors className="h-3.5 w-3.5" />;
+                      case "Flower2": return <Flower2 className="h-3.5 w-3.5" />;
+                      case "Heart": return <Heart className="h-3.5 w-3.5" />;
+                      case "Star": return <Star className="h-3.5 w-3.5" />;
+                      case "Gift": return <Gift className="h-3.5 w-3.5" />;
+                      case "Ticket": return <Ticket className="h-3.5 w-3.5" />;
+                      default: return <Sparkles className="h-3.5 w-3.5" />;
+                    }
+                  };
 
-                  <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                      <Scissors className="h-3.5 w-3.5" /> SPECIAL OFFER
-                    </span>
-                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
-                      Get 20% Off Your First Visit
-                    </h3>
-                  </div>
+                  return (
+                    <div key={coupon.id} className={`relative w-[92%] flex-none overflow-hidden rounded-2xl border bg-white shadow-md md:w-full ${isGold ? 'border-[#c29a63]/20' : 'border-primary/15'}`}>
+                      <div className={`relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4 ${isGold ? 'border-[#c29a63]/30' : 'border-[#c8a24a]'}`}>
+                        <div className={`absolute h-32 w-32 rounded-full blur-2xl ${isGold ? 'bottom-0 left-0 -mb-10 -ml-10 bg-[#c29a63]/20' : 'top-0 right-0 -mt-10 -mr-10 bg-primary/20'}`} />
 
-                  {/* Vertical Dashed separator */}
-                  <div className="border-[#c8a24a] relative z-10 mx-2 h-16 w-px border-l-2 border-dashed" />
+                        <div className="relative z-10 flex-1 pr-3">
+                          <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
+                            {getIcon(coupon.icon)} {coupon.type}
+                          </span>
+                          <h3 className="text-primary mb-1 font-serif text-lg leading-tight line-clamp-2">
+                            {coupon.title}
+                          </h3>
+                        </div>
 
-                  <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
-                    <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                      Use Code
-                    </p>
-                    <strong className="text-primary border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
-                      ORYX20
-                    </strong>
-                  </div>
-                </div>
-              </div>
+                        <div className={`relative z-10 mx-2 h-16 w-px border-l-2 border-dashed ${isGold ? 'border-[#c29a63]/30' : 'border-[#c8a24a]'}`} />
 
-              {/* Card 2 */}
-              <div className="bg-white relative w-[92%] flex-none overflow-hidden rounded-2xl border border-[#c29a63]/20 shadow-md md:w-full">
-                {/* Inner Dashed container */}
-                <div className="relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed border-[#c29a63]/30 p-4">
-                  <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-32 w-32 rounded-full bg-[#c29a63]/20 blur-2xl" />
-
-                  <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                      <Sparkles className="h-3.5 w-3.5" /> FREE GIFT
-                    </span>
-                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
-                      Free Polish With Manicure
-                    </h3>
-                  </div>
-
-                  {/* Vertical Dashed separator */}
-                  <div className="relative z-10 mx-2 h-16 w-px border-l-2 border-dashed border-[#c29a63]/30" />
-
-                  <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
-                    <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                      Use Code
-                    </p>
-                    <strong className="text-primary inline-block rounded-md border border-[#c29a63]/20 bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
-                      GLOWUP
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3 (Bridal Spa Day) */}
-              <div className="bg-white border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
-                <div className="border-primary/30 relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4">
-                  <div className="bg-primary/20 absolute top-0 left-0 -mt-10 -ml-10 h-32 w-32 rounded-full blur-2xl" />
-                  <div className="relative z-10 flex-1 pr-3">
-                    <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                      <Flower2 className="h-3.5 w-3.5" /> PACKAGE
-                    </span>
-                    <h3 className="text-primary mb-1 font-serif text-lg leading-tight">
-                      Bridal Spa Day
-                    </h3>
-                  </div>
-                  <div className="border-primary/30 relative z-10 mx-2 h-16 w-px border-l-2 border-dashed" />
-                  <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center">
-                    <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                      Use Code
-                    </p>
-                    <strong className="text-primary border-primary/20 inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm">
-                      BRIDE30
-                    </strong>
-                  </div>
-                </div>
-              </div>
+                        <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center min-w-[80px]">
+                          <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
+                            Use Code
+                          </p>
+                          <strong className={`text-primary inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm truncate max-w-[90px] ${isGold ? 'border-[#c29a63]/20' : 'border-primary/20'}`}>
+                            {coupon.code}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </section>
         )}
@@ -292,7 +279,7 @@ export default function HomePage() {
         {(loading || error) && !searchQuery && (
           <>
             <section className="section-padding">
-              <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
+              <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
                 <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                   Featured Services
                 </h2>
@@ -300,19 +287,39 @@ export default function HomePage() {
               </div>
               <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={`service-skeleton-${i}`} className="w-[44%] flex-none md:w-80">
-                    <div className="relative flex h-56 w-full items-center justify-center rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] bg-primary/5 shadow-sm md:h-96 overflow-hidden">
+                  <div
+                    key={`service-skeleton-${i}`}
+                    className="w-[44%] flex-none md:w-80"
+                  >
+                    <div className="bg-primary/5 relative flex h-56 w-full items-center justify-center overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
                       {loading ? (
                         <>
-                          <div className="absolute inset-0 bg-primary/20" />
-                          <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                          <div className="bg-primary/20 absolute inset-0" />
+                          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                         </>
                       ) : (
-                        <div className="flex flex-col items-center justify-center p-4 text-center z-10">
+                        <div className="z-10 flex flex-col items-center justify-center p-4 text-center">
                           <span className="mb-2 text-[#c8a24a]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-6 w-6"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" x2="12" y1="8" y2="12" />
+                              <line x1="12" x2="12.01" y1="16" y2="16" />
+                            </svg>
                           </span>
-                          <span className="text-xs text-[#c8a24a] md:text-sm">Failed to load</span>
+                          <span className="text-xs text-[#c8a24a] md:text-sm">
+                            Failed to load
+                          </span>
                         </div>
                       )}
                     </div>
@@ -320,50 +327,70 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="mt-6 flex justify-center">
-                <span className="text-white text-sm font-semibold">
+                <span className="text-sm font-semibold text-white">
                   See All
                 </span>
               </div>
             </section>
 
             <section className="section-padding">
-              <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
+              <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
                 <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                   Our Products
                 </h2>
                 <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
               </div>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 lg:grid-cols-4 md:gap-6 px-4">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-6 px-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div key={`product-skeleton-${i}`} className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm p-2 md:p-3">
-                    <div className="relative flex aspect-square items-center justify-center rounded-xl bg-primary/5 overflow-hidden">
-                      <div className="h-full w-full relative">
+                  <div
+                    key={`product-skeleton-${i}`}
+                    className="bg-surface flex flex-col overflow-hidden rounded-2xl p-2 shadow-sm md:p-3"
+                  >
+                    <div className="bg-primary/5 relative flex aspect-square items-center justify-center overflow-hidden rounded-xl">
+                      <div className="relative h-full w-full">
                         {loading ? (
                           <>
-                            <div className="absolute inset-0 bg-primary/20" />
-                            <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                            <div className="bg-primary/20 absolute inset-0" />
+                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                           </>
                         ) : (
-                          <div className="flex flex-col items-center justify-center h-full p-4 text-center z-10">
+                          <div className="z-10 flex h-full flex-col items-center justify-center p-4 text-center">
                             <span className="mb-2 text-[#c8a24a]">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-6 w-6"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" x2="12" y1="8" y2="12" />
+                                <line x1="12" x2="12.01" y1="16" y2="16" />
+                              </svg>
                             </span>
-                            <span className="text-xs text-[#c8a24a] md:text-sm">Failed to load</span>
+                            <span className="text-xs text-[#c8a24a] md:text-sm">
+                              Failed to load
+                            </span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="relative flex flex-col pt-3 md:pt-4 px-1 md:px-2 overflow-hidden">
-                      <div className="h-4 w-2/3 rounded bg-primary/20" />
+                    <div className="relative flex flex-col overflow-hidden px-1 pt-3 md:px-2 md:pt-4">
+                      <div className="bg-primary/20 h-4 w-2/3 rounded" />
                       {loading && (
-                        <div className="animate-[shimmer_2s_infinite] absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                       )}
                     </div>
                   </div>
                 ))}
               </div>
               <div className="mt-8 flex justify-center">
-                <span className="text-white text-sm font-semibold">
+                <span className="text-sm font-semibold text-white">
                   Show All
                 </span>
               </div>
@@ -390,7 +417,7 @@ export default function HomePage() {
                     key={item.id}
                     className="group block w-44 flex-none"
                   >
-                    <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm transition-transform group-hover:scale-[1.02]">
+                    <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
@@ -414,55 +441,66 @@ export default function HomePage() {
         {/* Featured Services */}
         {!searchQuery && !loading && !error && (
           <section className="section-padding">
-            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Featured Services
               </h2>
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
             <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
-              {filteredItems.filter((item) => !item.isProduct).length === 0 ? (
-                <p className="text-text-secondary w-full py-8 text-center text-sm">
-                  No services available yet.
-                </p>
-              ) : (
-                <>
-                  {filteredItems
-                  .filter((item) => !item.isProduct)
-                  .slice(0, 6)
-                  .map((item, index, arr) => {
-                    const isLast = index === arr.length - 1;
-                    return (
-                      <Link
-                        href={isLast ? "/services" : `/service/${item.id}`}
-                        key={item.id}
-                        className="group block w-[44%] flex-none md:w-80"
-                      >
-                        <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                          />
-                          {!isLast && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />}
-                          {!isLast && (
-                            <h3 className="absolute right-4 bottom-4 left-4 text-center font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
-                              {item.name}
-                            </h3>
-                          )}
-                          {isLast && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
-                              <span className="font-serif text-xl font-bold text-primary-dark group-hover:underline">
-                                See All
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </>
-              )}
+              {(() => {
+                const services = filteredItems.filter((item) => !item.isProduct);
+                if (services.length === 0) {
+                  return (
+                    <p className="text-text-secondary w-full py-8 text-center text-sm">
+                      No services available yet.
+                    </p>
+                  );
+                }
+
+                const hasMoreServices = services.length > 6;
+                const displayServices = services.slice(0, 6);
+
+                return (
+                  <>
+                    {displayServices.map((item, index) => {
+                      const isLast = hasMoreServices && index === displayServices.length - 1;
+                      return (
+                        <Link
+                          href={isLast ? "/services" : `/service/${item.id}`}
+                          key={item.id}
+                          className="group flex flex-col w-[65%] flex-none md:w-80"
+                        >
+                          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-full rounded-b-2xl border-[3px] border-[#c8a24a] shadow-sm">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="h-full w-full object-cover"
+                            />
+                            {!isLast && (
+                              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[95%] drop-shadow-md md:bottom-5 md:w-[90%]">
+                                <h3
+                                  className="animate-shine bg-[#c8a24a] text-white px-6 py-1.5 text-center line-clamp-1 font-serif text-[11px] font-medium md:text-sm"
+                                  style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%)' }}
+                                >
+                                  {item.name}
+                                </h3>
+                              </div>
+                            )}
+                            {isLast && (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
+                                <span className="text-primary-dark font-serif text-xl font-bold group-hover:underline">
+                                  See All
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </>
+                );
+              })()}
             </div>
           </section>
         )}
@@ -470,54 +508,61 @@ export default function HomePage() {
         {/* Products Section */}
         {!searchQuery && !loading && !error && (
           <section className="section-padding">
-            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Our Products
               </h2>
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-              {filteredItems.filter((item) => item.isProduct).length === 0 ? (
-                <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3 lg:col-span-4">
-                  No products available yet.
-                </p>
-              ) : (
-                <>
-                  {filteredItems
-                  .filter((item) => item.isProduct)
-                  .slice(0, 8)
-                  .map((item, index, arr) => {
-                    const isLast = index === arr.length - 1;
-                    return (
-                      <Link
-                        href={isLast ? "/products" : `/service/${item.id}`}
-                        key={item.id}
-                        className="bg-surface relative group flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1 p-2 md:p-3"
-                      >
-                        <div className="relative aspect-square overflow-hidden rounded-xl">
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                          />
-                        </div>
-                        <div className="flex flex-col pt-3 md:pt-4 px-1 md:px-2">
-                          <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
-                            {item.name}
-                          </h3>
-                        </div>
-                        {isLast && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80 z-10 rounded-2xl">
-                            <span className="font-serif text-xl font-bold text-primary-dark group-hover:underline">
-                              See All
-                            </span>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+              {(() => {
+                const products = filteredItems.filter((item) => item.isProduct);
+                if (products.length === 0) {
+                  return (
+                    <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3 lg:col-span-4">
+                      No products available yet.
+                    </p>
+                  );
+                }
+
+                const hasMoreProducts = products.length > 8;
+                const displayProducts = products.slice(0, 8);
+
+                return (
+                  <>
+                    {displayProducts.map((item, index) => {
+                      const isLast = hasMoreProducts && index === displayProducts.length - 1;
+                      return (
+                        <Link
+                          href={isLast ? "/products" : `/service/${item.id}`}
+                          key={item.id}
+                          className="bg-surface group relative flex flex-col overflow-hidden rounded-2xl p-2 shadow-sm md:p-3"
+                        >
+                          <div className="relative aspect-square overflow-hidden rounded-xl">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="h-full w-full object-cover"
+                            />
                           </div>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </>
-              )}
+                          <div className="flex flex-col px-1 pt-3 md:px-2 md:pt-4">
+                            <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
+                              {item.name}
+                            </h3>
+                          </div>
+                          {isLast && (
+                            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
+                              <span className="text-primary-dark font-serif text-xl font-bold group-hover:underline">
+                                See All
+                              </span>
+                            </div>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </>
+                );
+              })()}
             </div>
           </section>
         )}
@@ -525,11 +570,11 @@ export default function HomePage() {
         {/* Testimonials Section */}
         {!searchQuery && (
           <section className="section-padding">
-            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Customer Reviews
               </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[160px] md:max-w-[200px]" />
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
             </div>
 
             <div className="flex w-full justify-center">
@@ -545,7 +590,7 @@ export default function HomePage() {
               <div className="flex gap-4">
                 <a
                   href="#"
-                  className="bg-white border-primary/20 text-[#e8baa0] hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
+                  className="border-primary/20 hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border bg-white text-[#e8baa0] shadow-sm transition-all hover:text-white"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -566,7 +611,7 @@ export default function HomePage() {
                 </a>
                 <a
                   href="#"
-                  className="bg-white border-primary/20 text-[#e8baa0] hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
+                  className="border-primary/20 hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border bg-white text-[#e8baa0] shadow-sm transition-all hover:text-white"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -585,7 +630,7 @@ export default function HomePage() {
                 </a>
                 <a
                   href="#"
-                  className="bg-white border-primary/20 text-[#e8baa0] hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all hover:text-white"
+                  className="border-primary/20 hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border bg-white text-[#e8baa0] shadow-sm transition-all hover:text-white"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -604,7 +649,7 @@ export default function HomePage() {
                 </a>
               </div>
 
-              <div className="text-white flex gap-4 text-xs font-medium">
+              <div className="flex gap-4 text-xs font-medium text-white">
                 <Link href="/privacy" className="hover:text-white/80">
                   Privacy Policy
                 </Link>
@@ -618,7 +663,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <p className="text-white mt-4 text-[10px] md:text-xs">
+              <p className="mt-4 text-[10px] text-white md:text-xs">
                 © {new Date().getFullYear()} ORYX Beauty Spa. All rights
                 reserved.
               </p>

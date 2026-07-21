@@ -17,6 +17,8 @@ import {
   Settings,
   UserCircle2,
   MessageSquare,
+  ImageIcon,
+  Ticket,
 } from "lucide-react";
 
 // ─── Nav items organised by purpose, separated by dividers ────────────────────
@@ -44,7 +46,12 @@ const navClusters = [
     { name: "Reviews",       href: "/reviews",       icon: MessageSquare },
     { name: "Notifications", href: "/notifications", icon: Bell  },
   ],
-  // 5. Config
+  // 5. Content Management
+  [
+    { name: "Hero Section",  href: "/hero",          icon: ImageIcon },
+    { name: "Coupons",       href: "/coupons",       icon: Ticket },
+  ],
+  // 6. Config
   [
     { name: "Settings", href: "/settings", icon: Settings },
   ],

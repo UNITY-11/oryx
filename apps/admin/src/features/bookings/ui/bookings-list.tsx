@@ -6,8 +6,9 @@ import {
   Loader2,
   Search,
 } from "lucide-react";
+
 import { BookingWizard } from "../booking-wizard";
-import { Booking, BookingStatus } from "../mock-data";
+import { Booking, BookingStatus } from "../types";
 
 interface BookingsListProps {
   loading: boolean;
@@ -34,7 +35,7 @@ export function BookingsList({
   toggleSort,
   filteredAndSortedBookings,
   handleAddBooking,
-  createBooking
+  createBooking,
 }: BookingsListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -154,7 +155,10 @@ export function BookingsList({
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-red-500">
+                      <td
+                        colSpan={5}
+                        className="py-12 text-center text-red-500"
+                      >
                         <div className="flex items-center justify-center gap-2">
                           <AlertCircle className="h-5 w-5" /> {error}
                         </div>
@@ -209,11 +213,14 @@ export function BookingsList({
                         </td>
                         <td className="text-text-secondary py-5">
                           <p className="font-medium">
-                            {new Date(booking.date).toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })}
+                            {new Date(booking.date).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
                           </p>
                           <p className="mt-0.5 text-sm">{booking.time}</p>
                         </td>

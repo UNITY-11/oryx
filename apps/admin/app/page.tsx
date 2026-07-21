@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchBookings } from "@features/bookings/api";
+import { Booking } from "@features/bookings/types";
+import { fetchCustomers } from "@features/customers/api";
+import { fetchProducts } from "@features/products/api";
 import {
   AlertCircle,
   Calendar,
@@ -9,11 +13,6 @@ import {
   ShoppingBag,
   Users,
 } from "lucide-react";
-
-import { fetchBookings } from "@features/bookings/api";
-import { Booking } from "@features/bookings/mock-data";
-import { fetchCustomers } from "@features/customers/api";
-import { fetchProducts } from "@features/products/api";
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);

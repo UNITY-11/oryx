@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,6 +15,7 @@ import {
   Bell,
   Settings,
   UserCircle2,
+  MessageSquare,
 } from "lucide-react";
 
 // ─── Nav items organised by purpose, separated by dividers ────────────────────
@@ -38,6 +40,7 @@ const navClusters = [
   // 4. People & Activity
   [
     { name: "Customers",     href: "/customers",     icon: Users },
+    { name: "Reviews",       href: "/reviews",       icon: MessageSquare },
     { name: "Notifications", href: "/notifications", icon: Bell  },
   ],
   // 5. Config
@@ -50,6 +53,19 @@ const navClusters = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const count = data.filter((n) => n.status === "Unread").length;
+          setUnreadCount(count);
+        }
+      })
+      .catch((err) => console.error("Error fetching notifications for sidebar:", err));
+  }, [pathname]);
 
   return (
     <div className="hidden md:flex p-4 pr-0">
@@ -96,7 +112,16 @@ export function Sidebar() {
                       }`}
                     >
                       <Icon className="w-5 h-5 shrink-0" />
-                      <span className="font-medium text-sm">{item.name}</span>
+                      <span className="font-medium text-sm flex-1">{item.name}</span>
+                      {item.name === "Notifications" && unreadCount > 0 && (
+                        <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                          isActive 
+                            ? "bg-white text-primary" 
+                            : "bg-red-500 text-white"
+                        }`}>
+                          {unreadCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

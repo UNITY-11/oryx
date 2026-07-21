@@ -22,12 +22,14 @@ export function TopHeader() {
       case '/services': return 'Services Management';
       case '/products': return 'Products Inventory';
       case '/customers': return 'Customers Directory';
+      case '/reviews': return 'Reviews Management';
       case '/settings': return 'Admin Settings';
       case '/notifications': return 'Notifications';
       default:
         if (pathname.startsWith('/services/')) return 'Service Details';
         if (pathname.startsWith('/products/')) return 'Product Details';
         if (pathname.startsWith('/customers/')) return 'Customer Details';
+        if (pathname.startsWith('/reviews/')) return 'Review Details';
         return 'Admin Portal';
     }
   };
@@ -113,6 +115,16 @@ export function TopHeader() {
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Customer</span>
+              </Link>
+            )}
+
+            {pathname === '/reviews' && (
+              <Link
+                href="/reviews/new"
+                className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity flex items-center space-x-2 whitespace-nowrap text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Review</span>
               </Link>
             )}
           </div>

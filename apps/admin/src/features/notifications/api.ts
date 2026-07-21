@@ -1,15 +1,5 @@
 import type { Notification } from "./mock-data";
-
-async function parseOrThrow<T>(
-  res: Response,
-  fallbackMessage: string
-): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? fallbackMessage);
-  }
-  return res.json();
-}
+import { parseOrThrow } from "@/shared/lib/api-helpers";
 
 export async function fetchNotifications(): Promise<Notification[]> {
   const res = await fetch("/api/notifications", { cache: "no-store" });

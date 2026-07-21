@@ -1,15 +1,5 @@
 import type { Product } from "./mock-data";
-
-async function parseOrThrow<T>(
-  res: Response,
-  fallbackMessage: string
-): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? fallbackMessage);
-  }
-  return res.json();
-}
+import { parseOrThrow, uploadImage } from "@/shared/lib/api-helpers";
 
 export async function fetchProducts(): Promise<Product[]> {
   const res = await fetch("/api/products", { cache: "no-store" });
@@ -49,13 +39,4 @@ export async function deleteProduct(id: string): Promise<void> {
   await parseOrThrow<{ success: boolean }>(res, "Failed to delete product");
 }
 
-export async function uploadProductImage(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  const data = await parseOrThrow<{ url: string }>(
-    res,
-    "Failed to upload image"
-  );
-  return data.url;
-}
+export { uploadImage as uploadProductImage };

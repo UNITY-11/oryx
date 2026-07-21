@@ -1,15 +1,5 @@
 import type { Booking } from "./mock-data";
-
-async function parseOrThrow<T>(
-  res: Response,
-  fallbackMessage: string
-): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? fallbackMessage);
-  }
-  return res.json();
-}
+import { parseOrThrow } from "@/shared/lib/api-helpers";
 
 export async function fetchBookings(): Promise<Booking[]> {
   const res = await fetch("/api/bookings", { cache: "no-store" });

@@ -1,3 +1,5 @@
+import { parseOrThrow } from "@/shared/lib/api-helpers";
+
 export interface Review {
   id: string;
   name: string;
@@ -5,17 +7,6 @@ export interface Review {
   rating: number;
   status: "Active" | "Inactive";
   avatar: string | null;
-}
-
-async function parseOrThrow<T>(
-  res: Response,
-  fallbackMessage: string
-): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? fallbackMessage);
-  }
-  return res.json();
 }
 
 export async function fetchReviews(): Promise<Review[]> {

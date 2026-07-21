@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import { NOTIFICATIONS_LIST_QUERY } from "@/features/notifications/sanity-queries";
 import { sanityClient } from "@/shared/lib/sanity/client";
 

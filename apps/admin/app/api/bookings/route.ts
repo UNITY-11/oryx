@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 import type { BookingService } from "@/features/bookings/mock-data";
 import { BOOKINGS_LIST_QUERY } from "@/features/bookings/sanity-queries";
 import { sanityClient } from "@/shared/lib/sanity/client";

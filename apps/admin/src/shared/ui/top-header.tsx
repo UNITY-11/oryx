@@ -39,7 +39,7 @@ export function TopHeader() {
           <div className="flex items-center space-x-4 flex-1">
             <Link
               href={bookingStep > 1 ? `/bookings?action=add&step=${bookingStep - 1}` : "/bookings"}
-              className="border-primary/10 hover:border-primary/30 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm transition-colors"
+              className="hover:border-primary/30 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
             >
               <ChevronLeft className="text-text-secondary h-5 w-5" />
             </Link>

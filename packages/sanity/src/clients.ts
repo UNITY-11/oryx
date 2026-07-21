@@ -1,5 +1,5 @@
 import { createClient } from "@sanity/client";
-import { sanityConfig } from "./config.js";
+import { sanityConfig } from "./config";
 
 
 /**

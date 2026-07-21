@@ -1,7 +1,7 @@
-export { sanityConfig } from "./config.js";
+export { sanityConfig } from "./config";
 export {
   createReadClient,
   createWriteClient,
   createPublicListenerClient,
-} from "./clients.js";
-export { SERVICE_PROJECTION, PRODUCT_PROJECTION } from "./projections.js";
+} from "./clients";
+export { SERVICE_PROJECTION, PRODUCT_PROJECTION } from "./projections";

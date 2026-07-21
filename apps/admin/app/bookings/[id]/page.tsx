@@ -284,7 +284,7 @@ export default function BookingDetailPage({
             {!isCompleted && !isEditing && (
               <button
                 onClick={handleCancelSession}
-                className="border-red-200 text-red-500 hover:bg-red-50 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
+                className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
               >
                 <XCircle className="h-4 w-4" />
                 Cancel
@@ -294,7 +294,7 @@ export default function BookingDetailPage({
             {!isEditing && (
               <button
                 onClick={handleDeleteSession}
-                className="border-red-200 text-red-500 hover:bg-red-50 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
+                className="border-primary text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete

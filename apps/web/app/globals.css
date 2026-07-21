@@ -47,3 +47,9 @@
     transparent 6px
   );
 }
+
+@layer utilities {
+  .section-padding {
+    @apply py-4 md:py-8;
+  }
+}

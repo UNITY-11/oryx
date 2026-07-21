@@ -114,16 +114,16 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="mt-10 px-3 pb-6 md:mt-0 md:px-0 md:pb-24">
+        <section className="section-padding px-3 md:px-0">
           <HeroCarousel />
         </section>
       )}
 
-      <div className="mx-auto w-full max-w-screen-2xl flex-1 space-y-8 px-3 pb-6 md:space-y-24 md:px-8 md:pb-24 lg:px-12 xl:px-16">
+      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pb-6 md:px-8 md:pb-24 lg:px-12 xl:px-16">
         {/* Categories Section */}
         {!searchQuery && (
-          <section>
-            <div className="mb-2 text-center">
+          <section className="section-padding">
+            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Categories
               </h2>
@@ -201,7 +201,7 @@ export default function HomePage() {
 
         {/* Promotional Banner */}
         {!searchQuery && (
-          <section>
+          <section className="section-padding">
             <div className="scrollbar-hide -mx-3 flex space-x-4 overflow-x-auto px-3 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0">
               {/* Card 1 */}
               <div className="bg-white border-primary/15 relative w-[92%] flex-none overflow-hidden rounded-2xl border shadow-md md:w-full">
@@ -291,8 +291,8 @@ export default function HomePage() {
         {/* Catalog loading / error */}
         {(loading || error) && !searchQuery && (
           <>
-            <section>
-              <div className="mb-2 text-center">
+            <section className="section-padding">
+              <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
                 <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                   Featured Services
                 </h2>
@@ -326,8 +326,8 @@ export default function HomePage() {
               </div>
             </section>
 
-            <section className="mt-8 md:mt-24">
-              <div className="mb-2 text-center">
+            <section className="section-padding">
+              <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
                 <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                   Our Products
                 </h2>
@@ -373,7 +373,7 @@ export default function HomePage() {
 
         {/* Search Results */}
         {searchQuery && (
-          <section>
+          <section className="section-padding">
             <h2 className="text-surface mb-4 font-serif text-xl md:text-3xl">
               Search Results
             </h2>
@@ -413,8 +413,8 @@ export default function HomePage() {
 
         {/* Featured Services */}
         {!searchQuery && !loading && !error && (
-          <section>
-            <div className="mb-2 text-center">
+          <section className="section-padding">
+            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Featured Services
               </h2>
@@ -426,43 +426,51 @@ export default function HomePage() {
                   No services available yet.
                 </p>
               ) : (
-                filteredItems
+                <>
+                  {filteredItems
                   .filter((item) => !item.isProduct)
-                  .map((item) => (
-                    <Link
-                      href={`/service/${item.id}`}
-                      key={item.id}
-                      className="group block w-[44%] flex-none md:w-80"
-                    >
-                      <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
-                        <h3 className="absolute right-4 bottom-4 left-4 text-center font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
-                          {item.name}
-                        </h3>
-                      </div>
-                    </Link>
-                  ))
+                  .slice(0, 6)
+                  .map((item, index, arr) => {
+                    const isLast = index === arr.length - 1;
+                    return (
+                      <Link
+                        href={isLast ? "/services" : `/service/${item.id}`}
+                        key={item.id}
+                        className="group block w-[44%] flex-none md:w-80"
+                      >
+                        <div className="relative h-56 w-full overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          {!isLast && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />}
+                          {!isLast && (
+                            <h3 className="absolute right-4 bottom-4 left-4 text-center font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
+                              {item.name}
+                            </h3>
+                          )}
+                          {isLast && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
+                              <span className="font-serif text-xl font-bold text-primary-dark group-hover:underline">
+                                See All
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </>
               )}
-            </div>
-            <div className="mt-6 flex justify-center">
-              <Link
-                href="/services"
-                className="text-white text-sm font-semibold"
-              >
-                See All
-              </Link>
             </div>
           </section>
         )}
 
         {/* Products Section */}
         {!searchQuery && !loading && !error && (
-          <section>
-            <div className="mb-2 text-center">
+          <section className="section-padding">
+            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Our Products
               </h2>
@@ -474,53 +482,57 @@ export default function HomePage() {
                   No products available yet.
                 </p>
               ) : (
-                filteredItems
+                <>
+                  {filteredItems
                   .filter((item) => item.isProduct)
                   .slice(0, 8)
-                  .map((item) => (
-                    <Link
-                      href={`/service/${item.id}`}
-                      key={item.id}
-                      className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1 p-2 md:p-3"
-                    >
-                      <div className="relative aspect-square overflow-hidden rounded-xl">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="flex flex-col pt-3 md:pt-4 px-1 md:px-2">
-                        <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
-                          {item.name}
-                        </h3>
-                      </div>
-                    </Link>
-                  ))
+                  .map((item, index, arr) => {
+                    const isLast = index === arr.length - 1;
+                    return (
+                      <Link
+                        href={isLast ? "/products" : `/service/${item.id}`}
+                        key={item.id}
+                        className="bg-surface relative group flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1 p-2 md:p-3"
+                      >
+                        <div className="relative aspect-square overflow-hidden rounded-xl">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="flex flex-col pt-3 md:pt-4 px-1 md:px-2">
+                          <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
+                            {item.name}
+                          </h3>
+                        </div>
+                        {isLast && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80 z-10 rounded-2xl">
+                            <span className="font-serif text-xl font-bold text-primary-dark group-hover:underline">
+                              See All
+                            </span>
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </>
               )}
-            </div>
-            <div className="mt-8 flex justify-center">
-              <Link
-                href="/products"
-                className="text-white text-sm font-semibold"
-              >
-                Show All
-              </Link>
             </div>
           </section>
         )}
 
         {/* Testimonials Section */}
         {!searchQuery && (
-          <section className="mt-16 md:mt-28">
-            <div className="mb-8 flex flex-col items-center justify-center">
+          <section className="section-padding">
+            <div className="mb-8 md:mb-12 flex flex-col items-center justify-center text-center">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Customer Reviews
               </h2>
               <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[160px] md:max-w-[200px]" />
             </div>
 
-            <div className="flex w-full justify-center pt-2 pb-8">
+            <div className="flex w-full justify-center">
               <TestimonialCarousel />
             </div>
           </section>
@@ -528,7 +540,7 @@ export default function HomePage() {
 
         {/* Footer */}
         {!searchQuery && (
-          <section className="mt-20 flex w-full flex-col items-center justify-center">
+          <section className="section-padding flex w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center justify-center space-y-6">
               <div className="flex gap-4">
                 <a

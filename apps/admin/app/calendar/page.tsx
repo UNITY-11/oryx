@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSanityListener } from "../../src/shared/hooks/use-sanity-listener";
 import {
   AlertCircle,
   Calendar as CalendarIcon,
@@ -31,12 +32,18 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reloadBookings = () => {
     fetchBookings()
       .then(setBookings)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reloadBookings();
   }, []);
+
+  useSanityListener('*[_type == "booking"]', reloadBookings);
 
   const formattedDate = currentDate.toISOString().split("T")[0];
   const todayStr = realTime.toISOString().split("T")[0];

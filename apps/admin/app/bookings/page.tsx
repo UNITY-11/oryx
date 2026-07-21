@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSanityListener } from "../../src/shared/hooks/use-sanity-listener";
 import {
   AlertCircle,
   ArrowUpDown,
@@ -28,12 +29,18 @@ function BookingsContent() {
     router.push(`?action=add&step=${newStep}`);
   };
 
-  useEffect(() => {
+  const reloadBookings = () => {
     fetchBookings()
       .then(setBookings)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reloadBookings();
   }, []);
+
+  useSanityListener('*[_type == "booking"]', reloadBookings);
 
 
   // Filter & Sort State

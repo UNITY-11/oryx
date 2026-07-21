@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSanityListener } from "../../src/shared/hooks/use-sanity-listener";
 import {
   AlertCircle,
   ArrowRight,
@@ -41,15 +42,23 @@ export default function NotificationsPage() {
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reloadNotifications = () => {
     fetchNotifications()
       .then((data) => {
         setNotifications(data);
-        setSelectedId(data[0]?.id ?? null);
+        if (!selectedId) {
+          setSelectedId(data[0]?.id ?? null);
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reloadNotifications();
   }, []);
+
+  useSanityListener('*[_type == "notification"]', reloadNotifications);
 
   const filtered = notifications.filter(
     (n) =>

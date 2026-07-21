@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSanityListener } from "../../src/shared/hooks/use-sanity-listener";
 import {
   AlertCircle,
   Check,
@@ -468,7 +469,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reloadBookings = () => {
     Promise.all([fetchBookings(), fetchServices()])
       .then(([b, s]) => {
         setBookings(b);
@@ -476,7 +477,15 @@ export default function BillingPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reloadBookings();
   }, []);
+
+  useSanityListener('*[_type == "booking"]', () => {
+    fetchBookings().then(setBookings).catch(console.error);
+  });
 
   const billable = bookings
     .filter((b) => {

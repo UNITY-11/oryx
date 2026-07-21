@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSanityListener } from "../hooks/use-sanity-listener";
 import {
   Home,
   BarChart2,
@@ -55,7 +56,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  useEffect(() => {
+  const fetchNotifications = () => {
     fetch("/api/notifications")
       .then((res) => res.json())
       .then((data) => {
@@ -65,7 +66,13 @@ export function Sidebar() {
         }
       })
       .catch((err) => console.error("Error fetching notifications for sidebar:", err));
+  };
+
+  useEffect(() => {
+    fetchNotifications();
   }, [pathname]);
+
+  useSanityListener('*[_type == "notification"]', fetchNotifications);
 
   return (
     <div className="hidden md:flex p-4 pr-0">

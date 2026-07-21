@@ -114,7 +114,7 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="section-padding px-3 md:px-0">
+        <section className="section-padding px-3 md:px-0 md:pt-0">
           <HeroCarousel />
         </section>
       )}

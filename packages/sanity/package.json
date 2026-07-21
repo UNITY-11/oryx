@@ -1,0 +1,19 @@
+{
+  "name": "@repo/sanity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts",
+    "./clients": "./src/clients.ts",
+    "./projections": "./src/projections.ts"
+  },
+  "dependencies": {
+    "@sanity/client": "^7.23.2"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.9.2"
+  }
+}

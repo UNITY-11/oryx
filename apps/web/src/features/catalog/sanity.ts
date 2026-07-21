@@ -1,5 +1,6 @@
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { Category, Item } from "@/shared/types";
+import { SERVICE_PROJECTION, PRODUCT_PROJECTION } from "@repo/sanity";
 
 const PLACEHOLDER_IMAGE = "/images/services/image.png";
 
@@ -40,30 +41,6 @@ type SanityProduct = {
   image?: string | null;
   status?: string;
 };
-
-const SERVICE_PROJECTION = `{
-  "id": _id,
-  name,
-  category,
-  status,
-  description,
-  shortDescription,
-  image,
-  pricingTiers,
-  addons
-}`;
-
-const PRODUCT_PROJECTION = `{
-  "id": _id,
-  name,
-  brand,
-  volumeOrWeight,
-  quantity,
-  price,
-  category,
-  image,
-  status
-}`;
 
 export const ACTIVE_SERVICES_QUERY = `*[_type == "service" && status == "Active"] | order(name asc) ${SERVICE_PROJECTION}`;
 export const ACTIVE_PRODUCTS_QUERY = `*[_type == "product" && status == "Active"] | order(name asc) ${PRODUCT_PROJECTION}`;

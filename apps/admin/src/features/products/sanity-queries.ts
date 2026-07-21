@@ -1,14 +1,4 @@
-export const PRODUCT_PROJECTION = `{
-  "id": _id,
-  name,
-  brand,
-  volumeOrWeight,
-  quantity,
-  price,
-  category,
-  image,
-  status
-}`;
+import { PRODUCT_PROJECTION } from "@repo/sanity";
 
 export const PRODUCTS_LIST_QUERY = `*[_type == "product"] | order(name asc) ${PRODUCT_PROJECTION}`;
 

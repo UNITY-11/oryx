@@ -228,7 +228,7 @@ export default function NewProductPage() {
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className="border-primary/40 hover:border-primary/70 bg-primary/5 group relative w-full cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed transition-colors"
-                  style={{ aspectRatio: "3/4" }}
+                  style={{ aspectRatio: "1/1" }}
                 >
                   {product.image ? (
                     <>
@@ -250,7 +250,7 @@ export default function NewProductPage() {
                       <div className="text-center">
                         <p className="text-xs font-medium">Upload Image</p>
                         <p className="mt-0.5 text-[10px]">
-                          3:4 ratio recommended
+                          1:1 ratio recommended
                         </p>
                       </div>
                       <Upload className="h-4 w-4" />

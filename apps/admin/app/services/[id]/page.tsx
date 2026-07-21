@@ -12,6 +12,9 @@ import {
   Loader2,
   Plus,
   Save,
+  Trash2,
+  Ban,
+  CheckCircle,
   Upload,
   Users,
   X,
@@ -21,6 +24,7 @@ import {
   fetchService,
   updateService,
   uploadServiceImage,
+  deleteService,
 } from "../../../src/features/services/api";
 import {
   Addon,
@@ -115,6 +119,7 @@ export default function ServiceDetailPage({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetchService(id)
@@ -227,6 +232,24 @@ export default function ServiceDetailPage({
     }
   };
 
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setSaving(true);
+      await deleteService(id as string);
+      router.push("/services");
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to delete service"
+      );
+      setSaving(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
@@ -241,6 +264,16 @@ export default function ServiceDetailPage({
           </button>
 
           <div className="flex items-center gap-3">
+            <div
+              className={`rounded-full border px-4 py-1.5 text-xs font-medium ${
+                service.status === "Active"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-gray-200 bg-gray-100 text-gray-500"
+              }`}
+            >
+              {service.status}
+            </div>
+
             <button
               onClick={() =>
                 update(
@@ -248,13 +281,27 @@ export default function ServiceDetailPage({
                   service.status === "Active" ? "Inactive" : "Active"
                 )
               }
-              className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
-                service.status === "Active"
-                  ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                  : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
+              className="text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold transition-colors"
             >
-              {service.status}
+              {service.status === "Active" ? (
+                <>
+                  <Ban className="h-4 w-4" />
+                  Disable
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  Enable
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleDelete}
+              className="text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
             </button>
 
             <button
@@ -576,6 +623,44 @@ export default function ServiceDetailPage({
           </div>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="bg-primary/10 p-3 rounded-full text-primary">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-serif text-primary-dark font-semibold">Delete Service</h3>
+            </div>
+            <p className="text-text-secondary mb-8">
+              Are you sure you want to completely delete this service? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-5 py-2.5 rounded-full border border-primary/20 text-primary font-medium hover:bg-primary/5 transition-colors"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-full bg-primary text-white font-medium hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  "Delete Service"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

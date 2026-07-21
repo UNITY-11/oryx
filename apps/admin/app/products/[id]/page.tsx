@@ -11,6 +11,9 @@ import {
   Loader2,
   Package,
   Save,
+  Trash2,
+  Ban,
+  CheckCircle,
   Upload,
 } from "lucide-react";
 
@@ -18,6 +21,7 @@ import {
   fetchProduct,
   updateProduct,
   uploadProductImage,
+  deleteProduct,
 } from "../../../src/features/products/api";
 import {
   Product,
@@ -109,6 +113,7 @@ export default function ProductDetailPage({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetchProduct(id)
@@ -175,6 +180,24 @@ export default function ProductDetailPage({
     }
   };
 
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setSaving(true);
+      await deleteProduct(id as string);
+      router.push("/products");
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to delete product"
+      );
+      setSaving(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const stockColor =
     product.quantity === 0
       ? "text-red-500"
@@ -196,6 +219,16 @@ export default function ProductDetailPage({
           </button>
 
           <div className="flex items-center gap-3">
+            <div
+              className={`rounded-full border px-4 py-1.5 text-xs font-medium ${
+                product.status === "Active"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-gray-200 bg-gray-100 text-gray-500"
+              }`}
+            >
+              {product.status}
+            </div>
+
             <button
               onClick={() =>
                 update(
@@ -203,13 +236,27 @@ export default function ProductDetailPage({
                   product.status === "Active" ? "Inactive" : "Active"
                 )
               }
-              className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
-                product.status === "Active"
-                  ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                  : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
+              className="text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold transition-colors"
             >
-              {product.status}
+              {product.status === "Active" ? (
+                <>
+                  <Ban className="h-4 w-4" />
+                  Disable
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  Enable
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleDelete}
+              className="text-primary hover:bg-primary/5 flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
             </button>
 
             <button
@@ -249,7 +296,7 @@ export default function ProductDetailPage({
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className="border-primary/40 hover:border-primary/70 bg-primary/5 group relative w-full cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed transition-colors"
-                  style={{ aspectRatio: "3/4" }}
+                  style={{ aspectRatio: "1/1" }}
                 >
                   {product.image ? (
                     <>
@@ -271,7 +318,7 @@ export default function ProductDetailPage({
                       <div className="text-center">
                         <p className="text-xs font-medium">Upload Image</p>
                         <p className="mt-0.5 text-[10px]">
-                          3:4 ratio recommended
+                          1:1 ratio recommended
                         </p>
                       </div>
                       <Upload className="h-4 w-4" />
@@ -385,6 +432,44 @@ export default function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="bg-primary/10 p-3 rounded-full text-primary">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-serif text-primary-dark font-semibold">Delete Product</h3>
+            </div>
+            <p className="text-text-secondary mb-8">
+              Are you sure you want to completely delete this product? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-5 py-2.5 rounded-full border border-primary/20 text-primary font-medium hover:bg-primary/5 transition-colors"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-full bg-primary text-white font-medium hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  "Delete Product"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

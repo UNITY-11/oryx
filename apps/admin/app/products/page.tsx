@@ -138,7 +138,7 @@ export default function ProductsPage() {
                 className={`rounded-full border px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   categoryFilter === cat
                     ? "bg-primary border-primary text-white shadow-sm"
-                    : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
+                    : "text-primary-dark border-primary/10 hover:bg-primary/10 bg-primary/5"
                 }`}
               >
                 {cat}
@@ -170,7 +170,7 @@ export default function ProductsPage() {
               <Link
                 href="/products/new"
                 className="group border-primary/30 hover:border-primary/60 hover:bg-primary/5 text-primary/50 hover:text-primary flex flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all"
-                style={{ aspectRatio: "3/4" }}
+                style={{ aspectRatio: "1/1" }}
               >
                 <div className="bg-primary/10 group-hover:bg-primary/20 mb-3 flex h-12 w-12 items-center justify-center rounded-full transition-colors">
                   <span className="text-2xl leading-none font-light">+</span>
@@ -186,7 +186,7 @@ export default function ProductsPage() {
                   key={product.id}
                   href={`/products/${product.id}`}
                   className="group from-primary/10 to-primary/5 relative overflow-hidden rounded-3xl bg-gradient-to-br shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
-                  style={{ aspectRatio: "3/4" }}
+                  style={{ aspectRatio: "1/1" }}
                 >
                   {product.image ? (
                     <img

@@ -68,7 +68,7 @@ export default function ServicesPage() {
                 className={`rounded-full border px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                   categoryFilter === cat
                     ? "bg-primary border-primary text-white shadow-sm"
-                    : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
+                    : "text-primary-dark border-primary/10 hover:bg-primary/10 bg-primary/5"
                 }`}
               >
                 {cat}

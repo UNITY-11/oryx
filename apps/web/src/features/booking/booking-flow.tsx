@@ -636,13 +636,13 @@ export function BookingFlow({
         {/* 3. AUTH / OTP */}
         {step === "auth" && (
           <div
-            className="scrollbar-hide flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background pt-4 pb-32 md:bg-white md:py-0"
+            className="scrollbar-hide flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto bg-background pt-4 pb-32 md:bg-white md:py-0"
             data-lenis-prevent
           >
             {/* Top Pink Banner (Mobile only) */}
 
 
-            <div className="md:border-primary/10 relative z-10 w-[calc(100%-2.5rem)] max-w-[420px] rounded-[2.5rem] bg-white p-8 pb-10 shadow-xl md:border">
+            <div className="md:border-primary/10 relative z-10 mx-auto w-[calc(100%-2.5rem)] max-w-[420px] rounded-[2.5rem] bg-white p-8 pb-10 shadow-xl md:border">
               {/* Heading */}
               <h3 className="text-primary-dark mt-2 mb-6 text-center font-serif text-2xl">
                 Your Details
@@ -683,28 +683,7 @@ export function BookingFlow({
                   />
                 </div>
 
-                {/* Receive Updates Via */}
-                <div className="pt-2">
-                  <label className="mb-3 block text-center text-xs font-bold tracking-wider text-[#9a8276] uppercase">
-                    Receive Updates Via
-                  </label>
-                  <div className="flex rounded-xl border border-primary bg-transparent p-1">
-                    <button
-                      type="button"
-                      onClick={() => setChannel("WhatsApp")}
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-primary text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
-                    >
-                      WhatsApp
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChannel("SMS")}
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${channel === "SMS" ? "bg-primary text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
-                    >
-                      SMS
-                    </button>
-                  </div>
-                </div>
+
 
                 {/* Verify & Confirm (Mobile Only) */}
                 <div className="pt-6 md:hidden">
@@ -728,8 +707,8 @@ export function BookingFlow({
               Booking Confirmed!
             </h2>
             <p className="text-text-secondary mx-auto max-w-md">
-              Your appointment has been successfully scheduled. We have sent the
-              details via {channel}.
+              Your appointment has been successfully scheduled. We will contact you
+              shortly on your mobile number.
             </p>
             <Link
               href="/"

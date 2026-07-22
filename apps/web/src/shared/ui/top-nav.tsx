@@ -21,7 +21,7 @@ export function TopNav() {
   }
 
   return (
-    <nav className="hidden md:flex w-full bg-white/90 backdrop-blur-xl border border-[#e8baa0]/10 rounded-full px-8 py-4 items-center justify-between z-50 shrink-0 shadow-sm">
+    <nav className="hidden md:flex w-full bg-white/90 backdrop-blur-xl border border-background/10 rounded-full px-8 py-4 items-center justify-between z-50 shrink-0 shadow-sm">
       {/* Left side: Links */}
       <div className="flex items-center space-x-3 flex-1">
         {leftNavItems.map((item) => {
@@ -31,9 +31,9 @@ export function TopNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors text-[#e8baa0] ${isActive
-                  ? 'border-[#e8baa0] bg-[#e8baa0]/5'
-                  : 'border-transparent hover:border-[#e8baa0]/30 hover:bg-gray-50'
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors text-background ${isActive
+                  ? 'border-background bg-background/5'
+                  : 'border-transparent hover:border-background/30 hover:bg-gray-50'
                 }`}
             >
               <Icon className="w-4 h-4" />
@@ -53,17 +53,17 @@ export function TopNav() {
       {/* Right side: Search, Favorites & Profile */}
       <div className="flex items-center justify-end space-x-4 flex-1">
         <div className="relative w-48 xl:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#e8baa0]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-background" />
           <input
             type="text"
             placeholder="Search treatments or products..."
-            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder:text-[#e8baa0] focus:ring-2 focus:ring-[#e8baa0] outline-none transition-shadow"
+            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder:text-background focus:ring-2 focus:ring-background outline-none transition-shadow"
           />
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
 
-          <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-[#e8baa0] hover:text-[#c29a63] transition-colors">
+          <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-background hover:text-[#c29a63] transition-colors">
             {user ? (
               <span className="font-semibold text-lg">{user.name.charAt(0).toUpperCase()}</span>
             ) : (

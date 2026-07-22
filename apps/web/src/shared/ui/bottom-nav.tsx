@@ -88,7 +88,7 @@ export function BottomNav() {
                   className="relative flex flex-col items-center justify-center focus:outline-none rounded-full border-[6px] border-white bg-white md:border-none md:bg-transparent z-10"
                 >
                   <div
-                    className={`shadow-spa flex h-14 w-14 items-center justify-center rounded-full transition-colors md:h-12 md:w-full md:rounded-2xl ${isActive ? "bg-[#e8baa0] md:bg-[#c29a63]" : "bg-[#e8baa0] md:bg-[#e8baa0]"} md:space-x-3`}
+                    className={`shadow-spa flex h-14 w-14 items-center justify-center rounded-full transition-colors md:h-12 md:w-full md:rounded-2xl ${isActive ? "bg-background md:bg-[#c29a63]" : "bg-background md:bg-background"} md:space-x-3`}
                   >
                     <Icon
                       className="text-white h-6 w-6 md:h-5 md:w-5"
@@ -107,7 +107,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex w-12 flex-col items-center justify-center space-y-1 transition-colors focus:outline-none md:w-full md:flex-row md:justify-start md:space-y-0 md:space-x-4 md:rounded-2xl md:px-4 md:py-3 ${isActive ? "text-[#c8a24a] md:bg-[#e8baa0]/10" : "text-[#e8baa0] hover:text-[#c8a24a] md:hover:bg-[#e8baa0]/5"}`}
+              className={`flex w-12 flex-col items-center justify-center space-y-1 transition-colors focus:outline-none md:w-full md:flex-row md:justify-start md:space-y-0 md:space-x-4 md:rounded-2xl md:px-4 md:py-3 ${isActive ? "text-primary md:bg-background/10" : "text-background hover:text-primary md:hover:bg-background/5"}`}
             >
               <Icon
                 className="h-6 w-6 transition-transform hover:scale-110 md:h-5 md:w-5 md:hover:scale-100"

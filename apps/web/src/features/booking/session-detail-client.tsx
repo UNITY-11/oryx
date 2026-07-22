@@ -138,7 +138,7 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
             </div>
 
             <div className="mt-4 flex items-start text-sm">
-              <MapPin className="mt-0.5 mr-3 h-4 w-4 shrink-0 text-[#c8a24a]" />
+              <MapPin className="mt-0.5 mr-3 h-4 w-4 shrink-0 text-primary" />
               <div>
                 <p className="text-text-primary font-medium">
                   ORYX Spa & Salon Main Branch

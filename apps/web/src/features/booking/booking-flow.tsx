@@ -412,7 +412,7 @@ export function BookingFlow({
           <>
             {(!isIntegrated || step !== "services") && (
               <div
-                className={`absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 ${step === "auth" ? "bg-background" : "bg-background md:bg-white"}`}
+                className={`absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 bg-background md:bg-white`}
               >
                 <button
                   onClick={handleBack}
@@ -504,7 +504,7 @@ export function BookingFlow({
         {/* 2. TIME SELECTION */}
         {step === "time" && (
           <div
-            className="scrollbar-hide min-h-0 flex-1 space-y-8 overflow-y-auto px-6 pt-4 pb-32 md:bg-background md:pb-8"
+            className="scrollbar-hide min-h-0 flex-1 space-y-8 overflow-y-auto px-6 pt-4 pb-32 md:bg-white md:pb-8"
             data-lenis-prevent
           >
             {/* Calendar Header */}
@@ -636,7 +636,7 @@ export function BookingFlow({
         {/* 3. AUTH / OTP */}
         {step === "auth" && (
           <div
-            className="scrollbar-hide flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background py-12 md:bg-background md:py-0"
+            className="scrollbar-hide flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background py-12 md:bg-white md:py-0"
             data-lenis-prevent
           >
             {/* Top Pink Banner (Mobile only) */}

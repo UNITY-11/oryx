@@ -51,7 +51,7 @@ export default function RootLayout({
       >
         {/* App Layout Wrapper */}
         <div className="relative mx-auto flex h-[100dvh] w-full flex-col overflow-x-hidden shadow-2xl">
-          <div className="pointer-events-none absolute top-4 right-4 left-4 z-50 md:pointer-events-auto">
+          <div className="pointer-events-none absolute top-0 left-0 w-full z-50 md:pointer-events-auto">
             <TopNav />
           </div>
 

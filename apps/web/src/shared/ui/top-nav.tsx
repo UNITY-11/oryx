@@ -21,7 +21,7 @@ export function TopNav() {
   }
 
   return (
-    <nav className="hidden md:flex w-full bg-white/90 backdrop-blur-xl border border-background/10 rounded-full px-8 py-4 items-center justify-between z-50 shrink-0 shadow-sm">
+    <nav className="hidden md:flex w-full bg-white border-b border-background/10 px-8 py-4 items-center justify-between z-50 shrink-0 shadow-sm">
       {/* Left side: Links */}
       <div className="flex items-center space-x-3 flex-1">
         {leftNavItems.map((item) => {

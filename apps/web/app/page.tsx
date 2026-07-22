@@ -123,7 +123,9 @@ export default function HomePage() {
       {!searchQuery && (
         <section className="pb-4 pt-4 px-4 md:p-0">
           {heroLoading ? (
-            <div className="w-full h-64 md:h-[100vh] bg-gray-200 animate-pulse rounded-3xl md:rounded-none"></div>
+            <div className="relative w-full h-64 md:h-[100vh] rounded-3xl md:rounded-none overflow-hidden bg-black">
+              <img src="/images/hero/image.png" alt="Loading..." className="w-full h-full object-cover opacity-70" />
+            </div>
           ) : (
             <HeroCarousel slides={slides} />
           )}

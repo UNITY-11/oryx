@@ -400,10 +400,10 @@ export function BookingFlow({
   };
 
   if (!isMounted)
-    return <div className="flex-1 bg-[#faf6f3] md:bg-transparent" />;
+    return <div className="flex-1 bg-white md:bg-transparent" />;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#faf6f3] md:flex-row md:bg-transparent">
+    <div className="relative flex h-full flex-col overflow-hidden bg-white md:flex-row md:bg-transparent">
       {/* LEFT COLUMN - MAIN FLOW */}
       <div
         className={`relative flex h-full min-h-0 flex-1 flex-col overflow-hidden ${step !== "success" ? "md:border-primary/10 md:border-r" : ""}`}
@@ -412,7 +412,7 @@ export function BookingFlow({
           <>
             {(!isIntegrated || step !== "services") && (
               <div
-                className={`absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 ${step === "auth" ? "bg-[#A87434] md:bg-white" : "bg-[#faf6f3] md:bg-white"}`}
+                className={`absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 ${step === "auth" ? "bg-white" : "bg-[#e8baa0] md:bg-white"}`}
               >
                 <button
                   onClick={handleBack}
@@ -476,7 +476,7 @@ export function BookingFlow({
                       new Set(cartItems.map((i) => i.item.category))
                     ).map((category) => (
                       <div key={category} className="space-y-3">
-                        <h3 className="text-primary border-primary/10 border-b pb-2 text-lg font-medium">
+                        <h3 className="text-white border-white/20 border-b pb-2 text-lg font-medium">
                           {category}
                         </h3>
                         {cartItems
@@ -668,7 +668,7 @@ export function BookingFlow({
             data-lenis-prevent
           >
             {/* Top Pink Banner (Mobile only) */}
-            <div className="absolute top-[76px] right-0 left-0 z-0 h-[25%] rounded-b-[24px] bg-[#A87434] md:hidden"></div>
+            
 
             <div className="md:border-primary/10 relative z-10 w-[calc(100%-2.5rem)] max-w-[420px] rounded-[2.5rem] bg-white p-8 pb-10 shadow-xl md:border">
               {/* Heading */}
@@ -692,7 +692,7 @@ export function BookingFlow({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter full name"
-                    className="focus:ring-primary/50 text-text-primary w-full rounded-xl border border-[#A87434] bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
+                    className="focus:ring-primary/50 text-text-primary w-full rounded-xl border border-[#c8a24a] bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
                   />
                 </div>
 
@@ -707,7 +707,7 @@ export function BookingFlow({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+974 1234 5678"
-                    className="focus:ring-primary/50 text-text-primary w-full rounded-xl border border-[#A87434] bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
+                    className="focus:ring-primary/50 text-text-primary w-full rounded-xl border border-[#c8a24a] bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
                   />
                 </div>
 
@@ -716,18 +716,18 @@ export function BookingFlow({
                   <label className="mb-3 block text-center text-xs font-bold tracking-wider text-[#9a8276] uppercase">
                     Receive Updates Via
                   </label>
-                  <div className="flex rounded-xl border border-[#A87434] bg-transparent p-1">
+                  <div className="flex rounded-xl border border-[#c8a24a] bg-transparent p-1">
                     <button
                       type="button"
                       onClick={() => setChannel("WhatsApp")}
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#A87434] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
+                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${channel === "WhatsApp" ? "bg-[#c8a24a] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
                     >
                       WhatsApp
                     </button>
                     <button
                       type="button"
                       onClick={() => setChannel("SMS")}
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#A87434] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
+                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${channel === "SMS" ? "bg-[#c8a24a] text-white shadow-sm" : "text-[#9a8276] hover:bg-[#fbf6f0]"}`}
                     >
                       SMS
                     </button>
@@ -738,7 +738,7 @@ export function BookingFlow({
                 <div className="pt-6 md:hidden">
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-[#A87434] py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
+                    className="w-full rounded-xl bg-[#c8a24a] py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
                   >
                     Verify & Confirm
                   </button>
@@ -750,7 +750,7 @@ export function BookingFlow({
 
         {/* 4. SUCCESS */}
         {step === "success" && (
-          <div className="flex h-full w-full flex-1 flex-col items-center justify-center space-y-4 bg-[#fcf4f0] px-6 text-center md:bg-white">
+          <div className="flex h-full w-full flex-1 flex-col items-center justify-center space-y-4 bg-white px-6 text-center md:bg-white">
             <CheckCircle2 className="text-primary h-24 w-24" />
             <h2 className="text-primary-dark mt-4 font-serif text-3xl md:text-4xl">
               Booking Confirmed!
@@ -761,7 +761,7 @@ export function BookingFlow({
             </p>
             <Link
               href="/"
-              className="bg-primary text-surface hover:bg-primary-dark mt-8 inline-block rounded-xl px-8 py-3.5 font-medium shadow-md transition-all"
+              className="bg-[#c8a24a] text-white hover:opacity-90 mt-8 inline-block rounded-xl px-8 py-3.5 font-medium shadow-md transition-all"
             >
               Return to Home
             </Link>
@@ -832,7 +832,7 @@ export function BookingFlow({
                 <button
                   onClick={() => setStep("time")}
                   disabled={cartItems.length === 0}
-                  className="bg-primary hover:bg-primary-dark flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+                  className="bg-[#c8a24a] hover:opacity-90 flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
                 >
                   Proceed to Time <ChevronRight className="ml-2 h-5 w-5" />
                 </button>
@@ -846,7 +846,7 @@ export function BookingFlow({
                   <button
                     disabled={!selectedTime || bookingSubmitting}
                     onClick={handleCheckout}
-                    className="bg-primary hover:bg-primary-dark flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+                    className="bg-[#c8a24a] hover:opacity-90 flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
                   >
                     {bookingSubmitting ? (
                       <>
@@ -871,7 +871,7 @@ export function BookingFlow({
                     type="submit"
                     form="auth-form"
                     disabled={bookingSubmitting}
-                    className="flex w-full items-center justify-center rounded-xl bg-[#A87434] py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+                    className="flex w-full items-center justify-center rounded-xl bg-[#c8a24a] py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
                   >
                     {bookingSubmitting ? (
                       <>
@@ -895,7 +895,7 @@ export function BookingFlow({
       {/* CART FLOATING ACTION (Mobile Only) */}
       {cartItems.length > 0 && (step === "services" || step === "time") && (
         <div className="animate-in slide-in-from-bottom-5 absolute right-0 bottom-[100px] left-0 z-40 mx-auto w-full max-w-md px-6 md:hidden">
-          <div className="bg-primary-dark rounded-soft shadow-spa text-surface flex items-center justify-between p-4">
+          <div className="bg-white border-t border-gray-100 rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] text-gray-900 flex items-center justify-between p-4">
             <div className="flex flex-col">
               <span className="flex items-center text-sm font-medium">
                 <ClipboardList className="mr-2 h-4 w-4" /> {cartItems.length}{" "}
@@ -906,7 +906,7 @@ export function BookingFlow({
             {step === "services" ? (
               <button
                 onClick={() => setStep("time")}
-                className="bg-primary text-surface hover:bg-primary-dark border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors"
+                className="bg-[#c8a24a] text-white hover:opacity-90 border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors"
               >
                 Book the services <ChevronRight className="ml-1 h-4 w-4" />
               </button>
@@ -914,7 +914,7 @@ export function BookingFlow({
               <button
                 disabled={!selectedTime || bookingSubmitting}
                 onClick={handleCheckout}
-                className="bg-primary text-surface hover:bg-primary-dark border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                className="bg-[#c8a24a] text-white hover:opacity-90 border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {bookingSubmitting ? (
                   <>

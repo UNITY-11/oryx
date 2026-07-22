@@ -125,7 +125,7 @@ export function SwipeableBookings() {
   };
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#faf6f3] md:bg-white">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#e8baa0] md:bg-white">
       <div className="z-10 shrink-0 bg-white px-6 pt-6 md:hidden">
         <h1 className="text-primary-dark mb-4 font-serif text-3xl font-medium">
           Bookings
@@ -176,12 +176,12 @@ export function SwipeableBookings() {
           }}
         >
           {/* Current Booking / Cart */}
-          <div className="relative flex h-full min-h-0 w-1/3 flex-col overflow-hidden bg-[#faf6f3] md:bg-transparent">
+          <div className="relative flex h-full min-h-0 w-1/3 flex-col overflow-hidden bg-[#e8baa0] md:bg-transparent">
             <BookingFlow isIntegrated={true} />
           </div>
 
           {/* Upcoming Bookings */}
-          <div className="relative h-full w-1/3 overflow-y-auto bg-[#faf6f3] px-6 pb-24 md:bg-transparent">
+          <div className="relative h-full w-1/3 overflow-y-auto bg-[#e8baa0] px-6 pb-24 md:bg-transparent">
             {renderBookingList(
               upcomingBookings,
               "You have no upcoming sessions."
@@ -189,7 +189,7 @@ export function SwipeableBookings() {
           </div>
 
           {/* Completed Bookings */}
-          <div className="relative h-full w-1/3 overflow-y-auto bg-[#faf6f3] px-6 pb-24 md:bg-transparent">
+          <div className="relative h-full w-1/3 overflow-y-auto bg-[#e8baa0] px-6 pb-24 md:bg-transparent">
             {renderBookingList(
               completedBookings,
               "You have no completed sessions."

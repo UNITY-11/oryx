@@ -32,13 +32,13 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
   );
 
   if (!isMounted) {
-    return <div className="flex-1 bg-[#faf6f3]" />;
+    return <div className="flex-1 bg-white" />;
   }
 
   // If we can't find it, we'll fall back gracefully
   if (!booking) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-[#faf6f3] px-6">
+      <div className="flex h-full flex-col items-center justify-center bg-white px-6">
         <AlertCircle className="mb-4 h-12 w-12 text-red-400" />
         <h2 className="text-primary-dark font-serif text-2xl">
           Session not found
@@ -68,7 +68,7 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
   if (!primaryItem) return null;
 
   return (
-    <div className="min-h-screen bg-[#faf6f3]">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-primary/10 fixed top-0 right-0 left-0 z-50 flex w-full items-center justify-between border-b bg-white px-6 pt-6 pb-4">
         <div className="flex items-center">
@@ -138,7 +138,7 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
             </div>
 
             <div className="mt-4 flex items-start text-sm">
-              <MapPin className="mt-0.5 mr-3 h-4 w-4 shrink-0 text-[#A87434]" />
+              <MapPin className="mt-0.5 mr-3 h-4 w-4 shrink-0 text-[#c8a24a]" />
               <div>
                 <p className="text-text-primary font-medium">
                   ORYX Spa & Salon Main Branch
@@ -152,9 +152,9 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
 
           {/* Ticket Divider */}
           <div className="relative flex items-center justify-between px-4">
-            <div className="absolute left-[-8px] h-4 w-4 rounded-full bg-[#faf6f3]"></div>
+            <div className="absolute left-[-8px] h-4 w-4 rounded-full bg-white"></div>
             <div className="w-full border-t-2 border-dashed border-gray-200"></div>
-            <div className="absolute right-[-8px] h-4 w-4 rounded-full bg-[#faf6f3]"></div>
+            <div className="absolute right-[-8px] h-4 w-4 rounded-full bg-white"></div>
           </div>
 
           {/* Bottom Section - Receipt */}

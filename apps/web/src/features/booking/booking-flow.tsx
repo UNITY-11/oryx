@@ -434,13 +434,14 @@ export function BookingFlow({
           </>
         )}
 
-        {/* 1. CART SUMMARY */}
+        {/* 1. SERVICES SELECTION */}
         {step === "services" && (
-          <div
-            className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-32 md:bg-white md:pb-8"
-            data-lenis-prevent
-          >
-            {cartItems.length === 0 ? (
+          <div className="flex-1 flex flex-col min-h-0 md:bg-white">
+            <div
+              className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-32 md:pb-0"
+              data-lenis-prevent
+            >
+              {cartItems.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center space-y-6 px-6 pt-20 text-center">
                 <ClipboardList className="text-primary/20 h-16 w-16" />
                 <div>
@@ -471,9 +472,8 @@ export function BookingFlow({
                     />
                   ))}
                 </div>
-
-                {/* Add more & Billing (Mobile Billing hidden on Desktop) */}
-                <div className="mt-auto space-y-6 px-6 pt-4 pb-8">
+                {/* Mobile Billing (hidden on Desktop) */}
+                <div className="mt-auto space-y-6 px-6 pt-4 pb-8 md:hidden">
                   <Link
                     href="/services"
                     className="bg-background text-white hover:bg-background/80 flex w-full items-center justify-center rounded-xl py-3.5 font-medium transition-colors border-2 "
@@ -482,7 +482,7 @@ export function BookingFlow({
                     Add More Services
                   </Link>
 
-                  <div className="bg-white rounded-3xl space-y-3 p-4 pb-10 md:hidden">
+                  <div className="bg-white rounded-3xl space-y-3 p-4 pb-10">
                     <h3 className="text-primary-dark mb-4 font-serif text-lg">
                       Billing Details
                     </h3>
@@ -496,6 +496,20 @@ export function BookingFlow({
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+            </div>
+
+            {/* Desktop Add More Services Button */}
+            {cartItems.length > 0 && (
+              <div className="hidden md:block p-8 pt-4 bg-white border-t border-primary/5 shrink-0 z-10">
+                <Link
+                  href="/services"
+                  className="bg-background hover:opacity-90 flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all"
+                >
+                  <Plus className="mr-2 h-5 w-5" />
+                  Add More Services
+                </Link>
               </div>
             )}
           </div>
@@ -722,11 +736,12 @@ export function BookingFlow({
 
       {/* RIGHT COLUMN - PERSISTENT DESKTOP ORDER SUMMARY */}
       {step !== "success" && (
-        <div
-          className="scrollbar-hide relative hidden w-[380px] flex-col overflow-y-auto bg-gray-50/50 p-8 md:flex lg:w-[420px]"
-          data-lenis-prevent
-        >
-          <div className="sticky top-0 space-y-8">
+        <div className="relative hidden w-[380px] flex-col bg-gray-50/50 md:flex lg:w-[420px]">
+          <div
+            className="scrollbar-hide flex-1 overflow-y-auto p-8"
+            data-lenis-prevent
+          >
+            <div className="space-y-8">
             <div>
               <h3 className="text-primary-dark border-primary/10 mb-6 border-b pb-4 font-serif text-2xl">
                 Order Summary
@@ -776,69 +791,69 @@ export function BookingFlow({
                 <span className="text-primary-dark font-bold">QAR {total}</span>
               </div>
             </div>
-
-            {/* Desktop Action Button */}
-            <div className="pt-2">
-              {step === "services" ? (
+          </div>
+        </div>
+          
+        {/* Desktop Action Button */}
+          <div className="p-8 pt-4 bg-gray-50/50 border-t border-primary/5 shrink-0 z-10">
+            {step === "services" ? (
+              <button
+                onClick={() => setStep("time")}
+                disabled={cartItems.length === 0}
+                className="bg-background hover:opacity-90 flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+              >
+                Proceed to Time <ChevronRight className="ml-2 h-5 w-5" />
+              </button>
+            ) : step === "time" ? (
+              <>
+                {bookingError && (
+                  <p className="mb-3 text-center text-sm text-red-500">
+                    {bookingError}
+                  </p>
+                )}
                 <button
-                  onClick={() => setStep("time")}
-                  disabled={cartItems.length === 0}
-                  className="bg-background hover:opacity-90 flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+                  disabled={!selectedTime || bookingSubmitting}
+                  onClick={handleCheckout}
+                  className="bg-primary hover:opacity-90 flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
                 >
-                  Proceed to Time <ChevronRight className="ml-2 h-5 w-5" />
+                  {bookingSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Checkout <ChevronRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
                 </button>
-              ) : step === "time" ? (
-                <>
-                  {bookingError && (
-                    <p className="mb-3 text-center text-sm text-red-500">
-                      {bookingError}
-                    </p>
+              </>
+            ) : step === "auth" ? (
+              <>
+                {bookingError && (
+                  <p className="mb-3 text-center text-sm text-red-500">
+                    {bookingError}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  form="auth-form"
+                  disabled={bookingSubmitting}
+                  className="flex w-full items-center justify-center rounded-xl bg-primary py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+                >
+                  {bookingSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Confirming...
+                    </>
+                  ) : (
+                    <>
+                      Verify & Confirm <ChevronRight className="ml-2 h-5 w-5" />
+                    </>
                   )}
-                  <button
-                    disabled={!selectedTime || bookingSubmitting}
-                    onClick={handleCheckout}
-                    className="bg-primary hover:opacity-90 flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
-                  >
-                    {bookingSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
-                        Booking...
-                      </>
-                    ) : (
-                      <>
-                        Checkout <ChevronRight className="ml-2 h-5 w-5" />
-                      </>
-                    )}
-                  </button>
-                </>
-              ) : step === "auth" ? (
-                <>
-                  {bookingError && (
-                    <p className="mb-3 text-center text-sm text-red-500">
-                      {bookingError}
-                    </p>
-                  )}
-                  <button
-                    type="submit"
-                    form="auth-form"
-                    disabled={bookingSubmitting}
-                    className="flex w-full items-center justify-center rounded-xl bg-primary py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
-                  >
-                    {bookingSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
-                        Confirming...
-                      </>
-                    ) : (
-                      <>
-                        Verify & Confirm{" "}
-                        <ChevronRight className="ml-2 h-5 w-5" />
-                      </>
-                    )}
-                  </button>
-                </>
-              ) : null}
-            </div>
+                </button>
+              </>
+            ) : null}
           </div>
         </div>
       )}

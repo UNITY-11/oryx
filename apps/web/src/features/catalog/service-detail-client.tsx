@@ -95,10 +95,10 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   }
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col md:flex-row bg-surface overflow-hidden">
+    <div className="absolute inset-0 z-40 flex flex-col lg:flex-row bg-surface overflow-hidden">
       {/* Left Column (Desktop) / Header Image (Mobile) */}
-      <div className="relative h-[30vh] md:h-full md:w-1/2 flex-none md:p-6 lg:p-8">
-        <div className="w-full h-full relative md:rounded-[40px] overflow-hidden md:shadow-lg">
+      <div className="relative h-[30vh] md:h-[45vh] lg:h-full lg:w-1/2 flex-none lg:p-8">
+        <div className="w-full h-full relative lg:rounded-[40px] overflow-hidden lg:shadow-lg">
           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10" />
 
@@ -111,7 +111,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
 
 
 
-          <div className="absolute bottom-10 md:bottom-auto md:top-1/2 md:-translate-y-1/2 left-6 right-6 md:left-12 md:right-12">
+          <div className="absolute bottom-10 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 left-6 right-6 md:left-12 md:right-12">
             <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl font-medium text-white mb-2 md:mb-6 leading-tight">{item.name}</h1>
             {currentDuration && (
               <div className="flex items-center text-sm md:text-lg text-white/90">
@@ -121,7 +121,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
             )}
             
             {/* Desktop Description */}
-            <div className="hidden md:block mt-8">
+            <div className="hidden lg:block mt-8">
               <p className="text-white/80 text-lg leading-relaxed">{item.description}</p>
             </div>
           </div>
@@ -130,12 +130,12 @@ export function ServiceDetailClient({ item }: { item: Item }) {
 
       {/* Right Column (Desktop) / Content Container (Mobile) */}
       <div
-        className="flex-1 md:w-1/2 bg-gray-50 md:bg-white rounded-t-4xl md:rounded-none -mt-6 md:mt-0 relative z-10 px-6 md:px-16 pt-8 md:pt-16 pb-42 md:pb-40 overflow-y-auto overscroll-contain scrollbar-hide"
+        className="flex-1 lg:w-1/2 bg-gray-50 lg:bg-white rounded-t-4xl lg:rounded-none -mt-6 lg:mt-0 relative z-10 px-6 md:px-16 pt-8 md:pt-12 lg:pt-16 pb-42 md:pb-40 overflow-y-auto overscroll-contain scrollbar-hide"
         data-lenis-prevent
       >
         {/* Mobile Description */}
-        <div className="md:hidden prose prose-sm text-text-secondary leading-relaxed mb-8">
-          <p className="text-[15px]">{item.description}</p>
+        <div className="lg:hidden prose prose-sm text-text-secondary leading-relaxed mb-8">
+          <p className="text-[15px] md:text-base">{item.description}</p>
         </div>
 
         {/* Variants */}
@@ -213,18 +213,20 @@ export function ServiceDetailClient({ item }: { item: Item }) {
       </div>
 
       {/* Floating Booking Bar */}
-      <div className="fixed md:absolute bottom-0 left-0 md:left-1/2 right-0 p-6 md:p-8 md:px-16 bg-white/90 md:bg-white backdrop-blur-xl border-t border-primary/10 z-50">
-        <div className="flex items-center justify-between mb-4 md:mb-6">
-          <span className="text-text-secondary text-sm md:text-lg font-medium">Total</span>
-          <span className="font-serif text-2xl md:text-3xl font-bold text-primary-dark">QAR {totalPrice}</span>
+      <div className="fixed lg:absolute bottom-0 left-0 lg:left-1/2 right-0 p-4 md:p-6 lg:p-8 lg:px-16 bg-white/90 lg:bg-white backdrop-blur-xl border-t border-primary/10 z-50">
+        <div className="flex items-center justify-between gap-4 md:gap-8">
+          <div className="flex flex-col shrink-0">
+            <span className="text-text-secondary text-sm md:text-base font-medium">Total Price</span>
+            <span className="font-serif text-2xl md:text-3xl font-bold text-primary-dark mt-1">QAR {totalPrice}</span>
+          </div>
+          <button
+            onClick={handleAdd}
+            className="flex-1 bg-primary text-white py-3.5 md:py-4 lg:py-5 rounded-full font-medium text-lg md:text-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-[0.98]"
+          >
+            <ClipboardList className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3" />
+            Add to Booking
+          </button>
         </div>
-        <button
-          onClick={handleAdd}
-          className="w-full bg-primary text-white py-4 md:py-5 rounded-full font-medium text-lg md:text-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-[0.98]"
-        >
-          <ClipboardList className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3" />
-          Add to Booking
-        </button>
       </div>
     </div>
   );

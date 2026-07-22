@@ -121,9 +121,9 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="pb-4 pt-4 px-4 md:p-0">
+        <section className="pb-4 pt-4 px-4 md:px-8 md:pt-[130px] md:pb-6 lg:p-0">
           {heroLoading ? (
-            <div className="relative w-full h-64 md:h-[100vh] rounded-3xl md:rounded-none overflow-hidden bg-black">
+            <div className="relative w-full h-64 md:h-auto md:aspect-video lg:h-[100vh] lg:aspect-auto rounded-3xl md:rounded-[3rem] lg:rounded-none overflow-hidden bg-black">
               <img src="/images/hero/image.png" alt="Loading..." className="w-full h-full object-cover opacity-70" />
             </div>
           ) : (
@@ -132,11 +132,11 @@ export default function HomePage() {
         </section>
       )}
 
-      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-0 pb-0 md:px-8 md:pt-16 md:pb-24 lg:px-12 xl:px-16">
+      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-0 pb-0 md:px-8 md:pt-8 md:pb-24 lg:px-12 xl:px-16">
         {/* Categories Section */}
         {!searchQuery && (
-          <section className="pt-4 pb-2 md:py-16">
-            <div className="mb-4 flex flex-col items-center justify-center text-center md:mb-12">
+          <section className="pt-4 pb-2 md:pt-4 md:pb-12">
+            <div className="mb-4 flex flex-col items-center justify-center text-center md:mb-10">
               <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
                 Categories
               </h2>

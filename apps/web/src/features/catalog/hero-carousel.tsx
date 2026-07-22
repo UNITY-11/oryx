@@ -75,7 +75,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   return (
     <div 
-      className="relative w-full h-64 md:h-[100vh] overflow-hidden rounded-3xl md:rounded-none shadow-spa md:shadow-none"
+      className="relative w-full h-64 md:h-auto md:aspect-video lg:h-[100vh] lg:aspect-auto overflow-hidden rounded-3xl md:rounded-[3rem] lg:rounded-none shadow-spa lg:shadow-none"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEndHandler}

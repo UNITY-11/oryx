@@ -68,7 +68,7 @@ export default function RootLayout({
           </div>
 
           {/* Floating Contact Button - Desktop Only */}
-          <div className="pointer-events-none absolute right-8 bottom-8 z-50 hidden md:block">
+          <div className="pointer-events-none absolute right-8 bottom-8 z-50 hidden lg:block">
             <div className="pointer-events-auto">
               <Link
                 href="/contact"

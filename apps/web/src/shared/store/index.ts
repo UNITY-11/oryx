@@ -45,13 +45,9 @@ export const useCartStore = create<CartState>()(
           const addonIds = selectedAddons.map(a => a.id).sort().join('-');
           const cartItemId = `${item.id}-${selectedVariant?.id || 'base'}-${addonIds}`;
 
-          const existing = state.items.find((i) => i.id === cartItemId);
+          const existing = state.items.find((i) => i.item.id === item.id);
           if (existing) {
-            return {
-              items: state.items.map((i) =>
-                i.id === cartItemId ? { ...i, quantity: i.quantity + 1 } : i
-              ),
-            };
+            return state; // Do nothing if the service is already in the cart
           }
           return { items: [...state.items, { id: cartItemId, item, quantity: 1, selectedVariant, selectedAddons, totalPrice }] };
         }),

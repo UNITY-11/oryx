@@ -14,16 +14,7 @@ export default async function ProductsPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-screen-2xl flex-col pt-6 md:pt-36">
-      <div className="px-6 pb-4 md:px-12 lg:px-16">
-        <h1 className="text-surface font-serif text-3xl font-medium md:text-5xl">
-          Products
-        </h1>
-        <p className="text-text-secondary mt-2 text-sm md:mt-4 md:text-lg">
-          Discover our premium spa products.
-        </p>
-      </div>
-
+    <div className="mx-auto flex h-full w-full max-w-screen-2xl flex-col pt-6 md:pt-24">
       <div className="mt-4 grid grid-cols-2 gap-2 px-6 pb-6 md:mt-12 md:grid-cols-3 md:gap-4 md:px-12 lg:grid-cols-4 lg:px-16">
         {error && (
           <p className="col-span-2 py-8 text-center text-red-500 md:col-span-3 lg:col-span-4">

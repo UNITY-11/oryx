@@ -280,7 +280,7 @@ export default function EditHeroPage({ params }: { params: Promise<{ id: string 
                   Subtitle (Optional)
                 </label>
                 <input
-                  value={hero.subtitle}
+                  value={hero.subtitle || ""}
                   onChange={(e) => update("subtitle", e.target.value)}
                   placeholder="e.g. The ultimate relaxation experience."
                   className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/30 w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"

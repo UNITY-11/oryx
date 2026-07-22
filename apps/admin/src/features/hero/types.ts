@@ -3,6 +3,7 @@ export interface HeroItem {
   type: "image" | "video";
   src: string;
   title: string;
+  subtitle?: string;
   order: number;
   createdAt?: string;
 }

@@ -588,11 +588,11 @@ export function BookingFlow({
             {/* Time Slots */}
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-primary-dark font-serif text-lg">
+                <h3 className="text-white font-serif text-lg">
                   Available Times
                 </h3>
                 {selectedDate && (
-                  <span className="text-text-secondary text-sm font-medium">
+                  <span className="text-white text-sm font-medium">
                     {selectedDate.toLocaleString("default", {
                       weekday: "short",
                       month: "short",
@@ -603,7 +603,7 @@ export function BookingFlow({
               </div>
 
               {dynamicTimeSlots.length > 0 ? (
-                <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-5">
+                <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-5 pb-24">
                   {dynamicTimeSlots.map((time) => {
                     const isBooked = dynamicBookedSlots.includes(time);
                     const isSelected = selectedTime === time;
@@ -636,7 +636,7 @@ export function BookingFlow({
         {/* 3. AUTH / OTP */}
         {step === "auth" && (
           <div
-            className="scrollbar-hide flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background py-12 md:bg-white md:py-0"
+            className="scrollbar-hide flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-background pt-4 pb-32 md:bg-white md:py-0"
             data-lenis-prevent
           >
             {/* Top Pink Banner (Mobile only) */}

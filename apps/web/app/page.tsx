@@ -289,7 +289,7 @@ export default function HomePage() {
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={`service-skeleton-${i}`}
-                    className="w-[44%] flex-none md:w-80"
+                    className="w-[50%] flex-none md:w-80"
                   >
                     <div className="bg-primary/5 relative flex h-56 w-full items-center justify-center overflow-hidden rounded-t-full rounded-b-2xl border-2 border-[#e5c37a] shadow-sm md:h-96">
                       {loading ? (
@@ -469,7 +469,7 @@ export default function HomePage() {
                         <Link
                           href={isLast ? "/services" : `/service/${item.id}`}
                           key={item.id}
-                          className="group flex flex-col w-[65%] flex-none md:w-80"
+                          className="group flex flex-col w-[50%] flex-none md:w-80"
                         >
                           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-full rounded-b-2xl border-[3px] border-[#c8a24a] shadow-sm">
                             <img

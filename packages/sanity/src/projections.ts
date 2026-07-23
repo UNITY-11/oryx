@@ -15,7 +15,7 @@ export const SERVICE_PROJECTION = `{
   shortDescription,
   image,
   pricingTiers,
-  addons,
+  options,
   preparationTime,
   cleanupTime,
   maxCapacity,

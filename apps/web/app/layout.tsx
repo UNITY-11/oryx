@@ -51,7 +51,7 @@ export default function RootLayout({
       >
         {/* App Layout Wrapper */}
         <div className="relative mx-auto flex h-[100dvh] w-full flex-col overflow-x-hidden shadow-2xl">
-          <div className="pointer-events-none absolute top-0 left-0 w-full z-50 md:pointer-events-auto">
+          <div className="pointer-events-none absolute top-0 left-0 z-50 w-full md:pointer-events-auto">
             <TopNav />
           </div>
 
@@ -68,7 +68,7 @@ export default function RootLayout({
           </div>
 
           {/* Floating Contact Button - Desktop Only */}
-          <div className="pointer-events-none absolute right-8 bottom-8 z-50 hidden lg:block">
+          <div className="pointer-events-none absolute bottom-8 left-8 z-50 hidden lg:block">
             <div className="pointer-events-auto">
               <Link
                 href="/contact"

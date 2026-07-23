@@ -4,6 +4,7 @@ export interface ItemVariant {
   id: string;
   name: string;
   price: number;
+  duration?: number;
 }
 
 export interface Item {

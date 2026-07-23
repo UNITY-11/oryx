@@ -166,7 +166,7 @@ export default function ServiceDetailPage({
     if (current.some((o) => !o.name.trim())) return;
     update("options", [
       ...current,
-      { id: `a-${Date.now()}`, name: "", price: 0 },
+      { id: `a-${Date.now()}`, name: "", price: 0, duration: undefined },
     ]);
   };
   const removeOption = (id: string) =>
@@ -421,8 +421,9 @@ export default function ServiceDetailPage({
                   </div>
                 ) : (
                   <div className="border-primary/20 overflow-hidden rounded-2xl border">
-                    <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_130px_44px] border-b bg-gray-50 px-4 py-3 text-[10px] tracking-wider uppercase">
+                    <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_100px_100px_44px] border-b bg-gray-50 px-4 py-3 text-[10px] tracking-wider uppercase">
                       <span>Name</span>
+                      <span>Time (Min)</span>
                       <span>Price (QAR)</span>
                       <span />
                     </div>
@@ -430,7 +431,7 @@ export default function ServiceDetailPage({
                       {(service.options || []).map((option) => (
                         <div
                           key={option.id}
-                          className="grid grid-cols-[1fr_130px_44px] items-center gap-2 bg-white px-4 py-2"
+                          className="grid grid-cols-[1fr_100px_100px_44px] items-center gap-2 bg-white px-4 py-2"
                         >
                           <input
                             value={option.name}
@@ -439,6 +440,19 @@ export default function ServiceDetailPage({
                             }
                             placeholder="e.g. Hot Stone"
                             className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm focus:outline-none"
+                          />
+                          <input
+                            type="number"
+                            value={option.duration || ""}
+                            onChange={(e) =>
+                              updateOption(
+                                option.id,
+                                "duration",
+                                e.target.value === "" ? undefined : Number(e.target.value)
+                              )
+                            }
+                            placeholder="-"
+                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           />
                           <input
                             type="number"
@@ -451,7 +465,7 @@ export default function ServiceDetailPage({
                               )
                             }
                             placeholder="0"
-                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm font-medium focus:outline-none"
+                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm font-medium focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           />
                           <button
                             onClick={() => removeOption(option.id)}

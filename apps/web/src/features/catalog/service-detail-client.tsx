@@ -141,7 +141,14 @@ export function ServiceDetailClient({ item }: { item: Item }) {
                   >
                     <div className="flex flex-col">
                       <span className="font-medium text-text-primary text-[15px] md:text-lg mb-1">{option.name}</span>
-                      <span className="font-semibold text-text-primary text-sm md:text-base">+ QAR {option.price}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-text-primary text-sm md:text-base">+ QAR {option.price}</span>
+                        {option.duration && (
+                          <span className="text-text-secondary text-xs md:text-sm border-l border-gray-200 pl-2">
+                            {option.duration} mins
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button
                       className={`px-5 md:px-8 py-1.5 md:py-2.5 rounded-lg md:rounded-xl border text-sm md:text-base font-medium transition-colors ${isSelected

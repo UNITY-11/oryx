@@ -4,7 +4,6 @@ export interface ItemVariant {
   id: string;
   name: string;
   price: number;
-  duration?: number;
 }
 
 export interface Item {
@@ -12,12 +11,10 @@ export interface Item {
   name: string;
   description: string;
   price: number; // Base price
-  duration?: number; // Base duration
   category: Category;
   imageUrl: string;
   isProduct?: boolean;
-  variants?: ItemVariant[];
-  addons?: ItemVariant[];
+  options?: ItemVariant[];
 }
 
 export interface User {
@@ -34,7 +31,7 @@ export interface CartItem {
   item: Item;
   quantity: number;
   selectedVariant?: ItemVariant;
-  selectedAddons?: ItemVariant[];
+  selectedOptions?: ItemVariant[];
   totalPrice: number; // Calculated price for this specific configured item
 }
 

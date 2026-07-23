@@ -28,7 +28,7 @@ function CartItemCard({
   cartItem: CartItem;
   setItemToDelete: (id: string) => void;
   removeItem: (id: string) => void;
-  addItem: (item: Item, variant?: ItemVariant, addons?: ItemVariant[]) => void;
+  addItem: (item: Item, variant?: ItemVariant, options?: ItemVariant[]) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -94,23 +94,23 @@ function CartItemCard({
               </div>
             )}
 
-            {cartItem.selectedAddons && cartItem.selectedAddons.length > 0 && (
+            {cartItem.selectedOptions && cartItem.selectedOptions.length > 0 && (
               <div className="mt-3 space-y-1">
                 <p className="text-text-secondary mb-1 text-xs font-medium uppercase">
-                  Add-ons:
+                  Service Options:
                 </p>
-                {cartItem.selectedAddons.map((addon) => (
+                {cartItem.selectedOptions.map((option) => (
                   <div
-                    key={addon.id}
+                    key={option.id}
                     className="text-text-secondary flex items-center justify-between rounded border border-gray-100 bg-white p-2 text-sm"
                   >
-                    <span>+ {addon.name}</span>
+                    <span>+ {option.name}</span>
                     <div className="flex items-center space-x-3">
-                      <span className="font-medium">QAR {addon.price}</span>
+                      <span className="font-medium">QAR {option.price}</span>
                       <button
                         onClick={() => {
-                          const newAddons = cartItem.selectedAddons?.filter(
-                            (a) => a.id !== addon.id
+                          const newAddons = cartItem.selectedOptions?.filter(
+                            (a) => a.id !== option.id
                           );
                           removeItem(cartItem.id);
                           addItem(
@@ -134,13 +134,13 @@ function CartItemCard({
                 href={`/service/${cartItem.item.id}`}
                 className="text-primary flex items-center text-xs font-medium hover:underline"
               >
-                <Plus className="mr-1 h-3 w-3" /> Add more addons
+                <Plus className="mr-1 h-3 w-3" /> Add more options
               </Link>
             </div>
 
             {!cartItem.selectedVariant &&
-              (!cartItem.selectedAddons ||
-                cartItem.selectedAddons.length === 0) && (
+              (!cartItem.selectedOptions ||
+                cartItem.selectedOptions.length === 0) && (
                 <p className="text-text-secondary mt-3 text-sm italic">
                   No additional options selected.
                 </p>
@@ -300,7 +300,7 @@ export function BookingFlow({
   ) => {
     const servicesPayload = cartItems.map((ci) => ({
       name: ci.item.name,
-      addons: (ci.selectedAddons ?? []).map((a) => a.name),
+      options: (ci.selectedOptions ?? []).map((a) => a.name),
     }));
 
     const res = await fetch("/api/bookings", {

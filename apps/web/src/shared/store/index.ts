@@ -25,7 +25,7 @@ export const useUserStore = create<UserState>()(
 // Cart Store
 interface CartState {
   items: CartItem[];
-  addItem: (item: Item, selectedVariant?: ItemVariant, selectedAddons?: ItemVariant[]) => void;
+  addItem: (item: Item, selectedVariant?: ItemVariant, selectedOptions?: ItemVariant[]) => void;
   removeItem: (cartItemId: string) => void;
   clearCart: () => void;
   getTotal: () => number;
@@ -35,15 +35,15 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      addItem: (item, selectedVariant, selectedAddons = []) =>
+      addItem: (item, selectedVariant, selectedOptions = []) =>
         set((state) => {
           // Calculate total price for this configured item
           let totalPrice = selectedVariant ? selectedVariant.price : item.price;
-          selectedAddons.forEach((addon) => { totalPrice += addon.price; });
+          selectedOptions.forEach((option) => { totalPrice += option.price; });
 
           // Create a unique hash for this configuration to group identical items
-          const addonIds = selectedAddons.map(a => a.id).sort().join('-');
-          const cartItemId = `${item.id}-${selectedVariant?.id || 'base'}-${addonIds}`;
+          const optionIds = selectedOptions.map(a => a.id).sort().join('-');
+          const cartItemId = `${item.id}-${selectedVariant?.id || 'base'}-${optionIds}`;
 
           const existingIndex = state.items.findIndex((i) => i.item.id === item.id);
           if (existingIndex >= 0) {
@@ -53,12 +53,12 @@ export const useCartStore = create<CartState>()(
               item,
               quantity: 1,
               selectedVariant,
-              selectedAddons,
+              selectedOptions,
               totalPrice
             };
             return { items: newItems };
           }
-          return { items: [...state.items, { id: cartItemId, item, quantity: 1, selectedVariant, selectedAddons, totalPrice }] };
+          return { items: [...state.items, { id: cartItemId, item, quantity: 1, selectedVariant, selectedOptions, totalPrice }] };
         }),
       removeItem: (cartItemId) =>
         set((state) => ({

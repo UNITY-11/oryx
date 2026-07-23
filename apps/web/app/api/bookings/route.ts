@@ -3,7 +3,7 @@ import { sanityWriteClient } from "@/shared/lib/sanity/client";
 
 type BookingServiceInput = {
   name: string;
-  addons?: string[];
+  options?: string[];
 };
 
 export async function POST(request: Request) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const servicesWithKeys = services.map((svc, i) => ({
       _key: `svc-${i}-${svc.name}`,
       name: svc.name,
-      addons: svc.addons ?? [],
+      options: svc.options ?? [],
     }));
 
     // 1. Check if customer exists by phone
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
         customerPhone: body.phone ?? "",
         serviceName: serviceNames,
         duration: "60 mins",
-        addons: services.flatMap((s) => s.addons ?? []),
+        options: services.flatMap((s) => s.options ?? []),
         price: body.amount ?? 0,
         date: body.date ?? new Date().toISOString().slice(0, 10),
         time: body.time ?? "10:00",

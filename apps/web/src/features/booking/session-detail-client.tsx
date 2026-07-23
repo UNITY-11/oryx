@@ -62,7 +62,7 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
   const sessionTime = booking.time;
 
   const primaryItem = booking.cartItems[0]?.item;
-  const addons = booking.cartItems.flatMap((c) => c.selectedAddons || []);
+  const options = booking.cartItems.flatMap((c) => c.selectedOptions || []);
   const subtotal = booking.totalPrice;
 
   if (!primaryItem) return null;
@@ -188,17 +188,17 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
                 </div>
               ))}
 
-              {addons.map((addon, idx) => (
+              {options.map((option, idx) => (
                 <div key={idx} className="flex items-start justify-between">
                   <div>
                     <span className="text-text-primary font-medium">
-                      1x {addon.name}
+                      1x {option.name}
                     </span>
                     <span className="text-text-secondary mt-0.5 block text-[10px] tracking-wide uppercase">
-                      Add-on
+                      Service Option
                     </span>
                   </div>
-                  <span className="text-text-primary">QAR {addon.price}</span>
+                  <span className="text-text-primary">QAR {option.price}</span>
                 </div>
               ))}
             </div>

@@ -14,14 +14,12 @@ type SanityPricingTier = {
   id?: string;
   label?: string;
   price?: number;
-  duration?: number;
 };
 
-type SanityAddon = {
+type SanityOption = {
   id?: string;
   name?: string;
   price?: number;
-  duration?: number;
 };
 
 type SanityService = {
@@ -33,7 +31,7 @@ type SanityService = {
   shortDescription?: string;
   image?: string | null;
   pricingTiers?: SanityPricingTier[];
-  addons?: SanityAddon[];
+  options?: SanityOption[];
 };
 
 type SanityProduct = {
@@ -63,23 +61,12 @@ function asCategory(value: string | undefined, fallback: Category): Category {
 export function mapServiceToItem(service: SanityService): Item {
   const tiers = service.pricingTiers ?? [];
   const firstTier = tiers[0];
-  const variants =
-    tiers.length > 0
-      ? tiers.map((tier, index) => ({
-          id: tier.id || `tier-${index}`,
-          name: tier.label || `${tier.duration ?? 60} min`,
-          price: tier.price ?? 0,
-          duration: tier.duration,
-        }))
-      : undefined;
-
-  const addons =
-    (service.addons ?? []).length > 0
-      ? (service.addons ?? []).map((addon, index) => ({
-          id: addon.id || `addon-${index}`,
-          name: addon.name || "Add-on",
-          price: addon.price ?? 0,
-          duration: addon.duration,
+  const options =
+    (service.options ?? []).length > 0
+      ? (service.options ?? []).map((option, index) => ({
+          id: option.id || `option-${index}`,
+          name: option.name || "Service Option",
+          price: option.price ?? 0,
         }))
       : undefined;
 
@@ -88,12 +75,10 @@ export function mapServiceToItem(service: SanityService): Item {
     name: service.name,
     description: service.description || service.shortDescription || "",
     price: firstTier?.price ?? 0,
-    duration: firstTier?.duration,
     category: asCategory(service.category, "Massage"),
     imageUrl: service.image || PLACEHOLDER_IMAGE,
     isProduct: false,
-    variants,
-    addons,
+    options,
   };
 }
 

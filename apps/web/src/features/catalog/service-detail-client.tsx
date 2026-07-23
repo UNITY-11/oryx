@@ -15,30 +15,24 @@ export function ServiceDetailClient({ item }: { item: Item }) {
 
   const existingCartItem = cartItems.find(i => i.item.id === item.id);
 
-  const [selectedVariant, setSelectedVariant] = useState<ItemVariant | undefined>(
-    existingCartItem?.selectedVariant || (item.variants && item.variants.length > 0 ? item.variants[0] : undefined)
+  const [selectedOptions, setSelectedOptions] = useState<ItemVariant[]>(
+    existingCartItem?.selectedOptions || []
   );
 
-  const [selectedAddons, setSelectedAddons] = useState<ItemVariant[]>(
-    existingCartItem?.selectedAddons || []
-  );
-
-  const toggleAddon = (addon: ItemVariant) => {
-    setSelectedAddons(prev =>
-      prev.find(a => a.id === addon.id)
-        ? prev.filter(a => a.id !== addon.id)
-        : [...prev, addon]
+  const toggleAddon = (option: ItemVariant) => {
+    setSelectedOptions(prev =>
+      prev.find(a => a.id === option.id)
+        ? prev.filter(a => a.id !== option.id)
+        : [...prev, option]
     );
   };
 
-  const currentPrice = selectedVariant ? selectedVariant.price : item.price;
-  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.price, 0);
-  const totalPrice = currentPrice + addonsTotal;
-
-  const currentDuration = selectedVariant ? selectedVariant.duration : item.duration;
+  const currentPrice = item.price;
+  const optionsTotal = selectedOptions.reduce((sum, a) => sum + a.price, 0);
+  const totalPrice = currentPrice + optionsTotal;
 
   const handleAdd = () => {
-    addItem(item, selectedVariant, selectedAddons);
+    addItem(item, undefined, selectedOptions);
     router.push("/booking");
   };
 
@@ -113,12 +107,6 @@ export function ServiceDetailClient({ item }: { item: Item }) {
 
           <div className="absolute bottom-10 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 left-6 right-6 md:left-12 md:right-12">
             <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl font-medium text-white mb-2 md:mb-6 leading-tight">{item.name}</h1>
-            {currentDuration && (
-              <div className="flex items-center text-sm md:text-lg text-white/90">
-                <Clock className="w-4 h-4 md:w-5 md:h-5 mr-1.5 md:mr-3" />
-                {currentDuration} minutes
-              </div>
-            )}
             
             {/* Desktop Description */}
             <div className="hidden lg:block mt-8">
@@ -138,63 +126,22 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           <p className="text-[15px] md:text-base">{item.description}</p>
         </div>
 
-        {/* Variants */}
-        {item.variants && item.variants.length > 0 && (
+        {/* ServiceOptions */}
+        {item.options && item.options.length > 0 && (
           <div className="mb-8 md:mb-12">
-            <h3 className="font-serif text-lg md:text-2xl text-primary-dark mb-4 md:mb-6">Select Duration</h3>
             <div className="space-y-3 md:space-y-4">
-              {item.variants.map(variant => {
-                const isSelected = selectedVariant?.id === variant.id;
+              {item.options.map(option => {
+                const isSelected = selectedOptions.some(a => a.id === option.id);
                 return (
                   <div
-                    key={variant.id}
-                    onClick={() => setSelectedVariant(variant)}
+                    key={option.id}
+                    onClick={() => toggleAddon(option)}
                     className={`bg-white rounded-xl md:rounded-2xl p-4 md:p-6 flex items-center justify-between shadow-sm border transition-all cursor-pointer hover:shadow-md ${isSelected ? 'border-primary/50 ring-1 md:ring-2 ring-primary/20' : 'border-gray-100 md:border-gray-200'
                       }`}
                   >
                     <div className="flex flex-col">
-                      <span className="font-medium text-text-primary text-[15px] md:text-lg mb-1">{variant.name}</span>
-                      <span className="font-semibold text-text-primary text-sm md:text-base">QAR {variant.price}</span>
-                    </div>
-                    <button
-                      className={`px-5 md:px-8 py-1.5 md:py-2.5 rounded-lg md:rounded-xl border text-sm md:text-base font-medium transition-colors ${isSelected
-                        ? 'border-primary text-primary bg-primary/5'
-                        : 'border-gray-200 text-text-secondary'
-                        }`}
-                    >
-                      {isSelected ? 'Selected' : 'Select'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Scroll Indicator */}
-            {item.addons && item.addons.length > 0 && (
-              <div className="flex justify-center mt-8 text-primary/40 animate-bounce">
-                <ChevronDown className="w-6 h-6" />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Addons */}
-        {item.addons && item.addons.length > 0 && (
-          <div className="mb-8 md:mb-12">
-            <h3 className="font-serif text-lg md:text-2xl text-primary-dark mb-4 md:mb-6">Enhance Your Experience</h3>
-            <div className="space-y-3 md:space-y-4">
-              {item.addons.map(addon => {
-                const isSelected = selectedAddons.some(a => a.id === addon.id);
-                return (
-                  <div
-                    key={addon.id}
-                    onClick={() => toggleAddon(addon)}
-                    className={`bg-white rounded-xl md:rounded-2xl p-4 md:p-6 flex items-center justify-between shadow-sm border transition-all cursor-pointer hover:shadow-md ${isSelected ? 'border-primary/50 ring-1 md:ring-2 ring-primary/20' : 'border-gray-100 md:border-gray-200'
-                      }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium text-text-primary text-[15px] md:text-lg mb-1">{addon.name}</span>
-                      <span className="font-semibold text-text-primary text-sm md:text-base">+ QAR {addon.price}</span>
+                      <span className="font-medium text-text-primary text-[15px] md:text-lg mb-1">{option.name}</span>
+                      <span className="font-semibold text-text-primary text-sm md:text-base">+ QAR {option.price}</span>
                     </div>
                     <button
                       className={`px-5 md:px-8 py-1.5 md:py-2.5 rounded-lg md:rounded-xl border text-sm md:text-base font-medium transition-colors ${isSelected
@@ -221,7 +168,12 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           </div>
           <button
             onClick={handleAdd}
-            className="flex-1 bg-primary text-white py-3.5 md:py-4 lg:py-5 rounded-full font-medium text-lg md:text-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-[0.98]"
+            disabled={!item.isProduct && selectedOptions.length === 0}
+            className={`flex-1 py-3.5 md:py-4 lg:py-5 rounded-full font-medium text-lg md:text-xl flex items-center justify-center transition-all active:scale-[0.98] ${
+              !item.isProduct && selectedOptions.length === 0
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-dark"
+            }`}
           >
             <ClipboardList className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3" />
             Add to Booking

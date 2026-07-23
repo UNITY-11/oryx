@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { SERVICES_LIST_QUERY } from "@/features/services/sanity-queries";
-import type { Addon, PricingTier } from "@/features/services/types";
+import type { ServiceOption } from "@/features/services/types";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys<T extends { id: string }>(
@@ -41,8 +41,8 @@ export async function POST(request: Request) {
       description: body.description ?? "",
       shortDescription: body.shortDescription ?? "",
       image: body.image ?? null,
-      pricingTiers: withKeys<PricingTier>(body.pricingTiers),
-      addons: withKeys<Addon>(body.addons),
+      price: body.price,
+      options: withKeys<ServiceOption>(body.options),
       preparationTime: body.preparationTime ?? 0,
       cleanupTime: body.cleanupTime ?? 0,
       maxCapacity: body.maxCapacity ?? 1,

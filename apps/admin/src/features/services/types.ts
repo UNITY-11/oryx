@@ -2,19 +2,13 @@ export type ServiceCategory =
   "Massage" | "Facial" | "Body Treatment" | "Hair" | "Nails" | "Package";
 export type ServiceStatus = "Active" | "Inactive";
 
-export interface Addon {
+export interface ServiceOption {
   id: string;
   name: string;
   price: number;
-  duration: number; // minutes
 }
 
-export interface PricingTier {
-  id: string;
-  label: string; // e.g. "60 min", "90 min"
-  price: number;
-  duration: number;
-}
+
 
 export interface Service {
   id: string;
@@ -24,8 +18,8 @@ export interface Service {
   description: string;
   shortDescription: string;
   image: string | null;
-  pricingTiers: PricingTier[];
-  addons: Addon[];
+  price: number;
+  options: ServiceOption[];
   preparationTime: number; // minutes before appointment
   cleanupTime: number; // minutes after appointment
   maxCapacity: number;

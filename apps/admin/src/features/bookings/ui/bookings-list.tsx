@@ -114,7 +114,7 @@ export function BookingsList({
                         />
                       </div>
                     </th>
-                    <th className="py-4 font-medium">Service & Add-ons</th>
+                    <th className="py-4 font-medium">Service & Service Options</th>
                     <th
                       className="group cursor-pointer py-4 font-medium"
                       onClick={() => toggleSort("date")}
@@ -198,14 +198,14 @@ export function BookingsList({
                               {booking.services.length > 2 ? "s" : ""}
                             </p>
                           )}
-                          {(booking.services[0]?.addons?.length ?? 0) > 0 && (
+                          {(booking.services[0]?.options?.length ?? 0) > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1">
-                              {booking.services[0]?.addons.map((addon, idx) => (
+                              {booking.services[0]?.options.map((option, idx) => (
                                 <span
                                   key={idx}
                                   className="text-text-secondary inline-block rounded-md bg-gray-100 px-2 py-0.5 text-[10px] tracking-wider uppercase"
                                 >
-                                  + {addon}
+                                  + {option}
                                 </span>
                               ))}
                             </div>

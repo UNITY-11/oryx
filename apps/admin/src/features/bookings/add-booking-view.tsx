@@ -29,7 +29,7 @@ export function AddBookingView({
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [serviceSearchQuery, setServiceSearchQuery] = useState("");
 
   // Date & Time State
@@ -55,7 +55,7 @@ export function AddBookingView({
     selectedServiceIds.includes(s.id)
   );
   const basePrice = selectedServicesList.reduce(
-    (sum, s) => sum + (s.pricingTiers[0]?.price ?? 0),
+    (sum, s) => sum + (s.price ?? 0),
     0
   );
   const filteredServices = services.filter((s) =>
@@ -169,20 +169,20 @@ export function AddBookingView({
     }
 
     const servicesPayload = selectedServicesList.map((service) => {
-      const addons = service.addons.filter((a) =>
-        selectedAddons.includes(a.id)
+      const options = service.options.filter((a) =>
+        selectedOptions.includes(a.id)
       );
       return {
         name: service.name,
-        addons: addons.map((a) => a.name),
+        options: options.map((a) => a.name),
       };
     });
 
     const addonsCost = selectedServicesList.reduce((sum, service) => {
-      const addons = service.addons.filter((a) =>
-        selectedAddons.includes(a.id)
+      const options = service.options.filter((a) =>
+        selectedOptions.includes(a.id)
       );
-      return sum + addons.reduce((s, a) => s + a.price, 0);
+      return sum + options.reduce((s, a) => s + a.price, 0);
     }, 0);
 
     const amount = basePrice + addonsCost;
@@ -211,10 +211,10 @@ export function AddBookingView({
   };
 
   const handleAddonToggle = (addonId: string) => {
-    if (selectedAddons.includes(addonId)) {
-      setSelectedAddons(selectedAddons.filter((id) => id !== addonId));
+    if (selectedOptions.includes(addonId)) {
+      setSelectedOptions(selectedOptions.filter((id) => id !== addonId));
     } else {
-      setSelectedAddons([...selectedAddons, addonId]);
+      setSelectedOptions([...selectedOptions, addonId]);
     }
   };
 
@@ -276,11 +276,11 @@ export function AddBookingView({
                                       (id) => id !== s.id
                                     )
                                   );
-                                  // Also clear any selected addons that belong to this service
-                                  const removedAddonIds = s.addons.map(
+                                  // Also clear any selected options that belong to this service
+                                  const removedAddonIds = s.options.map(
                                     (a) => a.id
                                   );
-                                  setSelectedAddons((prev) =>
+                                  setSelectedOptions((prev) =>
                                     prev.filter(
                                       (id) => !removedAddonIds.includes(id)
                                     )
@@ -312,26 +312,26 @@ export function AddBookingView({
                                   {s.name}
                                 </span>
                                 <span className="text-primary text-sm font-medium">
-                                  QAR {s.pricingTiers[0]?.price ?? 0}
+                                  QAR {s.price ?? 0}
                                 </span>
                               </div>
                             </button>
 
-                            {isSelected && s.addons.length > 0 && (
+                            {isSelected && s.options.length > 0 && (
                               <div className="border-primary/5 mt-1 space-y-1 border-t px-3 pt-2 pb-3">
                                 <p className="text-text-secondary mb-1 text-[10px] font-semibold tracking-wider uppercase">
-                                  Add-ons
+                                  Service Options
                                 </p>
-                                {s.addons.map((addon) => {
+                                {s.options.map((option) => {
                                   const isAddonSelected =
-                                    selectedAddons.includes(addon.id);
+                                    selectedOptions.includes(option.id);
                                   return (
                                     <button
                                       type="button"
-                                      key={addon.id}
+                                      key={option.id}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleAddonToggle(addon.id);
+                                        handleAddonToggle(option.id);
                                       }}
                                       className={`flex w-full cursor-pointer items-center space-x-3 rounded-xl p-2.5 transition-colors ${
                                         isAddonSelected
@@ -357,10 +357,10 @@ export function AddBookingView({
                                         <span
                                           className={`truncate pr-2 font-medium ${isAddonSelected ? "text-[#e8baa0]" : "text-primary-dark"}`}
                                         >
-                                          {addon.name}
+                                          {option.name}
                                         </span>
                                         <span className="text-text-secondary font-medium whitespace-nowrap">
-                                          + QAR {addon.price}
+                                          + QAR {option.price}
                                         </span>
                                       </div>
                                     </button>
@@ -587,8 +587,8 @@ export function AddBookingView({
                 </p>
                 <div className="border-primary/10 scrollbar-hide flex-1 space-y-3 overflow-y-auto rounded-2xl border bg-white p-4 shadow-sm">
                   {selectedServicesList.map((service) => {
-                    const serviceAddons = service.addons.filter((a) =>
-                      selectedAddons.includes(a.id)
+                    const serviceAddons = service.options.filter((a) =>
+                      selectedOptions.includes(a.id)
                     );
                     return (
                       <div
@@ -597,15 +597,15 @@ export function AddBookingView({
                       >
                         <div className="text-primary-dark flex justify-between text-sm font-medium">
                           <span>{service.name}</span>
-                          <span>QAR {service.pricingTiers[0]?.price || 0}</span>
+                          <span>QAR {service.price || 0}</span>
                         </div>
-                        {serviceAddons.map((addon) => (
+                        {serviceAddons.map((option) => (
                           <div
-                            key={addon.id}
+                            key={option.id}
                             className="text-text-secondary mt-1 flex justify-between pl-2 text-xs"
                           >
-                            <span>+ {addon.name}</span>
-                            <span>QAR {addon.price}</span>
+                            <span>+ {option.name}</span>
+                            <span>QAR {option.price}</span>
                           </div>
                         ))}
                       </div>
@@ -638,8 +638,8 @@ export function AddBookingView({
                       selectedServicesList.reduce((sum, service) => {
                         return (
                           sum +
-                          service.addons
-                            .filter((a) => selectedAddons.includes(a.id))
+                          service.options
+                            .filter((a) => selectedOptions.includes(a.id))
                             .reduce((s, a) => s + a.price, 0)
                         );
                       }, 0)}

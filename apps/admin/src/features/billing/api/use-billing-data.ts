@@ -16,18 +16,18 @@ export function getServiceLineItems(
 ) {
   return booking.services.map((svc) => {
     const obj = catalog.find((r) => r.name === svc.name);
-    const base = obj?.pricingTiers?.[0]?.price || 0;
-    const addonItems = svc.addons.map((aName) => {
-      const a = obj?.addons.find((ad) => ad.name === aName);
+    const base = obj?.price || 0;
+    const addonItems = svc.options.map((aName) => {
+      const a = obj?.options.find((ad) => ad.name === aName);
       return { name: aName, price: a?.price || 0 };
     });
-    return { name: svc.name, base, addons: addonItems };
+    return { name: svc.name, base, options: addonItems };
   });
 }
 
 export function getTotal(booking: BillingBooking, catalog: Service[]) {
   return getServiceLineItems(booking, catalog).reduce(
-    (sum, s) => sum + s.base + s.addons.reduce((a, ad) => a + ad.price, 0),
+    (sum, s) => sum + s.base + s.options.reduce((a, ad) => a + ad.price, 0),
     0
   );
 }
@@ -56,7 +56,7 @@ export function buildInvoiceHTML(
       <span style="font-weight:600;color:#452c1e;">${svc.name}</span>
       <span style="font-weight:600;color:#452c1e;">QAR ${svc.base}</span>
     </div>` +
-        svc.addons
+        svc.options
           .map(
             (a) =>
               `<div style="display:flex;justify-content:space-between;padding-left:12px;margin-bottom:4px;">
@@ -173,7 +173,7 @@ export function useBillingData() {
     const lines = getServiceLineItems(booking, services);
     const servicesText = lines
       .map((s) => {
-        const addonsText = s.addons
+        const addonsText = s.options
           .map((a) => `   ↳ ${a.name}: QAR ${a.price}`)
           .join("\n");
         return `• ${s.name}: QAR ${s.base}${addonsText ? "\n" + addonsText : ""}`;

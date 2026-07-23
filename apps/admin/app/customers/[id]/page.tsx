@@ -11,7 +11,7 @@ import {
 } from "@features/customers/api";
 import { Customer, CustomerTier } from "@features/customers/types";
 import { fetchServices } from "@features/services/api";
-import { Addon, PricingTier, Service } from "@features/services/types";
+import { Service, ServiceCategory, ServiceOption } from "@/features/services/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -121,8 +121,7 @@ export default function CustomerDetailPage({
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
-  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<ServiceOption[]>([]);
 
   // Booking Form fields
   const [bookingDate, setBookingDate] = useState("");
@@ -231,29 +230,27 @@ export default function CustomerDetailPage({
   };
 
   // Booking Handlers
-  const handleServiceSelect = (svc: Service, tier: PricingTier) => {
+  const handleServiceSelect = (svc: Service) => {
     setSelectedService(svc);
-    setSelectedTier(tier);
-    setSelectedAddons([]);
-    if (svc.addons.length > 0) {
+    setSelectedOptions([]);
+    if (svc.options.length > 0) {
       setBookingStep(2);
     } else {
       setBookingStep(3);
     }
   };
 
-  const toggleAddon = (addon: Addon) => {
-    setSelectedAddons((prev) =>
-      prev.find((a) => a.id === addon.id)
-        ? prev.filter((a) => a.id !== addon.id)
-        : [...prev, addon]
+  const toggleAddon = (option: ServiceOption) => {
+    setSelectedOptions((prev) =>
+      prev.find((a) => a.id === option.id)
+        ? prev.filter((a) => a.id !== option.id)
+        : [...prev, option]
     );
   };
 
   const finalizeBooking = async () => {
     if (
       !selectedService ||
-      !selectedTier ||
       !bookingDate ||
       !bookingTime ||
       !bookingStaff
@@ -261,8 +258,8 @@ export default function CustomerDetailPage({
       return;
 
     const totalPrice =
-      selectedTier.price +
-      selectedAddons.reduce((acc, curr) => acc + curr.price, 0);
+      selectedService.price +
+      selectedOptions.reduce((acc, curr) => acc + curr.price, 0);
 
     setBookingSubmitting(true);
     setBookingSubmitError(null);
@@ -273,7 +270,7 @@ export default function CustomerDetailPage({
         services: [
           {
             name: selectedService.name,
-            addons: selectedAddons.map((a) => a.name),
+            options: selectedOptions.map((a) => a.name),
           },
         ],
         date: bookingDate,
@@ -288,8 +285,7 @@ export default function CustomerDetailPage({
       // Reset state
       setBookingStep(1);
       setSelectedService(null);
-      setSelectedTier(null);
-      setSelectedAddons([]);
+      setSelectedOptions([]);
       setBookingDate("");
       setBookingTime("");
       setBookingStaff("");
@@ -637,20 +633,14 @@ export default function CustomerDetailPage({
                               {svc.name}
                             </div>
                             <div className="flex flex-wrap gap-2">
-                              {svc.pricingTiers.map((tier) => (
                                 <button
-                                  key={tier.id}
-                                  onClick={() => handleServiceSelect(svc, tier)}
-                                  className="border-primary/20 hover:border-primary hover:bg-primary/5 rounded-xl border px-4 py-2 text-left text-sm transition-colors"
+                                  onClick={() => handleServiceSelect(svc)}
+                                  className="border-primary/20 hover:border-primary hover:bg-primary/5 rounded-xl border px-4 py-2 text-left text-sm transition-colors w-full flex justify-between items-center"
                                 >
                                   <div className="text-primary font-semibold">
-                                    {tier.label}
-                                  </div>
-                                  <div className="text-text-secondary text-xs">
-                                    QAR {tier.price}
+                                    Select Service
                                   </div>
                                 </button>
-                              ))}
                             </div>
                           </div>
                         ))}
@@ -662,17 +652,17 @@ export default function CustomerDetailPage({
               {bookingStep === 2 && selectedService && (
                 <div className="space-y-4">
                   <h3 className="text-primary-dark mb-4 text-sm font-bold tracking-wider uppercase">
-                    Step 2: Select Add-ons
+                    Step 2: Select Service Options
                   </h3>
                   <div className="space-y-3">
-                    {selectedService.addons.map((addon) => {
-                      const isSelected = selectedAddons.some(
-                        (a) => a.id === addon.id
+                    {selectedService.options.map((option) => {
+                      const isSelected = selectedOptions.some(
+                        (a) => a.id === option.id
                       );
                       return (
                         <button
-                          key={addon.id}
-                          onClick={() => toggleAddon(addon)}
+                          key={option.id}
+                          onClick={() => toggleAddon(option)}
                           className={`flex w-full items-center justify-between rounded-2xl border p-4 transition-colors ${
                             isSelected
                               ? "border-primary bg-primary/5"
@@ -688,11 +678,11 @@ export default function CustomerDetailPage({
                               )}
                             </div>
                             <span className="text-primary-dark text-sm font-medium">
-                              {addon.name}
+                              {option.name}
                             </span>
                           </div>
                           <span className="text-primary text-sm font-semibold">
-                            + QAR {addon.price}
+                            + QAR {option.price}
                           </span>
                         </button>
                       );
@@ -709,7 +699,7 @@ export default function CustomerDetailPage({
                 </div>
               )}
 
-              {bookingStep === 3 && selectedService && selectedTier && (
+              {bookingStep === 3 && selectedService && (
                 <div className="space-y-6">
                   <h3 className="text-primary-dark mb-2 text-sm font-bold tracking-wider uppercase">
                     Step 3: Finalize Booking
@@ -717,17 +707,17 @@ export default function CustomerDetailPage({
 
                   <div className="bg-primary/5 border-primary/10 rounded-2xl border p-4">
                     <div className="text-primary-dark font-semibold">
-                      {selectedService.name} - {selectedTier.label}
+                      {selectedService.name}
                     </div>
-                    {selectedAddons.length > 0 && (
+                    {selectedOptions.length > 0 && (
                       <div className="text-text-secondary mt-1 text-xs">
-                        + {selectedAddons.map((a) => a.name).join(", ")}
+                        + {selectedOptions.map((a) => a.name).join(", ")}
                       </div>
                     )}
                     <div className="text-primary mt-3 text-lg font-bold">
                       Total: QAR{" "}
-                      {selectedTier.price +
-                        selectedAddons.reduce((sum, a) => sum + a.price, 0)}
+                      {selectedService.price +
+                        selectedOptions.reduce((sum, a) => sum + a.price, 0)}
                     </div>
                   </div>
 
@@ -782,7 +772,7 @@ export default function CustomerDetailPage({
                     <button
                       onClick={() =>
                         setBookingStep(
-                          selectedService.addons.length > 0 ? 2 : 1
+                          selectedService.options.length > 0 ? 2 : 1
                         )
                       }
                       className="text-primary text-sm font-medium hover:underline"

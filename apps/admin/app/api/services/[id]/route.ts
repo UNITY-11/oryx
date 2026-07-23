@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { SERVICE_BY_ID_QUERY } from "@/features/services/sanity-queries";
-import type { Addon, PricingTier } from "@/features/services/types";
+import { ServiceOption, ServiceCategory } from "@/features/services/types";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys<T extends { id: string }>(
@@ -40,9 +40,8 @@ export async function PATCH(
     const { id: _ignore, ...fields } = body;
 
     const patch: Record<string, unknown> = { ...fields };
-    if (fields.pricingTiers)
-      patch.pricingTiers = withKeys<PricingTier>(fields.pricingTiers);
-    if (fields.addons) patch.addons = withKeys<Addon>(fields.addons);
+    if (fields.price !== undefined) patch.price = fields.price;
+    if (fields.options) patch.options = withKeys<ServiceOption>(fields.options);
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(SERVICE_BY_ID_QUERY, { id });

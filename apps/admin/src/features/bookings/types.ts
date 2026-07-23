@@ -3,7 +3,7 @@ export type BookingStatus =
 
 export interface BookingService {
   name: string;
-  addons: string[];
+  options: string[];
 }
 
 export interface Booking {

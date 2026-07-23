@@ -7,7 +7,7 @@ export interface BookingPayload {
   customerPhone: string;
   serviceName: string;
   duration: string;
-  addons: string[];
+  options: string[];
   price: number;
   date: string;
   time: string;

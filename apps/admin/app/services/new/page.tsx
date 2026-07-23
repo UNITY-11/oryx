@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createService, uploadServiceImage } from "@features/services/api";
-import { Addon, PricingTier, ServiceCategory } from "@features/services/types";
+import { ServiceOption, ServiceCategory } from "@features/services/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -97,8 +97,8 @@ interface NewServiceState {
   preparationTime: number;
   cleanupTime: number;
   maxCapacity: number;
-  pricingTiers: PricingTier[];
-  addons: Addon[];
+  price: number;
+  options: ServiceOption[];
   status: "Active" | "Inactive";
 }
 
@@ -110,8 +110,8 @@ const DEFAULT_STATE: NewServiceState = {
   preparationTime: 10,
   cleanupTime: 15,
   maxCapacity: 1,
-  pricingTiers: [{ id: "pt-1", label: "60 min", price: 0, duration: 60 }],
-  addons: [],
+  price: 0,
+  options: [],
   status: "Active",
 };
 
@@ -139,48 +139,30 @@ export default function NewServicePage() {
     reader.readAsDataURL(file);
   };
 
-  /* Pricing Tiers */
-  const addTier = () =>
-    update("pricingTiers", [
-      ...service.pricingTiers,
-      { id: `pt-${Date.now()}`, label: "", price: 0, duration: 60 },
-    ]);
-  const removeTier = (id: string) =>
-    update(
-      "pricingTiers",
-      service.pricingTiers.filter((t) => t.id !== id)
-    );
-  const updateTier = (
-    id: string,
-    field: keyof PricingTier,
-    value: string | number
-  ) =>
-    update(
-      "pricingTiers",
-      service.pricingTiers.map((t) =>
-        t.id === id ? { ...t, [field]: value } : t
-      )
-    );
 
-  /* Addons */
-  const addAddon = () =>
-    update("addons", [
-      ...service.addons,
-      { id: `a-${Date.now()}`, name: "", price: 0, duration: 0 },
+
+  /* ServiceOptions */
+  const addOption = () => {
+    const current = service.options || [];
+    if (current.some((o) => !o.name.trim())) return;
+    update("options", [
+      ...current,
+      { id: `a-${Date.now()}`, name: "", price: 0 },
     ]);
-  const removeAddon = (id: string) =>
+  };
+  const removeOption = (id: string) =>
     update(
-      "addons",
-      service.addons.filter((a) => a.id !== id)
+      "options",
+      (service.options || []).filter((a) => a.id !== id)
     );
-  const updateAddon = (
+  const updateOption = (
     id: string,
-    field: keyof Addon,
+    field: keyof ServiceOption,
     value: string | number
   ) =>
     update(
-      "addons",
-      service.addons.map((a) => (a.id === id ? { ...a, [field]: value } : a))
+      "options",
+      (service.options || []).map((a) => (a.id === id ? { ...a, [field]: value } : a))
     );
 
   const handleCreate = async () => {
@@ -312,59 +294,7 @@ export default function NewServicePage() {
                 </p>
               </div>
 
-              {/* Quick Stats */}
-              <div className="bg-primary/5 space-y-3 rounded-2xl p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" /> Prep Time
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      value={service.preparationTime}
-                      onChange={(e) =>
-                        update("preparationTime", Number(e.target.value))
-                      }
-                      className="text-primary-dark w-14 bg-transparent text-right text-sm font-medium focus:outline-none"
-                    />
-                    <span className="text-text-secondary text-xs">min</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" /> Cleanup
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      value={service.cleanupTime}
-                      onChange={(e) =>
-                        update("cleanupTime", Number(e.target.value))
-                      }
-                      className="text-primary-dark w-14 bg-transparent text-right text-sm font-medium focus:outline-none"
-                    />
-                    <span className="text-text-secondary text-xs">min</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary flex items-center gap-1.5">
-                    <Users className="h-4 w-4" /> Capacity
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      value={service.maxCapacity}
-                      onChange={(e) =>
-                        update("maxCapacity", Number(e.target.value))
-                      }
-                      className="text-primary-dark w-14 bg-transparent text-right text-sm font-medium focus:outline-none"
-                    />
-                    <span className="text-text-secondary text-xs">
-                      guest(s)
-                    </span>
-                  </div>
-                </div>
-              </div>
+
             </div>
 
             {/* RIGHT — Details */}
@@ -407,145 +337,77 @@ export default function NewServicePage() {
                 />
               </div>
 
-              {/* Pricing Tiers */}
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <label className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
-                    Pricing Tiers
-                  </label>
-                  <button
-                    onClick={addTier}
-                    className="text-primary flex items-center gap-1 text-xs font-semibold hover:underline"
-                  >
-                    <Plus className="h-3 w-3" /> Add Tier
-                  </button>
-                </div>
-                <div className="border-primary/10 overflow-hidden rounded-2xl border">
-                  <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_130px_130px_44px] border-b bg-[#fcf4f0] px-4 py-3 text-[10px] tracking-wider uppercase">
-                    <span>Label</span>
-                    <span>Price (QAR)</span>
-                    <span>Duration (min)</span>
-                    <span />
-                  </div>
-                  {service.pricingTiers.map((tier, i) => (
-                    <div
-                      key={tier.id}
-                      className={`grid grid-cols-[1fr_130px_130px_44px] items-center gap-2 px-4 py-3 ${i > 0 ? "border-primary/5 border-t" : ""}`}
-                    >
-                      <input
-                        value={tier.label}
-                        onChange={(e) =>
-                          updateTier(tier.id, "label", e.target.value)
-                        }
-                        placeholder="e.g. 60 min"
-                        className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:outline-none"
-                      />
-                      <input
-                        type="number"
-                        value={tier.price || ""}
-                        onChange={(e) =>
-                          updateTier(tier.id, "price", Number(e.target.value))
-                        }
-                        placeholder="0"
-                        className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-xl border bg-white px-3 py-2 text-sm font-medium focus:outline-none"
-                      />
-                      <input
-                        type="number"
-                        value={tier.duration || ""}
-                        onChange={(e) =>
-                          updateTier(
-                            tier.id,
-                            "duration",
-                            Number(e.target.value)
-                          )
-                        }
-                        placeholder="60"
-                        className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:outline-none"
-                      />
-                      <button
-                        onClick={() => removeTier(tier.id)}
-                        disabled={service.pricingTiers.length === 1}
-                        className="text-primary hover:text-primary-dark flex justify-center transition-colors disabled:opacity-20"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Addons */}
+
+              {/* ServiceOptions */}
               <div>
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3">
                   <label className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
-                    Add-ons
+                    Service Options
                   </label>
-                  <button
-                    onClick={addAddon}
-                    className="text-primary flex items-center gap-1 text-xs font-semibold hover:underline"
-                  >
-                    <Plus className="h-3 w-3" /> Add Addon
-                  </button>
                 </div>
-                {service.addons.length === 0 ? (
-                  <div className="border-primary/40 text-text-secondary rounded-2xl border border-dashed p-6 text-center text-sm">
-                    No add-ons yet. Click "Add Addon" to create one.
+                {(!service.options || service.options.length === 0) ? (
+                  <div className="border-primary/40 text-text-secondary flex flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center text-sm">
+                    <p className="mb-3">No options added yet.</p>
+                    <button
+                      onClick={addOption}
+                      className="bg-primary hover:bg-primary-dark rounded-full px-5 py-2 text-xs font-semibold text-white transition-colors"
+                    >
+                      <Plus className="mr-1 inline-block h-3 w-3" /> Add Service Option
+                    </button>
                   </div>
                 ) : (
-                  <div className="border-primary/10 overflow-hidden rounded-2xl border">
-                    <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_130px_130px_44px] border-b bg-[#fcf4f0] px-4 py-3 text-[10px] tracking-wider uppercase">
+                  <div className="border-primary/20 overflow-hidden rounded-2xl border">
+                    <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_130px_44px] border-b bg-gray-50 px-4 py-3 text-[10px] tracking-wider uppercase">
                       <span>Name</span>
                       <span>Price (QAR)</span>
-                      <span>+Mins</span>
                       <span />
                     </div>
-                    {service.addons.map((addon, i) => (
-                      <div
-                        key={addon.id}
-                        className={`grid grid-cols-[1fr_130px_130px_44px] items-center gap-2 px-4 py-3 ${i > 0 ? "border-primary/5 border-t" : ""}`}
-                      >
-                        <input
-                          value={addon.name}
-                          onChange={(e) =>
-                            updateAddon(addon.id, "name", e.target.value)
-                          }
-                          placeholder="Addon name"
-                          className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:outline-none"
-                        />
-                        <input
-                          type="number"
-                          value={addon.price || ""}
-                          onChange={(e) =>
-                            updateAddon(
-                              addon.id,
-                              "price",
-                              Number(e.target.value)
-                            )
-                          }
-                          placeholder="0"
-                          className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-xl border bg-white px-3 py-2 text-sm font-medium focus:outline-none"
-                        />
-                        <input
-                          type="number"
-                          value={addon.duration || ""}
-                          onChange={(e) =>
-                            updateAddon(
-                              addon.id,
-                              "duration",
-                              Number(e.target.value)
-                            )
-                          }
-                          placeholder="0"
-                          className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:outline-none"
-                        />
-                        <button
-                          onClick={() => removeAddon(addon.id)}
-                          className="text-primary hover:text-primary-dark flex justify-center"
+                    <div className="divide-primary/10 divide-y">
+                      {(service.options || []).map((option) => (
+                        <div
+                          key={option.id}
+                          className="grid grid-cols-[1fr_130px_44px] items-center gap-2 bg-white px-4 py-2"
                         >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
+                          <input
+                            value={option.name}
+                            onChange={(e) =>
+                              updateOption(option.id, "name", e.target.value)
+                            }
+                            placeholder="e.g. Hot Stone"
+                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm focus:outline-none"
+                          />
+                          <input
+                            type="number"
+                            value={option.price === 0 ? "" : option.price}
+                            onChange={(e) =>
+                              updateOption(
+                                option.id,
+                                "price",
+                                Number(e.target.value)
+                              )
+                            }
+                            placeholder="0"
+                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm font-medium focus:outline-none"
+                          />
+                          <button
+                            onClick={() => removeOption(option.id)}
+                            className="text-primary/40 hover:text-red-500 flex justify-center transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-primary/10 border-t bg-gray-50 p-2">
+                      <button
+                        onClick={addOption}
+                        className="text-primary hover:bg-primary/5 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
+                        disabled={(service.options || []).some(o => !o.name.trim())}
+                      >
+                        <Plus className="h-4 w-4" /> Add Option
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

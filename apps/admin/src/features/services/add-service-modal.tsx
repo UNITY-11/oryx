@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { ImageIcon, Plus, Trash2, Upload, X } from "lucide-react";
 
-import { Addon, PricingTier, Service, ServiceCategory } from "./types";
+import { ServiceOption, Service, ServiceCategory } from "./types";
 
 interface AddServiceModalProps {
   isOpen: boolean;
@@ -39,11 +39,9 @@ export function AddServiceModal({
     tags: "",
   });
 
-  const [pricingTiers, setPricingTiers] = useState<Omit<PricingTier, "id">[]>([
-    { label: "60 min", price: 0, duration: 60 },
-  ]);
+  const [price, setPrice] = useState(0);
 
-  const [addons, setAddons] = useState<Omit<Addon, "id">[]>([]);
+  const [options, setOptions] = useState<Omit<ServiceOption, "id">[]>([]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,31 +51,18 @@ export function AddServiceModal({
     reader.readAsDataURL(file);
   };
 
-  const addPricingTier = () =>
-    setPricingTiers([...pricingTiers, { label: "", price: 0, duration: 60 }]);
 
-  const removePricingTier = (idx: number) =>
-    setPricingTiers(pricingTiers.filter((_, i) => i !== idx));
 
-  const updatePricingTier = (
+  const addOption = () =>
+    setOptions([...options, { name: "", price: 0 }]);
+  const removeOption = (idx: number) =>
+    setOptions(options.filter((_, i) => i !== idx));
+  const updateOption = (
     idx: number,
-    field: keyof Omit<PricingTier, "id">,
+    field: keyof Omit<ServiceOption, "id">,
     value: string | number
   ) =>
-    setPricingTiers(
-      pricingTiers.map((t, i) => (i === idx ? { ...t, [field]: value } : t))
-    );
-
-  const addAddon = () =>
-    setAddons([...addons, { name: "", price: 0, duration: 0 }]);
-  const removeAddon = (idx: number) =>
-    setAddons(addons.filter((_, i) => i !== idx));
-  const updateAddon = (
-    idx: number,
-    field: keyof Omit<Addon, "id">,
-    value: string | number
-  ) =>
-    setAddons(addons.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
+    setOptions(options.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +76,8 @@ export function AddServiceModal({
       shortDescription: form.shortDescription,
       description: form.description,
       image: imagePreview,
-      pricingTiers: pricingTiers.map((t, i) => ({ ...t, id: `pt-new-${i}` })),
-      addons: addons.map((a, i) => ({ ...a, id: `a-new-${i}` })),
+      price: price,
+      options: options.map((a, i) => ({ ...a, id: `a-new-${i}` })),
       preparationTime: form.preparationTime,
       cleanupTime: form.cleanupTime,
       maxCapacity: form.maxCapacity,
@@ -220,125 +205,52 @@ export function AddServiceModal({
               />
             </div>
 
-            {/* Pricing Tiers */}
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <label className="text-text-secondary text-sm font-medium">
-                  Pricing Tiers
-                </label>
-                <button
-                  type="button"
-                  onClick={addPricingTier}
-                  className="text-primary flex items-center gap-1 text-xs font-medium hover:underline"
-                >
-                  <Plus className="h-3 w-3" /> Add Tier
-                </button>
-              </div>
-              <div className="space-y-2">
-                {pricingTiers.map((tier, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-3 items-center gap-2"
-                  >
-                    <input
-                      value={tier.label}
-                      onChange={(e) =>
-                        updatePricingTier(idx, "label", e.target.value)
-                      }
-                      placeholder="Label (e.g. 60 min)"
-                      className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
-                    />
-                    <input
-                      type="number"
-                      value={tier.price || ""}
-                      onChange={(e) =>
-                        updatePricingTier(idx, "price", Number(e.target.value))
-                      }
-                      placeholder="Price (QAR)"
-                      className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
-                    />
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={tier.duration || ""}
-                        onChange={(e) =>
-                          updatePricingTier(
-                            idx,
-                            "duration",
-                            Number(e.target.value)
-                          )
-                        }
-                        placeholder="Duration (min)"
-                        className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 flex-1 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
-                      />
-                      {pricingTiers.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removePricingTier(idx)}
-                          className="shrink-0 p-1 text-red-400 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Add-ons */}
+
+            {/* Service Options */}
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <label className="text-text-secondary text-sm font-medium">
-                  Add-ons
+                  Service Options
                 </label>
                 <button
                   type="button"
-                  onClick={addAddon}
+                  onClick={addOption}
                   className="text-primary flex items-center gap-1 text-xs font-medium hover:underline"
                 >
-                  <Plus className="h-3 w-3" /> Add Addon
+                  <Plus className="h-3 w-3" /> Add ServiceOption
                 </button>
               </div>
-              {addons.length === 0 && (
+              {options.length === 0 && (
                 <p className="text-primary/40 text-xs italic">
-                  No add-ons yet. Click "Add Addon" to create one.
+                  No add-ons yet. Click "Add ServiceOption" to create one.
                 </p>
               )}
               <div className="space-y-2">
-                {addons.map((addon, idx) => (
+                {options.map((option, idx) => (
                   <div
                     key={idx}
                     className="grid grid-cols-3 items-center gap-2"
                   >
                     <input
-                      value={addon.name}
-                      onChange={(e) => updateAddon(idx, "name", e.target.value)}
-                      placeholder="Addon name"
+                      value={option.name}
+                      onChange={(e) => updateOption(idx, "name", e.target.value)}
+                      placeholder="ServiceOption name"
                       className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
                     />
                     <input
                       type="number"
-                      value={addon.price || ""}
+                      value={option.price || ""}
                       onChange={(e) =>
-                        updateAddon(idx, "price", Number(e.target.value))
+                        updateOption(idx, "price", Number(e.target.value))
                       }
                       placeholder="Price (QAR)"
                       className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
                     />
                     <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={addon.duration || ""}
-                        onChange={(e) =>
-                          updateAddon(idx, "duration", Number(e.target.value))
-                        }
-                        placeholder="+mins"
-                        className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 flex-1 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
-                      />
                       <button
                         type="button"
-                        onClick={() => removeAddon(idx)}
+                        onClick={() => removeOption(idx)}
                         className="shrink-0 p-1 text-red-400 hover:text-red-600"
                       >
                         <Trash2 className="h-4 w-4" />

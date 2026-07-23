@@ -285,13 +285,13 @@ export function NotificationsPanel({
                             <span className="bg-primary/5 border-primary/10 rounded-md border px-2 py-0.5">
                               {selectedNotif.bookingData.duration}
                             </span>
-                            {selectedNotif.bookingData.addons?.map(
-                              (addon, idx) => (
+                            {selectedNotif.bookingData.options?.map(
+                              (option, idx) => (
                                 <span
                                   key={idx}
                                   className="bg-primary/5 border-primary/10 rounded-md border px-2 py-0.5"
                                 >
-                                  + {addon}
+                                  + {option}
                                 </span>
                               )
                             )}

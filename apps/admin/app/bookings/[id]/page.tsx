@@ -60,7 +60,7 @@ export default function BookingDetailPage({
   const [servicesError, setServicesError] = useState<string | null>(null);
 
   // POS State (service editor)
-  const [posMode, setPosMode] = useState<"services" | "addons">("services");
+  const [posMode, setPosMode] = useState<"services" | "options">("services");
   const [activeServiceIndex, setActiveServiceIndex] = useState<number | null>(
     null
   );
@@ -202,9 +202,9 @@ export default function BookingDetailPage({
 
       if (existingIndex >= 0) {
         const removedService = prev.services[existingIndex]!;
-        const basePrice = serviceObj.pricingTiers?.[0]?.price || 0;
-        const addonsPrice = removedService.addons.reduce((sum, aName) => {
-          const a = serviceObj.addons.find((ad) => ad.name === aName);
+        const basePrice = serviceObj.price || 0;
+        const addonsPrice = removedService.options.reduce((sum, aName) => {
+          const a = serviceObj.options.find((ad) => ad.name === aName);
           return sum + (a?.price || 0);
         }, 0);
 
@@ -227,10 +227,10 @@ export default function BookingDetailPage({
           amount: prev.amount - basePrice - addonsPrice,
         };
       } else {
-        const basePrice = serviceObj.pricingTiers?.[0]?.price || 0;
+        const basePrice = serviceObj.price || 0;
         return {
           ...prev,
-          services: [...prev.services, { name: serviceObj.name, addons: [] }],
+          services: [...prev.services, { name: serviceObj.name, options: [] }],
           amount: prev.amount + basePrice,
         };
       }
@@ -239,7 +239,7 @@ export default function BookingDetailPage({
 
   const configureAddonsFor = (index: number) => {
     setActiveServiceIndex(index);
-    setPosMode("addons");
+    setPosMode("options");
   };
 
   const toggleAddon = (addonName: string, addonPrice: number) => {
@@ -249,11 +249,11 @@ export default function BookingDetailPage({
       if (!prev) return prev;
       const newServices = [...prev.services];
       const service = { ...newServices[activeServiceIndex]! };
-      const hasAddon = service.addons?.includes(addonName) ?? false;
+      const hasAddon = service.options?.includes(addonName) ?? false;
 
-      service.addons = hasAddon
-        ? (service.addons || []).filter((a) => a !== addonName)
-        : [...(service.addons || []), addonName];
+      service.options = hasAddon
+        ? (service.options || []).filter((a) => a !== addonName)
+        : [...(service.options || []), addonName];
 
       newServices[activeServiceIndex] = service;
       return {
@@ -485,7 +485,7 @@ export default function BookingDetailPage({
                       const matchedObj = realServices.find(
                         (r) => r.name === svc.name
                       );
-                      const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
+                      const baseP = matchedObj?.price || 0;
                       return (
                         <div
                           key={idx}
@@ -499,11 +499,11 @@ export default function BookingDetailPage({
                               QAR {baseP}
                             </span>
                           </div>
-                          {svc.addons.length > 0 && (
+                          {svc.options.length > 0 && (
                             <div className="border-primary/10 mt-3 space-y-2 border-t pt-3">
-                              {svc.addons.map((addon, aIdx) => {
-                                const matchedAddon = matchedObj?.addons.find(
-                                  (a) => a.name === addon
+                              {svc.options.map((option, aIdx) => {
+                                const matchedAddon = matchedObj?.options.find(
+                                  (a) => a.name === option
                                 );
                                 return (
                                   <div
@@ -512,7 +512,7 @@ export default function BookingDetailPage({
                                   >
                                     <span className="text-text-secondary flex items-center gap-2">
                                       <ChevronRight className="text-primary/40 h-4 w-4" />{" "}
-                                      {addon}
+                                      {option}
                                     </span>
                                     <span className="text-text-secondary">
                                       {matchedAddon
@@ -562,7 +562,7 @@ export default function BookingDetailPage({
 
         {isEditing && (
           <div className="flex h-full w-full gap-4">
-            {/* LEFT: Service Catalog / Add-ons */}
+            {/* LEFT: Service Catalog / Service Options */}
             <div className="border-primary/10 scrollbar-hide flex-1 overflow-y-auto rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
               {posMode === "services" && (
                 <div className="animate-in fade-in duration-200">
@@ -684,7 +684,7 @@ export default function BookingDetailPage({
                 </div>
               )}
 
-              {posMode === "addons" &&
+              {posMode === "options" &&
                 currentServiceObject &&
                 activeService && (
                   <div className="animate-in fade-in duration-200">
@@ -723,19 +723,19 @@ export default function BookingDetailPage({
                     </div>
 
                     <h3 className="text-primary mb-4 text-sm font-bold tracking-wider uppercase">
-                      Available Add-ons
+                      Available Service Options
                     </h3>
-                    {currentServiceObject.addons.length > 0 ? (
+                    {currentServiceObject.options.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {currentServiceObject.addons.map((addon) => {
-                          const isSelected = activeService.addons.includes(
-                            addon.name
+                        {currentServiceObject.options.map((option) => {
+                          const isSelected = activeService.options.includes(
+                            option.name
                           );
                           return (
                             <div
-                              key={addon.id}
+                              key={option.id}
                               onClick={() =>
-                                toggleAddon(addon.name, addon.price)
+                                toggleAddon(option.name, option.price)
                               }
                               className={`flex cursor-pointer items-center justify-between rounded-2xl border p-5 transition-all ${
                                 isSelected
@@ -747,12 +747,12 @@ export default function BookingDetailPage({
                                 <h4
                                   className={`text-sm font-semibold ${isSelected ? "text-white" : "text-primary-dark"}`}
                                 >
-                                  {addon.name}
+                                  {option.name}
                                 </h4>
                                 <span
                                   className={`text-xs font-bold ${isSelected ? "text-white" : "text-primary"}`}
                                 >
-                                  + QAR {addon.price}
+                                  + QAR {option.price}
                                 </span>
                               </div>
                               <div
@@ -769,7 +769,7 @@ export default function BookingDetailPage({
                     ) : (
                       <div className="border-primary/10 bg-primary/5 rounded-2xl border border-dashed p-12 text-center">
                         <p className="text-primary-dark font-medium">
-                          No Add-ons Available
+                          No Service Options Available
                         </p>
                       </div>
                     )}
@@ -799,7 +799,7 @@ export default function BookingDetailPage({
                       const matchedObj = realServices.find(
                         (r) => r.name === svc.name
                       );
-                      const baseP = matchedObj?.pricingTiers?.[0]?.price || 0;
+                      const baseP = matchedObj?.price || 0;
                       const isActive = activeServiceIndex === idx;
 
                       return (
@@ -815,11 +815,11 @@ export default function BookingDetailPage({
                               QAR {baseP}
                             </span>
                           </div>
-                          {svc.addons.length > 0 ? (
+                          {svc.options.length > 0 ? (
                             <div className="border-primary/10 mt-2 space-y-1.5 border-t pt-2">
-                              {svc.addons.map((addon, aIdx) => {
-                                const matchedAddon = matchedObj?.addons.find(
-                                  (a) => a.name === addon
+                              {svc.options.map((option, aIdx) => {
+                                const matchedAddon = matchedObj?.options.find(
+                                  (a) => a.name === option
                                 );
                                 return (
                                   <div
@@ -828,7 +828,7 @@ export default function BookingDetailPage({
                                   >
                                     <span className="text-text-secondary flex items-center gap-1.5">
                                       <ChevronRight className="text-primary/40 h-3 w-3" />{" "}
-                                      {addon}
+                                      {option}
                                     </span>
                                     <span className="text-text-secondary">
                                       {matchedAddon
@@ -853,7 +853,7 @@ export default function BookingDetailPage({
                                   : "border-primary/20 text-primary hover:bg-primary/5 border bg-white"
                               }`}
                             >
-                              {isActive ? "Configuring" : "Edit Add-ons"}
+                              {isActive ? "Configuring" : "Edit Service Options"}
                             </button>
                           </div>
                         </div>

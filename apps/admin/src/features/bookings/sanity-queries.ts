@@ -2,7 +2,7 @@ export const BOOKING_PROJECTION = `{
   "id": _id,
   customerName,
   phone,
-  "services": services[]{ name, addons },
+  "services": services[]{ name, options },
   date,
   time,
   status,

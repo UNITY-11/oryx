@@ -20,7 +20,7 @@ export function PrintModal({
   onClose,
 }: {
   booking: BillingBooking;
-  lines: { name: string; base: number; addons: { name: string; price: number }[] }[];
+  lines: { name: string; base: number; options: { name: string; price: number }[] }[];
   total: number;
   onClose: () => void;
 }) {
@@ -218,7 +218,7 @@ export function PrintModal({
                           {svc.base}
                         </span>
                       </div>
-                      {svc.addons.map((a, j) => (
+                      {svc.options.map((a, j) => (
                          <div key={j} className="flex justify-between pl-2">
                           <span className="text-text-secondary text-[8px]">
                             ↳ {a.name}

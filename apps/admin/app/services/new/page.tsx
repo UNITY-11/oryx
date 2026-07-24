@@ -7,7 +7,9 @@ import { ServiceOption, ServiceCategory } from "@features/services/types";
 import {
   AlertCircle,
   ArrowLeft,
+  Ban,
   Check,
+  CheckCircle,
   ChevronDown,
   Clock,
   ImageIcon,
@@ -141,14 +143,23 @@ export default function NewServicePage() {
 
 
 
+  const optionsScrollRef = useRef<HTMLDivElement>(null);
+
   /* ServiceOptions */
+  const isOptionValid = (o: ServiceOption) => o.name.trim().length >= 5 && o.price > 0;
+
   const addOption = () => {
     const current = service.options || [];
-    if (current.some((o) => !o.name.trim())) return;
+    if (current.some((o) => !isOptionValid(o))) return;
     update("options", [
       ...current,
       { id: `a-${Date.now()}`, name: "", price: 0, duration: undefined },
     ]);
+    setTimeout(() => {
+      if (optionsScrollRef.current) {
+        optionsScrollRef.current.scrollTop = optionsScrollRef.current.scrollHeight;
+      }
+    }, 50);
   };
   const removeOption = (id: string) =>
     update(
@@ -158,7 +169,7 @@ export default function NewServicePage() {
   const updateOption = (
     id: string,
     field: keyof ServiceOption,
-    value: string | number
+    value: string | number | undefined
   ) =>
     update(
       "options",
@@ -187,18 +198,23 @@ export default function NewServicePage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
-        {/* Top Bar */}
-        <div className="border-primary/10 flex shrink-0 items-center justify-between border-b px-6 py-5 md:px-8">
-          <button
-            onClick={() => router.push("/services")}
-            className="text-text-secondary hover:text-primary-dark group flex items-center gap-2 text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            Back to Services
-          </button>
+      {/* Main Top Header */}
+      <div className="py-4 shrink-0">
+        <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 z-30">
+          <div className="flex items-center space-x-4 flex-1">
+            <button
+              onClick={() => router.push("/services")}
+              className="text-text-secondary hover:text-primary-dark hover:bg-primary/5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="hidden md:flex">
+              <h1 className="font-serif text-2xl font-medium text-primary uppercase">New Service</h1>
+            </div>
+          </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center space-x-3 shrink-0">
+
             <button
               onClick={() =>
                 update(
@@ -206,18 +222,36 @@ export default function NewServicePage() {
                   service.status === "Active" ? "Inactive" : "Active"
                 )
               }
-              className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+              className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${
                 service.status === "Active"
                   ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
                   : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
             >
-              {service.status}
+              {service.status === "Active" ? (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  Active
+                </>
+              ) : (
+                <>
+                  <Ban className="h-4 w-4" />
+                  Inactive
+                </>
+              )}
             </button>
 
             <button
               onClick={handleCreate}
-              disabled={!service.name.trim() || saving}
+              disabled={
+                !service.name.trim() ||
+                !service.description.trim() ||
+                !service.image ||
+                !service.options ||
+                service.options.length === 0 ||
+                service.options.some((o) => !isOptionValid(o)) ||
+                saving
+              }
               className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
                 saved
                   ? "bg-green-500 text-white"
@@ -226,14 +260,18 @@ export default function NewServicePage() {
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : saved ? (
+                <CheckCircle className="h-4 w-4" />
               ) : (
                 <Save className="h-4 w-4" />
               )}
               {saving ? "Creating..." : saved ? "Created!" : "Create Service"}
             </button>
           </div>
-        </div>
+        </header>
+      </div>
 
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {/* Scrollable Content */}
         <div className="scrollbar-hide flex-1 overflow-auto p-6 md:p-8">
           {saveError && (
@@ -242,7 +280,7 @@ export default function NewServicePage() {
               {saveError}
             </div>
           )}
-          <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row">
+          <div className="mx-auto flex h-full max-w-5xl flex-col gap-8 lg:flex-row">
             {/* LEFT — Image + Timing */}
             <div className="flex shrink-0 flex-col gap-6 lg:w-72">
               {/* Image Frame 3:4 */}
@@ -298,9 +336,9 @@ export default function NewServicePage() {
             </div>
 
             {/* RIGHT — Details */}
-            <div className="min-w-0 flex-1 space-y-8">
+            <div className="min-w-0 flex-1 flex flex-col gap-8 lg:h-full lg:max-h-[calc(100vh-250px)]">
               {/* Name & Category */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="shrink-0 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
                     Service Name *
@@ -324,7 +362,7 @@ export default function NewServicePage() {
               </div>
 
               {/* Description */}
-              <div>
+              <div className="shrink-0">
                 <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
                   Description
                 </label>
@@ -340,7 +378,7 @@ export default function NewServicePage() {
 
 
               {/* ServiceOptions */}
-              <div>
+              <div className="flex min-h-[300px] flex-1 flex-col">
                 <div className="mb-3">
                   <label className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
                     Service Options
@@ -357,14 +395,14 @@ export default function NewServicePage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="border-primary/20 overflow-hidden rounded-2xl border">
+                  <div className="border-primary/20 flex flex-1 flex-col overflow-hidden rounded-2xl border">
                     <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_100px_100px_44px] border-b bg-gray-50 px-4 py-3 text-[10px] tracking-wider uppercase">
                       <span>Name</span>
                       <span>Time (Min)</span>
                       <span>Price (QAR)</span>
                       <span />
                     </div>
-                    <div className="divide-primary/10 divide-y">
+                    <div ref={optionsScrollRef} className="divide-primary/10 scrollbar-hide flex-1 divide-y overflow-y-auto">
                       {(service.options || []).map((option) => (
                         <div
                           key={option.id}
@@ -413,11 +451,11 @@ export default function NewServicePage() {
                         </div>
                       ))}
                     </div>
-                    <div className="border-primary/10 border-t bg-gray-50 p-2">
+                    <div className="border-primary/10 shrink-0 border-t bg-gray-50 p-2">
                       <button
                         onClick={addOption}
                         className="text-primary hover:bg-primary/5 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
-                        disabled={(service.options || []).some(o => !o.name.trim())}
+                        disabled={(service.options || []).some(o => !isOptionValid(o))}
                       >
                         <Plus className="h-4 w-4" /> Add Option
                       </button>

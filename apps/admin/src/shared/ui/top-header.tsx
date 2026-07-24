@@ -11,7 +11,13 @@ export function TopHeader() {
   const isAddingBooking = pathname === '/bookings' && searchParams.get('action') === 'add';
   const bookingStep = Number(searchParams.get('step')) || 1;
 
-  if (pathname === '/calendar' || pathname === '/analytics' || pathname.startsWith('/bookings/') || pathname === '/billing') {
+  if (
+    pathname === '/calendar' || 
+    pathname === '/analytics' || 
+    pathname.startsWith('/bookings/') || 
+    pathname === '/billing' ||
+    (pathname.startsWith('/services/') && pathname !== '/services')
+  ) {
     return null;
   }
 

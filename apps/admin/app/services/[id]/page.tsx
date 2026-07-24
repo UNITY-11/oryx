@@ -114,6 +114,7 @@ export default function ServiceDetailPage({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const optionsScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchService(id)
@@ -160,7 +161,6 @@ export default function ServiceDetailPage({
   };
 
 
-  const optionsScrollRef = useRef<HTMLDivElement>(null);
 
   /* ServiceOptions */
   const isOptionValid = (o: ServiceOption) => o.name.trim().length >= 5 && o.price > 0;

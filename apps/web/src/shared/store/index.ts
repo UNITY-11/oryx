@@ -38,7 +38,9 @@ export const useCartStore = create<CartState>()(
       addItem: (item, selectedVariant, selectedOptions = []) =>
         set((state) => {
           // Calculate total price for this configured item
-          let totalPrice = selectedVariant ? selectedVariant.price : item.price;
+          let totalPrice = selectedVariant 
+            ? selectedVariant.price 
+            : (item.isProduct ? item.price : 0);
           selectedOptions.forEach((option) => { totalPrice += option.price; });
 
           // Create a unique hash for this configuration to group identical items

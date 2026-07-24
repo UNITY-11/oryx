@@ -27,7 +27,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
     );
   };
 
-  const currentPrice = item.price;
+  const currentPrice = item.isProduct ? item.price : 0;
   const optionsTotal = selectedOptions.reduce((sum, a) => sum + a.price, 0);
   const totalPrice = currentPrice + optionsTotal;
 
@@ -108,6 +108,12 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           <div className="absolute bottom-10 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 left-6 right-6 md:left-12 md:right-12">
             <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl font-medium text-white mb-2 md:mb-6 leading-tight">{item.name}</h1>
             
+            {/* Dynamic Total Price at Top */}
+            <div className="inline-flex items-center bg-white/20 backdrop-blur-md rounded-full px-5 py-2.5 text-white border border-white/20 mt-2">
+              <span className="text-xs md:text-sm font-medium uppercase tracking-wider mr-3 opacity-90">Total Price</span>
+              <span className="font-serif text-xl md:text-2xl font-bold">QAR {totalPrice}</span>
+            </div>
+
             {/* Desktop Description */}
             <div className="hidden lg:block mt-8">
               <p className="text-white/80 text-lg leading-relaxed">{item.description}</p>

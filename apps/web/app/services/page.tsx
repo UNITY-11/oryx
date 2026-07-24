@@ -15,7 +15,7 @@ export default async function ServicesPage() {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-screen-2xl flex-col pt-6 md:pt-24">
-      <div className="mt-4 grid grid-cols-2 gap-4 px-6 pb-6 md:mt-12 md:grid-cols-3 md:gap-8 md:px-12 lg:grid-cols-4 lg:px-16">
+      <div className="mt-4 grid grid-cols-2 gap-4 px-6 pb-6 md:mt-12 md:grid-cols-3 md:gap-8 md:px-12 lg:grid-cols-5 lg:px-16">
         {error && (
           <p className="col-span-2 py-8 text-center text-red-500 md:col-span-3">
             {error}

@@ -19,6 +19,7 @@ import {
   MessageSquare,
   ImageIcon,
   Ticket,
+  UserCog,
 } from "lucide-react";
 
 // ─── Nav items organised by purpose, separated by dividers ────────────────────
@@ -42,6 +43,7 @@ const navClusters = [
   ],
   // 4. People & Activity
   [
+    { name: "Staff",         href: "/staff",         icon: UserCog },
     { name: "Customers",     href: "/customers",     icon: Users },
     { name: "Reviews",       href: "/reviews",       icon: MessageSquare },
     { name: "Notifications", href: "/notifications", icon: Bell  },

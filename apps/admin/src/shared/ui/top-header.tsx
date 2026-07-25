@@ -1,13 +1,14 @@
 "use client";
 
-import { Bell, UserCircle2, Menu, Plus, ChevronLeft } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { Bell, UserCircle2, Menu, Plus, ChevronLeft, Search } from "lucide-react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 export function TopHeader() {
   const pathname = usePathname();
 
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isAddingBooking = pathname === '/bookings' && searchParams.get('action') === 'add';
   const bookingStep = Number(searchParams.get('step')) || 1;
 
@@ -16,7 +17,8 @@ export function TopHeader() {
     pathname === '/analytics' || 
     pathname.startsWith('/bookings/') || 
     pathname === '/billing' ||
-    (pathname.startsWith('/services/') && pathname !== '/services')
+    (pathname.startsWith('/services/') && pathname !== '/services') ||
+    (pathname.startsWith('/staff/') && pathname !== '/staff')
   ) {
     return null;
   }
@@ -29,6 +31,7 @@ export function TopHeader() {
       case '/products': return 'Products Inventory';
       case '/customers': return 'Customers Directory';
       case '/reviews': return 'Reviews Management';
+      case '/staff': return 'Staff Management';
       case '/settings': return 'Admin Settings';
       case '/notifications': return 'Notifications';
       default:
@@ -78,6 +81,27 @@ export function TopHeader() {
         </div>
 
         <div className="flex items-center space-x-3 shrink-0">
+          
+          {pathname === '/staff' && (
+            <div className="relative hidden md:block w-64 mr-2">
+              <Search className="text-text-secondary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search staff..."
+                defaultValue={searchParams.get('search') || ''}
+                onChange={(e) => {
+                  const params = new URLSearchParams(searchParams);
+                  if (e.target.value) {
+                    params.set('search', e.target.value);
+                  } else {
+                    params.delete('search');
+                  }
+                  router.replace(`${pathname}?${params.toString()}`);
+                }}
+                className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm shadow-sm outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          )}
 
           <div className="flex items-center pl-3 md:pl-5 md:border-l border-primary/10">
             {pathname === '/' && (
@@ -133,6 +157,16 @@ export function TopHeader() {
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Review</span>
+              </Link>
+            )}
+
+            {pathname === '/staff' && (
+              <Link
+                href="/staff/new"
+                className="bg-primary text-white px-6 py-2.5 rounded-full font-medium shadow-sm hover:opacity-90 transition-opacity flex items-center space-x-2 whitespace-nowrap text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Staff Member</span>
               </Link>
             )}
 

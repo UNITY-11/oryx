@@ -23,6 +23,9 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: "ORYX Beauty Spa & Salon",
   description: "Book your appointment at ORYX Beauty Spa & Salon",
+  icons: {
+    icon: "/images/favicon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

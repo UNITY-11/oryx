@@ -1,16 +1,28 @@
 import { useState, useEffect } from "react";
 import { Staff, AttendanceRecord } from "../types";
-import { fetchStaffList, fetchStaffById, fetchAttendance, createStaff, addAttendance } from "../api";
+import { fetchStaffList, fetchStaffById, fetchAttendance, createStaff, addAttendance, updateStaff } from "../api";
 
 export function useStaff() {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadData = () => {
     fetchStaffList().then((data) => {
       setStaffList(data);
       setLoading(false);
     });
+  };
+
+  useEffect(() => {
+    loadData();
+
+    window.addEventListener("focus", loadData);
+    window.addEventListener("popstate", loadData);
+    
+    return () => {
+      window.removeEventListener("focus", loadData);
+      window.removeEventListener("popstate", loadData);
+    };
   }, []);
 
   return { staffList, loading };
@@ -32,7 +44,7 @@ export function useStaffDetail(id: string, month?: string) {
     });
   }, [id, month]);
 
-  return { staff, attendance, loading, setAttendance };
+  return { staff, attendance, loading, setAttendance, setStaff };
 }
 
-export { createStaff, addAttendance };
+export { createStaff, addAttendance, updateStaff };

@@ -19,3 +19,44 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await sanityClient.delete(id);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Error deleting staff:", error);
+    return NextResponse.json(
+      { error: "Failed to delete staff member" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    
+    // Update the document in Sanity using partial updates
+    const updatedStaff = await sanityClient
+      .patch(id)
+      .set(body)
+      .commit();
+      
+    return NextResponse.json(updatedStaff);
+  } catch (error: any) {
+    console.error("Error updating staff:", error);
+    return NextResponse.json(
+      { error: "Failed to update staff member" },
+      { status: 500 }
+    );
+  }
+}

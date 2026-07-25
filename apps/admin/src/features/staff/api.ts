@@ -40,3 +40,11 @@ export async function addAttendance(data: Omit<AttendanceRecord, "id">): Promise
   return parseOrThrow<AttendanceRecord>(res, "Failed to add attendance");
 }
 
+export async function updateStaff(id: string, data: Partial<Omit<Staff, "id">>): Promise<Staff> {
+  const res = await fetch(`/api/staff/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return parseOrThrow<Staff>(res, "Failed to update staff");
+}

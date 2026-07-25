@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { ATTENDANCE_BY_STAFF_QUERY } from "@/features/staff/sanity-queries";
 
@@ -43,7 +44,15 @@ export async function POST(
       const updateData = { ...body };
       delete updateData.staffId;
       
-      const res = await sanityClient.patch(existing._id).set(updateData).commit();
+      let patch = sanityClient.patch(existing._id).set(updateData);
+      
+      if (body.status === "Absent") {
+        patch = patch.unset(['checkIn', 'checkOut']);
+      } else {
+        patch = patch.unset(['reason']);
+      }
+      
+      const res = await patch.commit();
       resultId = res._id;
     } else {
       const doc = {
@@ -57,11 +66,46 @@ export async function POST(
       resultId = res._id;
     }
     
+    revalidatePath('/staff', 'layout');
     return NextResponse.json({ ...body, staffId: id, id: resultId });
   } catch (error) {
     console.error("Error adding attendance:", error);
     return NextResponse.json(
       { error: "Failed to add attendance" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const url = new URL(request.url);
+    const date = url.searchParams.get("date");
+    
+    if (!date) {
+      return NextResponse.json({ error: "Date is required" }, { status: 400 });
+    }
+
+    const existing = await sanityClient.fetch(
+      `*[_type == "attendance" && staff._ref == $staffId && date == $date][0]`,
+      { staffId: id, date }
+    );
+
+    if (existing) {
+      await sanityClient.delete(existing._id);
+      revalidatePath('/staff', 'layout');
+      return NextResponse.json({ success: true, id: existing._id });
+    }
+
+    return NextResponse.json({ success: false, message: "Record not found" }, { status: 404 });
+  } catch (error) {
+    console.error("Error deleting attendance:", error);
+    return NextResponse.json(
+      { error: "Failed to delete attendance" },
       { status: 500 }
     );
   }

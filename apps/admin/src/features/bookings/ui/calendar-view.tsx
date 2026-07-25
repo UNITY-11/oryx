@@ -298,20 +298,26 @@ export function CalendarView({
             ))}
 
             {loading && (
-              <div className="text-text-secondary absolute inset-0 flex items-center justify-center gap-2">
-                <Loader2 className="h-5 w-5 animate-spin" /> Loading bookings...
+              <div className="fixed inset-0 z-50 flex items-center justify-center pl-64 pointer-events-none">
+                <div className="text-text-secondary bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-primary/10 flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading bookings...
+                </div>
               </div>
             )}
 
             {!loading && error && (
-              <div className="absolute inset-0 flex items-center justify-center gap-2 text-red-500">
-                <AlertCircle className="h-5 w-5" /> {error}
+              <div className="fixed inset-0 z-50 flex items-center justify-center pl-64 pointer-events-none">
+                <div className="text-red-500 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-red-500/20 flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5" /> {error}
+                </div>
               </div>
             )}
 
             {!loading && !error && todaysBookings.length === 0 && (
-              <div className="text-text-secondary absolute inset-0 flex items-center justify-center">
-                No bookings scheduled for this date.
+              <div className="fixed inset-0 z-50 flex items-center justify-center pl-64 pointer-events-none">
+                <div className="text-text-secondary bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-primary/10">
+                  No bookings scheduled for this date.
+                </div>
               </div>
             )}
           </div>

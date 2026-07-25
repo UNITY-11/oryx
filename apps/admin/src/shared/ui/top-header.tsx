@@ -98,7 +98,7 @@ export function TopHeader() {
                   }
                   router.replace(`${pathname}?${params.toString()}`);
                 }}
-                className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm shadow-sm outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
+                className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
               />
             </div>
           )}

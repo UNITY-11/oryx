@@ -2,12 +2,91 @@
 
 import { useStaff, addAttendance } from "@/features/staff/api/use-staff";
 import { ActionPinModal } from "@/shared/ui/action-pin-modal";
-import { UserCircle2, Loader2, Check, X, Clock, ChevronRight } from "lucide-react";
+import { UserCircle2, Loader2, Check, X, Clock, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { TopHeader } from "@/shared/ui/top-header";
 import { Staff, AttendanceRecord } from "@/features/staff/types";
+
+function TimePicker({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+  const [h = 0, m = 0] = value ? value.split(':').map(Number) : [new Date().getHours(), new Date().getMinutes()];
+  const isPM = h >= 12;
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  
+  const handleHourChange = (delta: number) => {
+    let newH = h + delta;
+    if (newH < 0) newH += 24;
+    if (newH >= 24) newH -= 24;
+    onChange(`${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+  };
+
+  const handleMinuteChange = (delta: number) => {
+    let newM = m + delta;
+    let newH = h;
+    if (newM < 0) {
+      newM = 59;
+      newH -= 1;
+    }
+    if (newM >= 60) {
+      newM = 0;
+      newH += 1;
+    }
+    if (newH < 0) newH += 24;
+    if (newH >= 24) newH -= 24;
+    onChange(`${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`);
+  };
+
+  const toggleAmPm = () => {
+    let newH = (h + 12) % 24;
+    onChange(`${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-3 select-none">
+      <div className="flex flex-col items-center gap-1">
+        <button type="button" onClick={() => handleHourChange(1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronUp className="w-6 h-6" /></button>
+        <div className="w-16 h-16 bg-gray-50 border border-primary/10 rounded-2xl flex items-center justify-center text-2xl font-medium text-text-primary shadow-sm">
+          {hour12.toString().padStart(2, '0')}
+        </div>
+        <button type="button" onClick={() => handleHourChange(-1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronDown className="w-6 h-6" /></button>
+      </div>
+
+      <span className="text-2xl font-bold text-gray-300 pb-2">:</span>
+
+      <div className="flex flex-col items-center gap-1">
+        <button type="button" onClick={() => handleMinuteChange(1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronUp className="w-6 h-6" /></button>
+        <div className="w-16 h-16 bg-gray-50 border border-primary/10 rounded-2xl flex items-center justify-center text-2xl font-medium text-text-primary shadow-sm">
+          {m.toString().padStart(2, '0')}
+        </div>
+        <button type="button" onClick={() => handleMinuteChange(-1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronDown className="w-6 h-6" /></button>
+      </div>
+
+      <div className="flex flex-col items-center gap-1 ml-2">
+        <button type="button" onClick={toggleAmPm} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronUp className="w-6 h-6" /></button>
+        <div className="w-16 h-16 bg-gray-50 border border-primary/10 rounded-2xl flex items-center justify-center text-xl font-bold text-primary shadow-sm">
+          {isPM ? 'PM' : 'AM'}
+        </div>
+        <button type="button" onClick={toggleAmPm} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronDown className="w-6 h-6" /></button>
+      </div>
+    </div>
+  );
+}
+
+function calculateTotalHours(checkIn: string, checkOut: string): string {
+  const [inH = 0, inM = 0] = checkIn.split(':').map(Number);
+  const [outH = 0, outM = 0] = checkOut.split(':').map(Number);
+  
+  let diff = (outH * 60 + outM) - (inH * 60 + inM);
+  if (diff < 0) {
+    diff += 24 * 60; // Handle overnight shifts
+  }
+  
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  return `${h}h ${m}m`;
+}
+
 
 function StaffList() {
   const { staffList, loading } = useStaff();
@@ -46,9 +125,7 @@ function StaffList() {
       setModalState(prev => ({ ...prev, open: false }));
       try {
         const today = new Date().toISOString().split("T")[0] as string;
-        const timeToLog = modalState.timeMode === "Now" 
-          ? new Date().toTimeString().slice(0, 5)
-          : modalState.customTime;
+        const timeToLog = modalState.customTime || new Date().toTimeString().slice(0, 5);
           
         if (actionType === "Present") {
           await addAttendance({
@@ -104,7 +181,7 @@ function StaffList() {
                   <Link 
                     href={`/staff/${staff.id}`} 
                     key={staff.id} 
-                    className="group relative bg-white rounded-[2rem] border border-primary/10 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                    className="group relative bg-white rounded-[2rem] border border-primary/10 transition-all duration-300 overflow-hidden flex flex-col"
                   >
                     <div className="p-6 flex-1 flex flex-col items-center text-center">
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-primary/5 border-4 border-white ring-4 ring-primary/5 shadow-sm overflow-hidden mb-5">
@@ -170,11 +247,18 @@ function StaffList() {
                               {staff.todayAttendance.status}
                             </span>
                             {(staff.todayAttendance.checkIn || staff.todayAttendance.checkOut) && (
-                              <span className="text-xs font-bold text-black tracking-wide flex items-center justify-center gap-2 mt-0.5">
-                                {staff.todayAttendance.checkIn && <span>IN: {staff.todayAttendance.checkIn}</span>}
-                                {staff.todayAttendance.checkIn && staff.todayAttendance.checkOut && <span>•</span>}
-                                {staff.todayAttendance.checkOut && <span>OUT: {staff.todayAttendance.checkOut}</span>}
-                              </span>
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="text-[10px] font-bold text-black tracking-wide flex items-center justify-center gap-2 mt-0.5">
+                                  {staff.todayAttendance.checkIn && <span>IN: {staff.todayAttendance.checkIn}</span>}
+                                  {staff.todayAttendance.checkIn && staff.todayAttendance.checkOut && <span>•</span>}
+                                  {staff.todayAttendance.checkOut && <span>OUT: {staff.todayAttendance.checkOut}</span>}
+                                </span>
+                                {staff.todayAttendance.checkIn && staff.todayAttendance.checkOut && (
+                                  <span className="text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full mt-1">
+                                    Total: {calculateTotalHours(staff.todayAttendance.checkIn, staff.todayAttendance.checkOut)}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
@@ -209,41 +293,17 @@ function StaffList() {
                   />
                 </div>
               ) : (
-                <>
-                  <div className="flex p-1.5 bg-gray-100/80 rounded-2xl">
-                    <button 
-                      onClick={() => setModalState(prev => ({ ...prev, timeMode: "Now" }))}
-                      className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${modalState.timeMode === "Now" ? "bg-white text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`}
-                    >
-                      Now
-                    </button>
-                    <button 
-                      onClick={() => setModalState(prev => ({ ...prev, timeMode: "Custom" }))}
-                      className={`flex-1 py-3 text-sm font-medium rounded-xl transition-all ${modalState.timeMode === "Custom" ? "bg-white text-primary shadow-sm" : "text-text-secondary hover:text-text-primary"}`}
-                    >
-                      Custom Time
-                    </button>
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <label className="text-primary/60 text-xs uppercase tracking-widest font-semibold mb-3 block text-center">
+                    Select Time
+                  </label>
+                  <div className="mx-auto w-full pt-4">
+                    <TimePicker 
+                      value={modalState.customTime} 
+                      onChange={(val) => setModalState(prev => ({ ...prev, customTime: val }))} 
+                    />
                   </div>
-
-                  {modalState.timeMode === "Custom" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 pt-2">
-                      <label className="text-primary/60 text-xs uppercase tracking-widest font-semibold mb-3 block text-center">
-                        Select Time
-                      </label>
-                      <div className="relative max-w-[220px] mx-auto">
-                        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                          <Clock className="w-5 h-5 text-primary/40" />
-                        </div>
-                        <input
-                          type="time"
-                          value={modalState.customTime}
-                          onChange={(e) => setModalState(prev => ({ ...prev, customTime: e.target.value }))}
-                          className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-primary/10 rounded-2xl text-xl font-medium text-text-primary outline-none focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all text-center tracking-wider"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </>
+                </div>
               )}
             </div>
 

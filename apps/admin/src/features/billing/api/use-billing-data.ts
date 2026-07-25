@@ -17,8 +17,8 @@ export function getServiceLineItems(
   return booking.services.map((svc) => {
     const obj = catalog.find((r) => r.name === svc.name);
     const base = obj?.price || 0;
-    const addonItems = svc.options.map((aName) => {
-      const a = obj?.options.find((ad) => ad.name === aName);
+    const addonItems = (svc.options || []).map((aName) => {
+      const a = (obj?.options || []).find((ad) => ad.name === aName);
       return { name: aName, price: a?.price || 0 };
     });
     return { name: svc.name, base, options: addonItems };

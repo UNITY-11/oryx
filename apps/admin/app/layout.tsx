@@ -22,6 +22,9 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: "ORYX Admin Panel",
   description: "Manage bookings, services, and customers",
+  icons: {
+    icon: "/images/favicon.png",
+  },
 };
 
 export const viewport: Viewport = {

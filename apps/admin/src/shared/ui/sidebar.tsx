@@ -85,7 +85,7 @@ export function Sidebar() {
 
   return (
     <div className="hidden md:flex p-4 pr-0">
-      <aside className="flex flex-col w-64 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl h-full overflow-hidden z-40 shrink-0 shadow-sm">
+      <aside className="flex flex-col w-64 bg-white border border-primary/10 rounded-3xl h-full overflow-hidden z-40 shrink-0 shadow-sm">
 
         {/* Logo */}
         <div className="bg-white p-8 flex flex-col items-center justify-center border-b border-primary/10 shrink-0">
@@ -124,7 +124,7 @@ export function Sidebar() {
                       className={`flex items-center space-x-3 px-4 py-3 rounded-2xl transition-colors ${
                         isActive
                           ? "bg-primary text-white shadow-sm"
-                          : "text-text-secondary hover:bg-primary/5 hover:text-primary-dark"
+                          : "text-primary hover:bg-primary/5"
                       }`}
                     >
                       <Icon className="w-5 h-5 shrink-0" />

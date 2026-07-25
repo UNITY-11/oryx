@@ -1,6 +1,7 @@
 "use client";
 
 import { useStaff, addAttendance } from "@/features/staff/api/use-staff";
+import { ActionPinModal } from "@/shared/ui/action-pin-modal";
 import { UserCircle2, Loader2, Check, X, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -14,6 +15,7 @@ function StaffList() {
   const searchTerm = searchParams.get('search') || "";
   
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionToConfirm, setActionToConfirm] = useState<(() => void) | null>(null);
 
   const filteredStaff = staffList.filter((s) =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -35,44 +37,50 @@ function StaffList() {
       return;
     }
     
-    setActionLoading(modalState.staffId + modalState.type);
-    setModalState(prev => ({ ...prev, open: false }));
-    try {
-      const today = new Date().toISOString().split("T")[0] as string;
-      const timeToLog = modalState.timeMode === "Now" 
-        ? new Date().toTimeString().slice(0, 5)
-        : modalState.customTime;
-        
-      if (modalState.type === "Present") {
-        await addAttendance({
-          staffId: modalState.staffId,
-          date: today,
-          checkIn: timeToLog,
-          status: "Present",
-        });
-      } else if (modalState.type === "Exit") {
-        await addAttendance({
-          staffId: modalState.staffId,
-          date: today,
-          checkOut: timeToLog,
-          status: "Present",
-        });
-      } else if (modalState.type === "Absent") {
-        await addAttendance({
-          staffId: modalState.staffId,
-          date: today,
-          status: "Absent",
-          reason: modalState.reason.trim(),
-        });
+    const staffId = modalState.staffId;
+    const actionType = modalState.type;
+    
+    setActionToConfirm(() => async () => {
+      setActionToConfirm(null);
+      setActionLoading(staffId + actionType);
+      setModalState(prev => ({ ...prev, open: false }));
+      try {
+        const today = new Date().toISOString().split("T")[0] as string;
+        const timeToLog = modalState.timeMode === "Now" 
+          ? new Date().toTimeString().slice(0, 5)
+          : modalState.customTime;
+          
+        if (actionType === "Present") {
+          await addAttendance({
+            staffId: staffId,
+            date: today,
+            checkIn: timeToLog,
+            status: "Present",
+          });
+        } else if (actionType === "Exit") {
+          await addAttendance({
+            staffId: staffId,
+            date: today,
+            checkOut: timeToLog,
+            status: "Present",
+          });
+        } else if (actionType === "Absent") {
+          await addAttendance({
+            staffId: staffId,
+            date: today,
+            status: "Absent",
+            reason: modalState.reason.trim(),
+          });
+        }
+        alert(`Action '${actionType}' logged successfully!`);
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to log action.");
+      } finally {
+        setActionLoading(null);
       }
-      alert(`Action '${modalState.type}' logged successfully!`);
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to log action.");
-    } finally {
-      setActionLoading(null);
-    }
+    });
   };
 
   return (
@@ -96,7 +104,7 @@ function StaffList() {
                   <Link 
                     href={`/staff/${staff.id}`} 
                     key={staff.id} 
-                    className="group relative bg-white rounded-[2rem] border border-primary/10 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+                    className="group relative bg-white rounded-[2rem] border border-primary/10 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                   >
                     <div className="p-6 flex-1 flex flex-col items-center text-center">
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-primary/5 border-4 border-white ring-4 ring-primary/5 shadow-sm overflow-hidden mb-5">
@@ -118,37 +126,57 @@ function StaffList() {
                             <button 
                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Present", timeMode: "Now", customTime: new Date().toTimeString().slice(0, 5), reason: "" })}}
                               disabled={actionLoading !== null}
-                              className="flex-1 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-semibold transition-all flex justify-center items-center gap-1.5 shadow-md shadow-primary/20 hover:shadow-lg"
+                              className="flex-1 py-2.5 rounded-xl bg-green-50 text-green-700 hover:bg-green-100 border border-green-200/50 text-xs font-bold transition-all flex justify-center items-center gap-1.5 shadow-sm"
                               title="Check In"
                             >
-                              {actionLoading === staff.id + "Present" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Check In
+                              {actionLoading === staff.id + "Present" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />} Check In
                             </button>
                             <button 
                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Absent", timeMode: "Now", customTime: "", reason: "" })}}
                               disabled={actionLoading !== null}
-                              className="flex-1 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-semibold transition-all flex justify-center items-center gap-1.5 shadow-md shadow-primary/20 hover:shadow-lg"
+                              className="flex-1 py-2.5 rounded-xl bg-primary/5 text-primary-dark hover:bg-primary/10 border border-primary/10 text-xs font-bold transition-all flex justify-center items-center gap-1.5 shadow-sm"
                               title="Mark Absent"
                             >
-                              {actionLoading === staff.id + "Absent" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />} Absent
+                              {actionLoading === staff.id + "Absent" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-4 h-4" />} Absent
                             </button>
                           </>
                         )}
 
                         {staff.todayAttendance?.status === "Present" && !staff.todayAttendance?.checkOut && (
-                          <button 
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Exit", timeMode: "Now", customTime: new Date().toTimeString().slice(0, 5), reason: "" })}}
-                            disabled={actionLoading !== null}
-                            className="w-full py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-semibold transition-all flex justify-center items-center gap-1.5 shadow-md shadow-primary/20 hover:shadow-lg"
-                            title="Check Out"
-                          >
-                            {actionLoading === staff.id + "Exit" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />} Check Out
-                          </button>
+                          <div className="flex flex-col items-center gap-1.5 w-full">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                              IN: <span className="text-black">{staff.todayAttendance.checkIn}</span>
+                            </span>
+                            <button 
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Exit", timeMode: "Now", customTime: new Date().toTimeString().slice(0, 5), reason: "" })}}
+                              disabled={actionLoading !== null}
+                              className="w-full py-2.5 rounded-xl bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200/50 text-xs font-bold transition-all flex justify-center items-center gap-1.5 shadow-sm mt-1"
+                              title="Check Out"
+                            >
+                              {actionLoading === staff.id + "Exit" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-4 h-4" />} Check Out
+                            </button>
+                          </div>
                         )}
 
-                        {(staff.todayAttendance?.status === "Absent" || (staff.todayAttendance?.status === "Present" && staff.todayAttendance?.checkOut)) && (
-                          <span className="w-full py-2.5 text-center text-xs font-bold tracking-wide text-white bg-primary rounded-xl shadow-md shadow-primary/20">
-                            Done for today
-                          </span>
+                        {(staff.todayAttendance?.status === "Absent" || (staff.todayAttendance?.status === "Present" && staff.todayAttendance?.checkOut) || staff.todayAttendance?.status === "Half Day") && (
+                          <div className="flex flex-col items-center gap-1 w-full pb-1">
+                            <span className={`text-xs font-bold flex items-center gap-1.5 ${
+                              staff.todayAttendance.status === "Present" ? "text-green-600" : 
+                              staff.todayAttendance.status === "Half Day" ? "text-orange-600" : 
+                              "text-red-600"
+                            }`}>
+                              {staff.todayAttendance.status === "Present" ? <Check className="w-3.5 h-3.5" /> : staff.todayAttendance.status === "Half Day" ? <Clock className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                              {staff.todayAttendance.status}
+                            </span>
+                            {(staff.todayAttendance.checkIn || staff.todayAttendance.checkOut) && (
+                              <span className="text-xs font-bold text-black tracking-wide flex items-center justify-center gap-2 mt-0.5">
+                                {staff.todayAttendance.checkIn && <span>IN: {staff.todayAttendance.checkIn}</span>}
+                                {staff.todayAttendance.checkIn && staff.todayAttendance.checkOut && <span>•</span>}
+                                {staff.todayAttendance.checkOut && <span>OUT: {staff.todayAttendance.checkOut}</span>}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -235,6 +263,13 @@ function StaffList() {
             </div>
           </div>
         </div>
+      )}
+      {/* Action PIN Verification Modal */}
+      {actionToConfirm && (
+        <ActionPinModal 
+          onSuccess={actionToConfirm} 
+          onCancel={() => setActionToConfirm(null)} 
+        />
       )}
     </div>
   );

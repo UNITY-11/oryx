@@ -15,9 +15,28 @@ export const CATEGORY_FILTERS: Array<ProductCategory | "All"> = [
 
 export const SORT_OPTIONS = [
   { value: "Default", label: "Sort: Default" },
-  { value: "StockHigh", label: "Stock: High to Low" },
-  { value: "StockLow", label: "Stock: Low to High" },
+  { value: "StockHigh", label: "Quantity: High → Low" },
+  { value: "StockLow", label: "Quantity: Low → High" },
 ];
+
+/** Stock level bands for quantity badges */
+export function getStockLevel(quantity: number): "low" | "medium" | "good" {
+  const qty = Number(quantity) || 0;
+  if (qty <= 10) return "low";
+  if (qty <= 30) return "medium";
+  return "good";
+}
+
+export function getStockBadgeClasses(quantity: number): string {
+  const level = getStockLevel(quantity);
+  if (level === "low") {
+    return "border-red-200 bg-red-500 text-white";
+  }
+  if (level === "medium") {
+    return "border-amber-200 bg-amber-400 text-amber-950";
+  }
+  return "border-green-200 bg-green-500 text-white";
+}
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,11 +49,17 @@ export function useProducts() {
   const [sortBy, setSortBy] = useState("Default");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  useEffect(() => {
+  const reload = () => {
+    setLoading(true);
+    setError(null);
     fetchProducts()
       .then(setProducts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reload();
   }, []);
 
   const filtered = products
@@ -42,12 +67,21 @@ export function useProducts() {
     .filter(
       (p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.brand ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
-      if (sortBy === "StockHigh") return b.quantity - a.quantity;
-      if (sortBy === "StockLow") return a.quantity - b.quantity;
-      return 0;
+      const qtyA = Number(a.quantity) || 0;
+      const qtyB = Number(b.quantity) || 0;
+      if (sortBy === "StockHigh") {
+        if (qtyB !== qtyA) return qtyB - qtyA;
+        return a.name.localeCompare(b.name);
+      }
+      if (sortBy === "StockLow") {
+        if (qtyA !== qtyB) return qtyA - qtyB;
+        return a.name.localeCompare(b.name);
+      }
+      return a.name.localeCompare(b.name);
     });
 
   const activeCount = products.filter((p) => p.status === "Active").length;
@@ -72,5 +106,6 @@ export function useProducts() {
     activeCount,
     lowStockCount,
     outOfStockCount,
+    reload,
   };
 }

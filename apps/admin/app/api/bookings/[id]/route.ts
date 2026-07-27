@@ -28,6 +28,28 @@ export async function GET(
   }
 }
 
+async function syncCustomerTotalSpent(phone: string | undefined | null) {
+  if (!phone) return;
+
+  const customer = await sanityClient.fetch(
+    `*[_type == "customer" && phone == $phone][0]{ _id }`,
+    { phone }
+  );
+  if (!customer?._id) return;
+
+  const completed = await sanityClient.fetch(
+    `*[_type == "booking" && phone == $phone && status == "Completed"]{ amount }`,
+    { phone }
+  );
+
+  const totalSpent = (completed as { amount?: number }[]).reduce(
+    (sum, b) => sum + (typeof b.amount === "number" ? b.amount : 0),
+    0
+  );
+
+  await sanityClient.patch(customer._id).set({ totalSpent }).commit();
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -37,11 +59,21 @@ export async function PATCH(
     const body = await request.json();
     const { id: _ignore, ...fields } = body;
 
+    const previous = await sanityClient.fetch(BOOKING_BY_ID_QUERY, { id });
+
     const patch: Record<string, unknown> = { ...fields };
     if (fields.services) patch.services = withKeys(fields.services);
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(BOOKING_BY_ID_QUERY, { id });
+
+    // Recalculate customer spend from Completed bookings only
+    const statusChanged =
+      fields.status !== undefined && fields.status !== previous?.status;
+    if (statusChanged || fields.amount !== undefined) {
+      await syncCustomerTotalSpent(updated?.phone || previous?.phone);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error(`Failed to update booking ${id}:`, error);

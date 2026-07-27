@@ -63,3 +63,22 @@ export const REVIEW_PROJECTION = `{
   avatar,
   createdAt
 }`;
+
+export const COMPANY_PROJECTION = `{
+  "id": _id,
+  name,
+  tagline,
+  email,
+  phone,
+  whatsapp,
+  website,
+  addressLine1,
+  addressLine2,
+  city,
+  state,
+  country,
+  postalCode,
+  mapUrl,
+  mapEmbedUrl,
+  updatedAt
+}`;

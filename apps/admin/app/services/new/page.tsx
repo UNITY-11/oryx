@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { createService, uploadServiceImage } from "@features/services/api";
-import { ServiceOption, ServiceCategory } from "@features/services/types";
+import { ServiceCategory, ServiceOption } from "@features/services/types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -141,12 +142,11 @@ export default function NewServicePage() {
     reader.readAsDataURL(file);
   };
 
-
-
   const optionsScrollRef = useRef<HTMLDivElement>(null);
 
   /* ServiceOptions */
-  const isOptionValid = (o: ServiceOption) => o.name.trim().length >= 5 && o.price > 0;
+  const isOptionValid = (o: ServiceOption) =>
+    o.name.trim().length >= 5 && o.price > 0;
 
   const addOption = () => {
     const current = service.options || [];
@@ -157,7 +157,8 @@ export default function NewServicePage() {
     ]);
     setTimeout(() => {
       if (optionsScrollRef.current) {
-        optionsScrollRef.current.scrollTop = optionsScrollRef.current.scrollHeight;
+        optionsScrollRef.current.scrollTop =
+          optionsScrollRef.current.scrollHeight;
       }
     }, 50);
   };
@@ -173,7 +174,9 @@ export default function NewServicePage() {
   ) =>
     update(
       "options",
-      (service.options || []).map((a) => (a.id === id ? { ...a, [field]: value } : a))
+      (service.options || []).map((a) =>
+        a.id === id ? { ...a, [field]: value } : a
+      )
     );
 
   const handleCreate = async () => {
@@ -199,22 +202,24 @@ export default function NewServicePage() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Main Top Header */}
-      <div className="py-4 shrink-0">
-        <header className="w-full h-20 bg-white/90 backdrop-blur-xl border border-primary/10 rounded-3xl shadow-sm flex items-center justify-between px-6 lg:px-10 z-30">
-          <div className="flex items-center space-x-4 flex-1">
+      <div className="shrink-0 py-2 sm:py-4">
+        <header className="border-primary/10 z-30 flex min-h-14 w-full flex-wrap items-center justify-between gap-2 rounded-2xl border bg-white/90 px-3 py-2 shadow-sm backdrop-blur-xl sm:min-h-20 sm:rounded-3xl sm:px-6 sm:py-0 lg:px-10">
+          <div className="flex min-w-0 flex-1 items-center space-x-2 sm:space-x-4">
+            <MobileMenuButton className="-ml-0" />
             <button
               onClick={() => router.push("/services")}
-              className="text-text-secondary hover:text-primary-dark hover:bg-primary/5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+              className="text-text-secondary hover:text-primary-dark hover:bg-primary/5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors sm:h-10 sm:w-10"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <div className="hidden md:flex">
-              <h1 className="font-serif text-2xl font-medium text-primary uppercase">New Service</h1>
+            <div className="min-w-0">
+              <h1 className="text-primary truncate font-serif text-base font-medium uppercase sm:text-xl md:text-2xl">
+                New Service
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3 shrink-0">
-
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-3">
             <button
               onClick={() =>
                 update(
@@ -222,7 +227,7 @@ export default function NewServicePage() {
                   service.status === "Active" ? "Inactive" : "Active"
                 )
               }
-              className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-2 text-xs font-semibold transition-colors sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm ${
                 service.status === "Active"
                   ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
                   : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -231,12 +236,12 @@ export default function NewServicePage() {
               {service.status === "Active" ? (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Active
+                  <span className="hidden sm:inline">Active</span>
                 </>
               ) : (
                 <>
                   <Ban className="h-4 w-4" />
-                  Inactive
+                  <span className="hidden sm:inline">Inactive</span>
                 </>
               )}
             </button>
@@ -252,7 +257,7 @@ export default function NewServicePage() {
                 service.options.some((o) => !isOptionValid(o)) ||
                 saving
               }
-              className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 sm:gap-2 sm:px-6 sm:py-2.5 sm:text-sm ${
                 saved
                   ? "bg-green-500 text-white"
                   : "bg-primary text-white hover:opacity-90"
@@ -265,24 +270,26 @@ export default function NewServicePage() {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? "Creating..." : saved ? "Created!" : "Create Service"}
+              <span className="hidden sm:inline">
+                {saving ? "Creating..." : saved ? "Created!" : "Create Service"}
+              </span>
             </button>
           </div>
         </header>
       </div>
 
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
         {/* Scrollable Content */}
-        <div className="scrollbar-hide flex-1 overflow-auto p-6 md:p-8">
+        <div className="scrollbar-hide flex-1 overflow-auto p-4 sm:p-6 md:p-8">
           {saveError && (
             <div className="mx-auto mb-6 flex max-w-5xl items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {saveError}
             </div>
           )}
-          <div className="mx-auto flex h-full max-w-5xl flex-col gap-8 lg:flex-row">
+          <div className="mx-auto flex h-full max-w-5xl flex-col gap-6 sm:gap-8 lg:flex-row">
             {/* LEFT — Image + Timing */}
-            <div className="flex shrink-0 flex-col gap-6 lg:w-72">
+            <div className="mx-auto flex w-full max-w-xs shrink-0 flex-col gap-6 sm:max-w-sm lg:mx-0 lg:w-72">
               {/* Image Frame 3:4 */}
               <div>
                 <label className="text-text-secondary mb-3 block text-sm font-medium">
@@ -331,14 +338,12 @@ export default function NewServicePage() {
                   Click to choose from gallery
                 </p>
               </div>
-
-
             </div>
 
             {/* RIGHT — Details */}
-            <div className="min-w-0 flex-1 flex flex-col gap-8 lg:h-full lg:max-h-[calc(100vh-250px)]">
+            <div className="flex min-w-0 flex-1 flex-col gap-8 lg:h-full lg:max-h-[calc(100vh-250px)]">
               {/* Name & Category */}
-              <div className="shrink-0 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
                     Service Name *
@@ -375,8 +380,6 @@ export default function NewServicePage() {
                 />
               </div>
 
-
-
               {/* ServiceOptions */}
               <div className="flex min-h-[300px] flex-1 flex-col">
                 <div className="mb-3">
@@ -384,70 +387,94 @@ export default function NewServicePage() {
                     Service Options
                   </label>
                 </div>
-                {(!service.options || service.options.length === 0) ? (
+                {!service.options || service.options.length === 0 ? (
                   <div className="border-primary/40 text-text-secondary flex flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center text-sm">
                     <p className="mb-3">No options added yet.</p>
                     <button
                       onClick={addOption}
                       className="bg-primary hover:bg-primary-dark rounded-full px-5 py-2 text-xs font-semibold text-white transition-colors"
                     >
-                      <Plus className="mr-1 inline-block h-3 w-3" /> Add Service Option
+                      <Plus className="mr-1 inline-block h-3 w-3" /> Add Service
+                      Option
                     </button>
                   </div>
                 ) : (
                   <div className="border-primary/20 flex flex-1 flex-col overflow-hidden rounded-2xl border">
-                    <div className="text-text-secondary border-primary/10 grid grid-cols-[1fr_100px_100px_44px] border-b bg-gray-50 px-4 py-3 text-[10px] tracking-wider uppercase">
+                    <div className="text-text-secondary border-primary/10 hidden grid-cols-[1fr_100px_100px_44px] border-b bg-gray-50 px-4 py-3 text-[10px] tracking-wider uppercase sm:grid">
                       <span>Name</span>
                       <span>Time (Min)</span>
                       <span>Price (QAR)</span>
                       <span />
                     </div>
-                    <div ref={optionsScrollRef} className="divide-primary/10 scrollbar-hide flex-1 divide-y overflow-y-auto">
+                    <div
+                      ref={optionsScrollRef}
+                      className="divide-primary/10 scrollbar-hide flex-1 divide-y overflow-y-auto"
+                    >
                       {(service.options || []).map((option) => (
                         <div
                           key={option.id}
-                          className="grid grid-cols-[1fr_100px_100px_44px] items-center gap-2 bg-white px-4 py-2"
+                          className="flex flex-col gap-2 bg-white p-3 sm:grid sm:grid-cols-[1fr_100px_100px_44px] sm:items-center sm:gap-2 sm:px-4 sm:py-2"
                         >
-                          <input
-                            value={option.name}
-                            onChange={(e) =>
-                              updateOption(option.id, "name", e.target.value)
-                            }
-                            placeholder="e.g. Hot Stone"
-                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm focus:outline-none"
-                          />
-                          <input
-                            type="number"
-                            value={option.duration || ""}
-                            onChange={(e) =>
-                              updateOption(
-                                option.id,
-                                "duration",
-                                e.target.value === "" ? undefined : Number(e.target.value)
-                              )
-                            }
-                            placeholder="-"
-                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                          />
-                          <input
-                            type="number"
-                            value={option.price === 0 ? "" : option.price}
-                            onChange={(e) =>
-                              updateOption(
-                                option.id,
-                                "price",
-                                Number(e.target.value)
-                              )
-                            }
-                            placeholder="0"
-                            className="text-primary-dark w-full bg-transparent px-2 py-2 text-sm font-medium focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                          />
-                          <button
-                            onClick={() => removeOption(option.id)}
-                            className="text-primary/40 hover:text-red-500 flex justify-center transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <div className="min-w-0">
+                            <label className="text-text-secondary mb-1 block text-[10px] font-semibold uppercase sm:hidden">
+                              Name
+                            </label>
+                            <input
+                              value={option.name}
+                              onChange={(e) =>
+                                updateOption(option.id, "name", e.target.value)
+                              }
+                              placeholder="e.g. Hot Stone"
+                              className="text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none sm:border-0 sm:px-2"
+                            />
+                          </div>
+                          <div className="grid grid-cols-[1fr_1fr_44px] gap-2 sm:contents">
+                            <div>
+                              <label className="text-text-secondary mb-1 block text-[10px] font-semibold uppercase sm:hidden">
+                                Time (Min)
+                              </label>
+                              <input
+                                type="number"
+                                value={option.duration || ""}
+                                onChange={(e) =>
+                                  updateOption(
+                                    option.id,
+                                    "duration",
+                                    e.target.value === ""
+                                      ? undefined
+                                      : Number(e.target.value)
+                                  )
+                                }
+                                placeholder="-"
+                                className="text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none sm:border-0 sm:px-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-text-secondary mb-1 block text-[10px] font-semibold uppercase sm:hidden">
+                                Price (QAR)
+                              </label>
+                              <input
+                                type="number"
+                                value={option.price === 0 ? "" : option.price}
+                                onChange={(e) =>
+                                  updateOption(
+                                    option.id,
+                                    "price",
+                                    Number(e.target.value)
+                                  )
+                                }
+                                placeholder="0"
+                                className="text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm font-medium focus:outline-none sm:border-0 sm:px-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              />
+                            </div>
+                            <button
+                              onClick={() => removeOption(option.id)}
+                              className="text-primary/40 mt-5 flex justify-center transition-colors hover:text-red-500 sm:mt-0"
+                              aria-label="Remove option"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -455,7 +482,9 @@ export default function NewServicePage() {
                       <button
                         onClick={addOption}
                         className="text-primary hover:bg-primary/5 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
-                        disabled={(service.options || []).some(o => !isOptionValid(o))}
+                        disabled={(service.options || []).some(
+                          (o) => !isOptionValid(o)
+                        )}
                       >
                         <Plus className="h-4 w-4" /> Add Option
                       </button>

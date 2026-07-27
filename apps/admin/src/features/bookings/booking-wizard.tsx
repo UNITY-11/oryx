@@ -249,19 +249,19 @@ export function BookingWizard({
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-white">
-      <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+    <div className="border-primary/10 flex h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[28px]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Left Side: Wizard Forms */}
-        <div className="scrollbar-hide relative w-full shrink-0 overflow-y-auto md:w-[60%]">
+        <div className="scrollbar-hide relative min-h-0 w-full flex-1 overflow-y-auto md:w-[60%] md:shrink-0">
           <form
             id="booking-form"
             onSubmit={handleSubmit}
-            className="space-y-8 p-6 md:p-8"
+            className="space-y-6 p-4 sm:space-y-8 sm:p-6 md:p-8"
           >
             {/* STEP 1: Services */}
             {step === 1 && (
               <div className="animate-in fade-in slide-in-from-right-4 flex h-full flex-col duration-300">
-                <div className="border-primary/5 sticky top-0 z-10 -mx-6 -mt-6 border-b bg-white px-6 pt-6 pb-4 md:-mx-8 md:-mt-8 md:px-8 md:pt-8">
+                <div className="border-primary/5 sticky top-0 z-10 -mx-4 -mt-4 border-b bg-white px-4 pt-4 pb-3 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6 sm:pb-4 md:-mx-8 md:-mt-8 md:px-8 md:pt-8">
                   <div className="relative">
                     <Search className="text-text-secondary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <input
@@ -413,9 +413,9 @@ export function BookingWizard({
             {step === 2 && (
               <div className="animate-in fade-in slide-in-from-right-4 space-y-4 duration-300">
                 {/* Calendar Container */}
-                <div className="bg-surface border-primary/10 overflow-hidden rounded-3xl border shadow-sm">
-                  <div className="bg-primary/5 border-primary/10 flex items-center justify-between border-b p-5">
-                    <h3 className="text-primary-dark font-serif text-lg font-semibold capitalize">
+                <div className="bg-surface border-primary/10 overflow-hidden rounded-2xl border shadow-sm sm:rounded-3xl">
+                  <div className="bg-primary/5 border-primary/10 flex items-center justify-between border-b p-3.5 sm:p-5">
+                    <h3 className="text-primary-dark font-serif text-base font-semibold capitalize sm:text-lg">
                       {currentMonth.toLocaleString("default", {
                         month: "long",
                         year: "numeric",
@@ -439,13 +439,13 @@ export function BookingWizard({
                       </button>
                     </div>
                   </div>
-                  <div className="p-5">
+                  <div className="p-3 sm:p-5">
                     {/* Calendar Grid */}
-                    <div className="mb-2 grid grid-cols-7 gap-1">
+                    <div className="mb-2 grid grid-cols-7 gap-0.5 sm:gap-1">
                       {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
                         <div
                           key={day}
-                          className="text-text-secondary py-1 text-center text-xs font-medium"
+                          className="text-text-secondary py-1 text-center text-[10px] font-medium sm:text-xs"
                         >
                           {day}
                         </div>
@@ -521,7 +521,7 @@ export function BookingWizard({
                     )}
                   </div>
                   {dynamicTimeSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-3 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
                       {dynamicTimeSlots.map((t) => {
                         const isBooked = dynamicBookedSlots.includes(t);
                         const isSelected = selectedTime === t;
@@ -531,7 +531,7 @@ export function BookingWizard({
                             key={t}
                             disabled={isBooked}
                             onClick={() => setSelectedTime(t)}
-                            className={`rounded-2xl border py-2 text-sm font-medium transition-colors ${
+                            className={`rounded-xl border py-2.5 text-xs font-medium transition-colors sm:rounded-2xl sm:py-2 sm:text-sm ${
                               isBooked
                                 ? "border-transparent bg-gray-100 text-gray-400 opacity-40"
                                 : isSelected
@@ -594,8 +594,8 @@ export function BookingWizard({
           </form>
         </div>
         {/* Right Side: Summary & Actions */}
-        <div className="border-primary/10 flex w-full shrink-0 flex-col border-t bg-gray-50 md:w-[40%] md:border-t-0 md:border-l">
-          <div className="flex min-h-0 flex-1 flex-col space-y-6 p-6">
+        <div className="border-primary/10 flex max-h-[42vh] w-full shrink-0 flex-col border-t bg-gray-50 md:max-h-none md:w-[40%] md:border-t-0 md:border-l">
+          <div className="scrollbar-hide hidden min-h-0 flex-1 flex-col space-y-6 overflow-y-auto p-6 md:flex">
             <h4 className="text-primary-dark shrink-0 font-serif text-lg">
               Summary
             </h4>
@@ -624,17 +624,23 @@ export function BookingWizard({
                         key={service.id}
                         className="border-primary/10 border-b pb-3 last:border-0 last:pb-0"
                       >
-                        <div className="text-primary-dark flex justify-between text-sm font-medium">
-                          <span>{service.name}</span>
-                          <span>QAR {service.price || 0}</span>
+                        <div className="text-primary-dark flex justify-between gap-2 text-sm font-medium">
+                          <span className="min-w-0 truncate">
+                            {service.name}
+                          </span>
+                          <span className="shrink-0">
+                            QAR {service.price || 0}
+                          </span>
                         </div>
                         {serviceAddons.map((option) => (
                           <div
                             key={option.id}
-                            className="text-text-secondary mt-1 flex justify-between pl-2 text-xs"
+                            className="text-text-secondary mt-1 flex justify-between gap-2 pl-2 text-xs"
                           >
-                            <span>+ {option.name}</span>
-                            <span>QAR {option.price}</span>
+                            <span className="min-w-0 truncate">
+                              + {option.name}
+                            </span>
+                            <span className="shrink-0">QAR {option.price}</span>
                           </div>
                         ))}
                       </div>
@@ -648,30 +654,38 @@ export function BookingWizard({
               </div>
             )}
           </div>
-          <div className="border-primary/10 border-t bg-white p-6 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
-            <div className="mb-4">
+          <div className="border-primary/10 mt-auto border-t bg-white p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] sm:p-6">
+            <div className="mb-3 sm:mb-4">
               {submitError ? (
-                <p className="flex items-center gap-1.5 rounded-lg bg-red-50 p-2 text-sm text-red-500">
-                  <AlertCircle className="h-4 w-4 shrink-0" /> {submitError}
+                <p className="flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-sm text-red-500">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{" "}
+                  {submitError}
                 </p>
               ) : (
-                <>
-                  <p className="text-text-secondary text-sm">
-                    Total Estimated Amount
+                <div className="flex items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-text-secondary text-xs sm:text-sm">
+                      Total Estimated Amount
+                    </p>
+                    <p className="text-primary-dark font-serif text-xl sm:text-2xl">
+                      QAR{" "}
+                      {basePrice +
+                        selectedServicesList.reduce((sum, service) => {
+                          return (
+                            sum +
+                            service.options
+                              .filter((a) => selectedOptions.includes(a.id))
+                              .reduce((s, a) => s + a.price, 0)
+                          );
+                        }, 0)}
+                    </p>
+                  </div>
+                  <p className="text-text-secondary shrink-0 text-xs md:hidden">
+                    {selectedServiceIds.length} service
+                    {selectedServiceIds.length === 1 ? "" : "s"}
+                    {selectedTime ? ` · ${selectedTime}` : ""}
                   </p>
-                  <p className="text-primary-dark font-serif text-2xl">
-                    QAR{" "}
-                    {basePrice +
-                      selectedServicesList.reduce((sum, service) => {
-                        return (
-                          sum +
-                          service.options
-                            .filter((a) => selectedOptions.includes(a.id))
-                            .reduce((s, a) => s + a.price, 0)
-                        );
-                      }, 0)}
-                  </p>
-                </>
+                </div>
               )}
             </div>
             {step < 3 ? (
@@ -685,7 +699,7 @@ export function BookingWizard({
                   setSubmitError(null);
                   setStep(step + 1);
                 }}
-                className="flex w-full items-center justify-center space-x-2 rounded-full bg-[#e8baa0] px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 w-full items-center justify-center space-x-2 rounded-full bg-[#e8baa0] px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 <span>Next Step</span>
                 <ChevronRight className="h-5 w-5" />
@@ -699,7 +713,7 @@ export function BookingWizard({
                   customerName.trim().length < 4 ||
                   phone.trim().length < 8
                 }
-                className="flex w-full items-center justify-center space-x-2 rounded-full bg-[#e8baa0] px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 w-full items-center justify-center space-x-2 rounded-full bg-[#e8baa0] px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 {submitting ? (
                   <Loader2 className="h-5 w-5 animate-spin" />

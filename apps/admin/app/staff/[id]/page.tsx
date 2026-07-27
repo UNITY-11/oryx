@@ -1,57 +1,142 @@
 "use client";
 
-import { useState, use } from "react";
-import { useStaffDetail, addAttendance, updateStaff } from "@/features/staff/api/use-staff";
-import { fetchAttendanceReason } from "@/features/staff/api";
-import { ActionPinModal } from "@/shared/ui/action-pin-modal";
-import { ArrowLeft, Loader2, Calendar, Clock, CheckCircle2, UserCircle2, Plus, ChevronLeft, ChevronRight, Edit2, Save, X, Trash2 } from "lucide-react";
+import { use, useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { fetchAttendanceReason } from "@/features/staff/api";
+import {
+  addAttendance,
+  updateStaff,
+  useStaffDetail,
+} from "@/features/staff/api/use-staff";
 import { AttendanceRecord } from "@/features/staff/types";
+import {
+  hasAttendanceErrors,
+  hasStaffFieldErrors,
+  validateAttendanceLog,
+  validateStaff,
+  type StaffFieldErrors,
+} from "@/features/staff/validation";
+import { ActionPinModal } from "@/shared/ui/action-pin-modal";
+import { MobileMenuButton } from "@/shared/ui/sidebar-context";
+import { Toast, type ToastState } from "@/shared/ui/toast";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Edit2,
+  Loader2,
+  UserCircle2,
+} from "lucide-react";
 
-export default function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const { id } = resolvedParams;
+export default function StaffDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
-  
-  // Calendar State
+
   const [currentDate, setCurrentDate] = useState(new Date());
-  const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-  
-  const { staff, attendance, loading, setAttendance, setStaff } = useStaffDetail(id, monthString);
+  const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
 
-  const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const { staff, attendance, loading, error, reload, setAttendance, setStaff } =
+    useStaffDetail(id, monthString);
 
-  // New log modal state
+  const getDaysInMonth = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const getFirstDayOfMonth = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  const prevMonth = () =>
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+    );
+  const nextMonth = () =>
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    );
+  const monthName = currentDate.toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  });
+
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
-  const [newAttendance, setNewAttendance] = useState<{ date: string; checkIn: string; checkOut: string; status: "Present" | "Absent" | "Half Day"; reason: string }>({ date: "", checkIn: "", checkOut: "", status: "Present", reason: "" });
-  
-  // Edit Staff State
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", role: "", email: "", phone: "", baseSalary: 0, status: "Active" as any });
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingAttendance, setSavingAttendance] = useState(false);
+  const [attendanceErrors, setAttendanceErrors] = useState<
+    Partial<
+      Record<"date" | "checkIn" | "checkOut" | "reason" | "status", string>
+    >
+  >({});
+  const [newAttendance, setNewAttendance] = useState<{
+    date: string;
+    checkIn: string;
+    checkOut: string;
+    status: "Present" | "Absent" | "Half Day";
+    reason: string;
+  }>({
+    date: "",
+    checkIn: "",
+    checkOut: "",
+    status: "Present",
+    reason: "",
+  });
 
-  const [actionToConfirm, setActionToConfirm] = useState<(() => void) | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    role: "",
+    email: "",
+    phone: "",
+    baseSalary: 0,
+    status: "Active" as "Active" | "Inactive",
+    joinedDate: "",
+  });
+  const [fieldErrors, setFieldErrors] = useState<StaffFieldErrors>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [actionToConfirm, setActionToConfirm] = useState<(() => void) | null>(
+    null
+  );
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
 
   if (loading) {
     return (
-      <div className="flex h-full flex-col space-y-6">
-        <div className="border-primary/10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-[32px] border bg-white shadow-sm">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+      <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+        <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+        <p className="text-text-secondary text-sm">Loading staff details...</p>
       </div>
     );
   }
 
-  if (!staff) {
+  if (error || !staff) {
     return (
-      <div className="flex h-full flex-col space-y-6">
-        <div className="border-primary/10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-[32px] border bg-white shadow-sm text-gray-500">
-          Staff not found
+      <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+        <AlertCircle className="mb-3 h-8 w-8 text-red-500" />
+        <p className="text-primary-dark mb-1 text-lg font-semibold">
+          Staff unavailable
+        </p>
+        <p className="text-text-secondary mb-5 max-w-sm text-sm">
+          {error ?? "This staff member could not be found."}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={reload}
+            className="border-primary text-primary hover:bg-primary/5 rounded-full border px-5 py-2.5 text-sm font-semibold"
+          >
+            Try again
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/staff")}
+            className="bg-primary rounded-full px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Back to Staff
+          </button>
         </div>
       </div>
     );
@@ -65,20 +150,40 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
       phone: staff.phone || "",
       baseSalary: staff.baseSalary,
       status: staff.status,
+      joinedDate: staff.joinedDate,
     });
+    setFieldErrors({});
     setIsEditing(true);
   };
 
   const handleUpdateStaff = async () => {
+    const errors = validateStaff(editForm);
+    if (hasStaffFieldErrors(errors)) {
+      setFieldErrors(errors);
+      setToast({ type: "error", message: "Please fix the highlighted fields" });
+      return;
+    }
+
     setActionToConfirm(() => async () => {
       setActionToConfirm(null);
       setIsSaving(true);
       try {
-        const updated = await updateStaff(staff.id, editForm);
+        const updated = await updateStaff(staff.id, {
+          ...editForm,
+          name: editForm.name.trim(),
+          role: editForm.role.trim(),
+          phone: editForm.phone.trim(),
+          email: editForm.email.trim() || undefined,
+        });
         setStaff(updated);
         setIsEditing(false);
+        setToast({ type: "success", message: "Staff details updated" });
       } catch (err) {
-        console.error(err);
+        setToast({
+          type: "error",
+          message:
+            err instanceof Error ? err.message : "Failed to update staff",
+        });
       } finally {
         setIsSaving(false);
       }
@@ -86,409 +191,762 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleLogAttendance = async () => {
-    if (!newAttendance.date) return;
-    if (newAttendance.status !== "Absent" && !newAttendance.checkIn) return;
-    
-    setActionToConfirm(() => async () => {
-      setActionToConfirm(null);
-      try {
-        const added = await addAttendance({
-          staffId: staff.id,
-          date: newAttendance.date,
-          checkIn: newAttendance.status !== "Absent" ? newAttendance.checkIn : undefined,
-          checkOut: newAttendance.status !== "Absent" ? newAttendance.checkOut : undefined,
-          status: newAttendance.status,
-          reason: newAttendance.status === "Absent" ? newAttendance.reason : undefined,
-        });
-        setAttendance((prev) => {
-          const filtered = prev.filter((a) => a.date !== newAttendance.date);
-          const newRecord = { 
-            ...added, 
-            checkIn: newAttendance.status !== "Absent" ? added.checkIn : undefined,
-            checkOut: newAttendance.status !== "Absent" ? added.checkOut : undefined 
-          };
-          return [newRecord, ...filtered];
-        });
-        setShowAttendanceModal(false);
-      } catch (err) {
-        console.error(err);
-      }
-    });
+    const errors = validateAttendanceLog(newAttendance);
+    if (hasAttendanceErrors(errors)) {
+      setAttendanceErrors(errors);
+      setToast({ type: "error", message: "Please fix attendance fields" });
+      return;
+    }
+
+    setSavingAttendance(true);
+    try {
+      const added = await addAttendance({
+        staffId: staff.id,
+        date: newAttendance.date,
+        checkIn:
+          newAttendance.status !== "Absent" ? newAttendance.checkIn : undefined,
+        checkOut:
+          newAttendance.status !== "Absent"
+            ? newAttendance.checkOut
+            : undefined,
+        status: newAttendance.status,
+        reason:
+          newAttendance.status === "Absent"
+            ? newAttendance.reason.trim()
+            : undefined,
+      });
+      setAttendance((prev) => {
+        const filtered = prev.filter((a) => a.date !== newAttendance.date);
+        const newRecord = {
+          ...added,
+          checkIn:
+            newAttendance.status !== "Absent" ? added.checkIn : undefined,
+          checkOut:
+            newAttendance.status !== "Absent" ? added.checkOut : undefined,
+        };
+        return [newRecord, ...filtered];
+      });
+      setShowAttendanceModal(false);
+      setAttendanceErrors({});
+      setToast({ type: "success", message: "Attendance saved" });
+    } catch (err) {
+      setToast({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Failed to save attendance",
+      });
+    } finally {
+      setSavingAttendance(false);
+    }
   };
 
   const handleDeleteAttendance = async () => {
     setActionToConfirm(() => async () => {
       setActionToConfirm(null);
+      setSavingAttendance(true);
       try {
-        const res = await fetch(`/api/staff/${staff.id}/attendance?date=${newAttendance.date}`, {
-          method: "DELETE",
-        });
+        const res = await fetch(
+          `/api/staff/${staff.id}/attendance?date=${newAttendance.date}`,
+          { method: "DELETE" }
+        );
         if (!res.ok) throw new Error("Failed to delete attendance");
-        
-        setAttendance(prev => prev.filter(a => a.date !== newAttendance.date));
+
+        setAttendance((prev) =>
+          prev.filter((a) => a.date !== newAttendance.date)
+        );
         setShowAttendanceModal(false);
+        setToast({ type: "success", message: "Attendance removed" });
       } catch (err) {
-        console.error("Error deleting attendance", err);
+        setToast({
+          type: "error",
+          message:
+            err instanceof Error ? err.message : "Failed to delete attendance",
+        });
+      } finally {
+        setSavingAttendance(false);
       }
     });
   };
 
-  const handleDayClick = async (dateStr: string, record: AttendanceRecord | undefined) => {
+  const handleDayClick = async (
+    dateStr: string,
+    record: AttendanceRecord | undefined
+  ) => {
     const todayStr = new Date().toISOString().split("T")[0] as string;
     const isFuture = dateStr > todayStr;
-    
+    setAttendanceErrors({});
+
     if (record) {
       setNewAttendance({
         date: dateStr,
         checkIn: record.checkIn || "",
         checkOut: record.checkOut || "",
-        status: isFuture ? "Absent" : (record.status as "Present" | "Absent" | "Half Day"),
-        reason: "", // Will fetch below if absent
+        status: isFuture
+          ? "Absent"
+          : (record.status as "Present" | "Absent" | "Half Day"),
+        reason: "",
       });
       setShowAttendanceModal(true);
 
       if (record.status === "Absent") {
         try {
           const { reason } = await fetchAttendanceReason(record.id);
-          setNewAttendance(prev => prev.date === dateStr ? { ...prev, reason: reason || "" } : prev);
+          setNewAttendance((prev) =>
+            prev.date === dateStr ? { ...prev, reason: reason || "" } : prev
+          );
         } catch (err) {
           console.error("Failed to fetch reason", err);
         }
       }
     } else {
-      setNewAttendance({ 
-        date: dateStr, 
-        checkIn: "", 
-        checkOut: "", 
-        status: isFuture ? "Absent" : "Present", 
-        reason: "" 
+      setNewAttendance({
+        date: dateStr,
+        checkIn: "",
+        checkOut: "",
+        status: isFuture ? "Absent" : "Present",
+        reason: "",
       });
       setShowAttendanceModal(true);
     }
   };
 
-  // Analytics Calculation
-  const totalPresents = attendance.filter(a => a.status === "Present").length;
-  const totalAbsents = attendance.filter(a => a.status === "Absent").length;
-  const totalHours = attendance.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
+  const totalPresents = attendance.filter((a) => a.status === "Present").length;
+  const totalAbsents = attendance.filter((a) => a.status === "Absent").length;
+  const totalHours = attendance.reduce(
+    (acc, curr) => acc + (curr.totalHours || 0),
+    0
+  );
+
+  const joinedDate = new Date(staff.joinedDate);
+  const canGoPrev =
+    currentDate.getFullYear() > joinedDate.getFullYear() ||
+    (currentDate.getFullYear() === joinedDate.getFullYear() &&
+      currentDate.getMonth() > joinedDate.getMonth());
+  const canGoNext = !(
+    currentDate.getMonth() === new Date().getMonth() &&
+    currentDate.getFullYear() === new Date().getFullYear()
+  );
 
   return (
-    <div className="flex h-full flex-col pt-2 lg:pt-4">
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
-        
-        {/* Header Bar within the rounded box */}
-        <div className="border-primary/10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
-          <div className="flex items-center gap-4 w-full">
-            <Link
-              href="/staff"
-              className="bg-primary/5 border border-primary/10 hover:bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full transition-colors shrink-0"
-            >
-              <ArrowLeft className="h-5 w-5 text-primary" />
-            </Link>
-            <h1 className="text-2xl font-bold font-serif text-primary-dark">Staff Dashboard</h1>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden pt-2 sm:pt-4">
+      <Toast toast={toast} onClose={closeToast} />
+
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
+        <div className="border-primary/10 flex shrink-0 items-center gap-2 border-b p-3 sm:gap-3 sm:p-4 md:p-6">
+          <MobileMenuButton className="-ml-0" />
+          <Link
+            href="/staff"
+            className="bg-primary/5 border-primary/10 hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="text-primary h-5 w-5" />
+          </Link>
+          <div className="min-w-0">
+            <h1 className="text-primary-dark truncate font-serif text-lg font-bold sm:text-2xl">
+              {staff.name}
+            </h1>
+            <p className="text-text-secondary truncate text-[11px] sm:text-sm">
+              {staff.role}
+            </p>
           </div>
         </div>
 
-        {/* Main Content Split */}
-        <div className="flex-1 p-4 md:p-6 flex flex-col min-h-0 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0 h-full">
-            
-            {/* Left Column: Staff Profile */}
-            <div className="col-span-1 flex flex-col min-h-0 lg:border-r lg:border-primary/10 lg:pr-8">
-              <div className="flex flex-col gap-6 sticky top-0">
-                <div className="flex flex-col items-center text-center gap-4">
-                  <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-primary/5 border-4 border-white shadow-sm overflow-hidden">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+          <div className="grid min-h-0 grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+            {/* Profile */}
+            <div className="border-primary/10 col-span-1 flex flex-col lg:border-r lg:pr-8">
+              <div className="flex flex-col gap-5 sm:gap-6">
+                <div className="flex flex-col items-center gap-3 text-center sm:gap-4">
+                  <div className="border-primary/5 bg-primary/5 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white shadow-sm sm:h-24 sm:w-24">
                     {staff.imageUrl ? (
-                      <img src={staff.imageUrl} alt={staff.name} className="h-full w-full object-cover" />
+                      <img
+                        src={staff.imageUrl}
+                        alt={staff.name}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
-                      <UserCircle2 className="h-12 w-12 text-primary/40" />
+                      <UserCircle2 className="text-primary/40 h-12 w-12" />
                     )}
                   </div>
-                  
+
                   <div>
-                    <h2 className="text-xl font-bold text-primary-dark">{staff.name}</h2>
-                    <p className="text-sm font-semibold text-primary">{staff.role}</p>
+                    <h2 className="text-primary-dark text-lg font-bold sm:text-xl">
+                      {staff.name}
+                    </h2>
+                    <p className="text-primary text-sm font-semibold">
+                      {staff.role}
+                    </p>
                     <div className="mt-3">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
-                        staff.status === "Active" ? "bg-green-100 text-green-700" : "bg-primary/10 text-primary-dark"
-                      }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold tracking-wider uppercase ${
+                          staff.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-primary/10 text-primary-dark"
+                        }`}
+                      >
                         {staff.status}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                  <div className="flex flex-col gap-4 mt-2">
-                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-                      <p className="text-[10px] font-bold text-primary/70 uppercase tracking-wider mb-1">Email</p>
-                      <p className="text-sm font-semibold text-primary-dark truncate">{staff.email || "—"}</p>
-                    </div>
-                    <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-                      <p className="text-[10px] font-bold text-primary/70 uppercase tracking-wider mb-1">Phone</p>
-                      <p className="text-sm font-semibold text-primary-dark">{staff.phone || "—"}</p>
-                    </div>
-                    <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20">
-                      <p className="text-[10px] font-bold text-primary/80 uppercase tracking-wider mb-1">Monthly Salary</p>
-                      <p className="text-lg font-bold text-primary">QAR {staff.baseSalary}</p>
-                    </div>
-                    
-                    <button 
-                      onClick={handleEditClick}
-                      className="mt-4 w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-md"
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  <div className="border-primary/10 bg-primary/5 rounded-2xl border p-3.5 sm:p-4">
+                    <p className="text-primary/70 mb-1 text-[10px] font-bold tracking-wider uppercase">
+                      Email
+                    </p>
+                    <p className="text-primary-dark truncate text-sm font-semibold">
+                      {staff.email || "—"}
+                    </p>
+                  </div>
+                  <div className="border-primary/10 bg-primary/5 rounded-2xl border p-3.5 sm:p-4">
+                    <p className="text-primary/70 mb-1 text-[10px] font-bold tracking-wider uppercase">
+                      Phone
+                    </p>
+                    <p className="text-primary-dark text-sm font-semibold">
+                      {staff.phone || "—"}
+                    </p>
+                  </div>
+                  <div className="border-primary/20 bg-primary/10 rounded-2xl border p-3.5 sm:p-4">
+                    <p className="text-primary/80 mb-1 text-[10px] font-bold tracking-wider uppercase">
+                      Monthly Salary
+                    </p>
+                    <p className="text-primary text-lg font-bold">
+                      QAR {staff.baseSalary}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleEditClick}
+                    className="bg-primary hover:bg-primary-dark mt-1 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white shadow-md transition-colors"
+                  >
+                    <Edit2 className="h-4 w-4" /> Edit Details
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Attendance */}
+            <div className="col-span-1 flex min-h-0 flex-col gap-4 sm:gap-6 lg:col-span-2">
+              <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                {[
+                  {
+                    icon: CheckCircle2,
+                    value: totalPresents,
+                    label: "Total Presents",
+                    iconClass: "bg-green-100 text-green-600",
+                  },
+                  {
+                    icon: Calendar,
+                    value: totalAbsents,
+                    label: "Total Absents",
+                    iconClass: "bg-orange-100 text-orange-600",
+                  },
+                  {
+                    icon: Clock,
+                    value: `${totalHours}h`,
+                    label: "Total Work Hours",
+                    iconClass: "bg-primary/10 text-primary",
+                  },
+                ].map(({ icon: Icon, value, label, iconClass }) => (
+                  <div
+                    key={label}
+                    className="border-primary/10 bg-primary/5 flex items-center gap-3 rounded-2xl border p-3.5 text-left sm:gap-4 sm:p-4"
+                  >
+                    <div
+                      className={`shrink-0 rounded-full p-2.5 sm:p-3 ${iconClass}`}
                     >
-                      <Edit2 className="w-4 h-4" /> Edit Details
-                    </button>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-primary-dark text-xl leading-none font-bold sm:text-2xl">
+                        {value}
+                      </h3>
+                      <p className="text-primary/70 mt-1 text-[10px] font-bold tracking-wider uppercase">
+                        {label}
+                      </p>
+                    </div>
                   </div>
-              </div>
-            </div>
-            
-            {/* Right Column: Attendance */}
-            <div className="col-span-1 lg:col-span-2 flex flex-col min-h-0 gap-6">
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex items-center gap-4 text-left">
-                  <div className="bg-green-100 text-green-600 p-3 rounded-full shrink-0">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-primary-dark font-sans leading-none">{totalPresents}</h3>
-                    <p className="text-[10px] font-bold text-primary/70 uppercase tracking-wider mt-1">Total Presents</p>
-                  </div>
-                </div>
-                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex items-center gap-4 text-left">
-                  <div className="bg-orange-100 text-orange-600 p-3 rounded-full shrink-0">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-primary-dark font-sans leading-none">{totalAbsents}</h3>
-                    <p className="text-[10px] font-bold text-primary/70 uppercase tracking-wider mt-1">Total Absents</p>
-                  </div>
-                </div>
-                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex items-center gap-4 text-left">
-                  <div className="bg-primary/10 text-primary p-3 rounded-full shrink-0">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-primary-dark font-sans leading-none">{totalHours}h</h3>
-                    <p className="text-[10px] font-bold text-primary/70 uppercase tracking-wider mt-1">Total Work Hours</p>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              <div className="flex flex-col flex-1 min-h-0 overflow-hidden pt-2">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 shrink-0">
-                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between">
-                    <h3 className="font-bold text-primary-dark text-lg">Attendance</h3>
-                    <div className="flex items-center bg-primary/5 rounded-full border border-primary/10 p-1">
-                      <button 
-                        onClick={prevMonth} 
-                        disabled={currentDate.getFullYear() < new Date(staff.joinedDate).getFullYear() || (currentDate.getFullYear() === new Date(staff.joinedDate).getFullYear() && currentDate.getMonth() <= new Date(staff.joinedDate).getMonth())}
-                        className="p-1 hover:bg-white rounded-full transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-1 sm:pt-2">
+                <div className="mb-4 flex shrink-0 flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <div className="flex w-full items-center justify-between gap-3 sm:w-auto">
+                    <h3 className="text-primary-dark text-base font-bold sm:text-lg">
+                      Attendance
+                    </h3>
+                    <div className="border-primary/10 bg-primary/5 flex items-center rounded-full border p-1">
+                      <button
+                        type="button"
+                        onClick={prevMonth}
+                        disabled={!canGoPrev}
+                        className="rounded-full p-1 transition-colors hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent"
                       >
-                        <ChevronLeft className="w-5 h-5 text-primary/70" />
+                        <ChevronLeft className="text-primary/70 h-5 w-5" />
                       </button>
-                      <span className="px-4 text-sm font-semibold text-primary min-w-[130px] text-center">{monthName}</span>
-                      <button 
-                        onClick={nextMonth} 
-                        disabled={currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear()}
-                        className="p-1 hover:bg-white rounded-full transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                      <span className="text-primary min-w-[120px] px-3 text-center text-xs font-semibold sm:min-w-[130px] sm:px-4 sm:text-sm">
+                        {monthName}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={nextMonth}
+                        disabled={!canGoNext}
+                        className="rounded-full p-1 transition-colors hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent"
                       >
-                        <ChevronRight className="w-5 h-5 text-primary/70" />
+                        <ChevronRight className="text-primary/70 h-5 w-5" />
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                    <div className="hidden sm:flex items-center gap-3 text-xs font-semibold mr-2">
-                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-400"></span> Present</span>
-                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-orange-400"></span> Half Day</span>
-                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Absent</span>
-                    </div>
+                  <div className="hidden items-center gap-3 text-xs font-semibold sm:flex">
+                    <span className="flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-400" />{" "}
+                      Present
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-orange-400" />{" "}
+                      Half Day
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-500" />{" "}
+                      Absent
+                    </span>
                   </div>
                 </div>
-                
-                <div className="grid grid-cols-7 gap-2 mb-2 shrink-0">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="text-center text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">{day}</div>
+
+                <div className="mb-2 grid shrink-0 grid-cols-7 gap-1 sm:gap-2">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                    <div
+                      key={day}
+                      className="text-center text-[10px] font-bold tracking-wider text-gray-500 uppercase sm:text-xs"
+                    >
+                      {day}
+                    </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-2 flex-1 min-h-0 auto-rows-fr pb-4">
-                  {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
-                    <div key={`empty-${i}`} className="bg-transparent rounded-xl"></div>
-                  ))}
-                  {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-                    const d = i + 1;
-                    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const record = attendance.find(a => a.date === dateStr);
-                    const isToday = dateStr === new Date().toISOString().split("T")[0];
-                    
-                    let bgColor = "bg-primary/5 text-primary-dark border-primary/10 hover:border-primary/40 hover:bg-primary/10";
-                    if (record?.status === "Present") bgColor = "bg-green-500 text-white border-green-600 shadow-sm hover:bg-green-600";
-                    if (record?.status === "Absent") bgColor = "bg-red-500 text-white border-red-600 shadow-sm hover:bg-red-600";
-                    if (record?.status === "Half Day") bgColor = "bg-orange-500 text-white border-orange-600 shadow-sm hover:bg-orange-600";
+                <div className="grid grid-cols-7 gap-1 pb-4 sm:gap-2">
+                  {Array.from({ length: getFirstDayOfMonth(currentDate) }).map(
+                    (_, i) => (
+                      <div
+                        key={`empty-${i}`}
+                        className="rounded-xl bg-transparent"
+                      />
+                    )
+                  )}
+                  {Array.from({ length: getDaysInMonth(currentDate) }).map(
+                    (_, i) => {
+                      const d = i + 1;
+                      const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                      const record = attendance.find((a) => a.date === dateStr);
+                      const isToday =
+                        dateStr === new Date().toISOString().split("T")[0];
 
-                    return (
-                      <div 
-                        key={d} 
-                        onClick={() => handleDayClick(dateStr, record)}
-                        className={`p-1 sm:p-2 border rounded-xl flex flex-col transition-colors min-h-[50px] overflow-hidden ${bgColor} ${isToday ? 'ring-2 ring-primary ring-offset-2' : ''} cursor-pointer`}
-                      >
-                        <span className={`text-xs sm:text-sm font-bold ${record ? 'text-white' : 'text-primary'} font-sans`}>{d}</span>
-                        {record && (
-                          <div className={`mt-auto flex flex-col gap-0 text-[9px] sm:text-[10px] font-bold tracking-tight leading-tight ${record.status === "Present" || record.status === "Half Day" || record.status === "Absent" ? "text-white/90" : "text-primary-dark"} font-sans`}>
-                            {record.status !== "Absent" && record.checkIn && <span className="truncate">IN: {record.checkIn}</span>}
-                            {record.status !== "Absent" && record.checkOut && <span className="truncate">OUT: {record.checkOut}</span>}
-                            {record.status === "Absent" && <span className="truncate text-white text-[9px] underline underline-offset-1 mt-0.5 opacity-80">View Details</span>}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      let bgColor =
+                        "bg-primary/5 text-primary-dark border-primary/10 hover:border-primary/40 hover:bg-primary/10";
+                      if (record?.status === "Present")
+                        bgColor =
+                          "bg-green-500 text-white border-green-600 shadow-sm hover:bg-green-600";
+                      if (record?.status === "Absent")
+                        bgColor =
+                          "bg-red-500 text-white border-red-600 shadow-sm hover:bg-red-600";
+                      if (record?.status === "Half Day")
+                        bgColor =
+                          "bg-orange-500 text-white border-orange-600 shadow-sm hover:bg-orange-600";
+
+                      return (
+                        <button
+                          type="button"
+                          key={d}
+                          onClick={() => handleDayClick(dateStr, record)}
+                          className={`flex min-h-[44px] flex-col overflow-hidden rounded-lg border p-1 transition-colors sm:min-h-[50px] sm:rounded-xl sm:p-2 ${bgColor} ${isToday ? "ring-primary ring-2 ring-offset-1 sm:ring-offset-2" : ""}`}
+                        >
+                          <span
+                            className={`text-left text-xs font-bold sm:text-sm ${record ? "text-white" : "text-primary"}`}
+                          >
+                            {d}
+                          </span>
+                          {record && (
+                            <div
+                              className={`mt-auto flex flex-col gap-0 text-[8px] leading-tight font-bold tracking-tight sm:text-[10px] ${
+                                record.status === "Present" ||
+                                record.status === "Half Day" ||
+                                record.status === "Absent"
+                                  ? "text-white/90"
+                                  : "text-primary-dark"
+                              }`}
+                            >
+                              {record.status !== "Absent" && record.checkIn && (
+                                <span className="truncate">
+                                  IN: {record.checkIn}
+                                </span>
+                              )}
+                              {record.status !== "Absent" &&
+                                record.checkOut && (
+                                  <span className="truncate">
+                                    OUT: {record.checkOut}
+                                  </span>
+                                )}
+                              {record.status === "Absent" && (
+                                <span className="mt-0.5 truncate text-[8px] text-white underline underline-offset-1 opacity-80 sm:text-[9px]">
+                                  Details
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    }
+                  )}
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* Log Attendance Modal */}
       {showAttendanceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-xl">
-            <h2 className="text-xl font-bold font-serif mb-4">Log Attendance for {newAttendance.date}</h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="w-full max-w-md rounded-t-[28px] bg-white p-5 shadow-xl sm:rounded-3xl sm:p-6">
+            <h2 className="mb-4 font-serif text-lg font-bold sm:text-xl">
+              Log Attendance · {newAttendance.date}
+            </h2>
             <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block">Status</label>
-                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
-                  {(["Present", "Half Day", "Absent"] as const).map((status) => {
-                    const isFuture = newAttendance.date > (new Date().toISOString().split("T")[0] as string);
-                    if (isFuture && status !== "Absent") return null;
+                <label className="mb-2 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                  Status
+                </label>
+                <div className="flex rounded-xl border border-gray-100 bg-gray-50 p-1">
+                  {(["Present", "Half Day", "Absent"] as const).map(
+                    (status) => {
+                      const isFuture =
+                        newAttendance.date >
+                        (new Date().toISOString().split("T")[0] as string);
+                      if (isFuture && status !== "Absent") return null;
 
-                    return (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => setNewAttendance({...newAttendance, status})}
-                        className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                          newAttendance.status === status
-                            ? status === "Present" ? "bg-green-500 text-white shadow-md"
-                            : status === "Half Day" ? "bg-orange-500 text-white shadow-md"
-                            : "bg-red-500 text-white shadow-md"
-                            : "text-gray-500 hover:text-gray-900 hover:bg-gray-100/50"
-                        }`}
-                      >
-                        <div className={`w-1.5 h-1.5 rounded-full ${newAttendance.status === status ? 'bg-white' : status === 'Present' ? 'bg-green-400' : status === 'Half Day' ? 'bg-orange-400' : 'bg-red-400'}`}></div>
-                        {status}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => {
+                            setNewAttendance({ ...newAttendance, status });
+                            setAttendanceErrors({});
+                          }}
+                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-[11px] font-bold transition-all sm:px-3 sm:text-xs ${
+                            newAttendance.status === status
+                              ? status === "Present"
+                                ? "bg-green-500 text-white shadow-md"
+                                : status === "Half Day"
+                                  ? "bg-orange-500 text-white shadow-md"
+                                  : "bg-red-500 text-white shadow-md"
+                              : "text-gray-500 hover:bg-gray-100/50 hover:text-gray-900"
+                          }`}
+                        >
+                          {status}
+                        </button>
+                      );
+                    }
+                  )}
                 </div>
               </div>
-              
+
               {newAttendance.status !== "Absent" && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Check In</label>
-                    <input type="time" value={newAttendance.checkIn} onChange={e => setNewAttendance({...newAttendance, checkIn: e.target.value})} className="w-full border rounded-xl p-3 shadow-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-sm font-semibold text-gray-900 bg-white" />
+                    <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                      Check In *
+                    </label>
+                    <input
+                      type="time"
+                      value={newAttendance.checkIn}
+                      onChange={(e) => {
+                        setNewAttendance({
+                          ...newAttendance,
+                          checkIn: e.target.value,
+                        });
+                        setAttendanceErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.checkIn;
+                          return next;
+                        });
+                      }}
+                      className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-white p-3 text-sm font-semibold text-gray-900 shadow-sm transition-colors outline-none focus:ring-1 ${attendanceErrors.checkIn ? "border-red-400" : ""}`}
+                    />
+                    {attendanceErrors.checkIn && (
+                      <p className="mt-1 text-xs font-medium text-red-500">
+                        {attendanceErrors.checkIn}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Check Out</label>
-                    <input type="time" value={newAttendance.checkOut} onChange={e => setNewAttendance({...newAttendance, checkOut: e.target.value})} className="w-full border rounded-xl p-3 shadow-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-sm font-semibold text-gray-900 bg-white" />
+                    <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                      Check Out
+                    </label>
+                    <input
+                      type="time"
+                      value={newAttendance.checkOut}
+                      onChange={(e) =>
+                        setNewAttendance({
+                          ...newAttendance,
+                          checkOut: e.target.value,
+                        })
+                      }
+                      className="focus:border-primary focus:ring-primary w-full rounded-xl border bg-white p-3 text-sm font-semibold text-gray-900 shadow-sm transition-colors outline-none focus:ring-1"
+                    />
                   </div>
                 </div>
               )}
 
               {newAttendance.status === "Absent" && (
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Reason for Absence</label>
-                  <input type="text" placeholder="Optional" value={newAttendance.reason} onChange={e => setNewAttendance({...newAttendance, reason: e.target.value})} className="w-full border rounded-xl p-3 shadow-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-sm font-semibold text-gray-900 bg-white" />
+                  <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                    Reason for Absence *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Required"
+                    value={newAttendance.reason}
+                    onChange={(e) => {
+                      setNewAttendance({
+                        ...newAttendance,
+                        reason: e.target.value,
+                      });
+                      setAttendanceErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.reason;
+                        return next;
+                      });
+                    }}
+                    className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-white p-3 text-sm font-semibold text-gray-900 shadow-sm transition-colors outline-none focus:ring-1 ${attendanceErrors.reason ? "border-red-400" : ""}`}
+                  />
+                  {attendanceErrors.reason && (
+                    <p className="mt-1 text-xs font-medium text-red-500">
+                      {attendanceErrors.reason}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
-            <div className="mt-6 flex justify-between items-center gap-3">
-              {attendance.some(a => a.date === newAttendance.date) ? (
-                <button onClick={handleDeleteAttendance} className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-semibold transition-colors mr-auto">Remove</button>
-              ) : <div></div>}
-              <div className="flex gap-3">
-                <button onClick={() => setShowAttendanceModal(false)} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-semibold transition-colors">Cancel</button>
-                <button onClick={handleLogAttendance} className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-semibold transition-colors shadow-md">Save</button>
+            <div className="mt-6 flex items-center justify-between gap-2">
+              {attendance.some((a) => a.date === newAttendance.date) ? (
+                <button
+                  type="button"
+                  onClick={handleDeleteAttendance}
+                  disabled={savingAttendance}
+                  className="rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAttendanceModal(false)}
+                  disabled={savingAttendance}
+                  className="rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-200 disabled:opacity-50 sm:px-5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogAttendance}
+                  disabled={savingAttendance}
+                  className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors disabled:opacity-50 sm:px-5"
+                >
+                  {savingAttendance && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  Save
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Staff Modal */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-xl">
-            <h2 className="text-xl font-bold font-serif mb-6">Edit Staff Details</h2>
-            
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="scrollbar-hide max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-white p-5 shadow-xl sm:rounded-3xl sm:p-6">
+            <h2 className="mb-5 font-serif text-lg font-bold sm:mb-6 sm:text-xl">
+              Edit Staff Details
+            </h2>
+
             <div className="flex flex-col gap-4">
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Full Name</label>
-                <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-gray-50" />
+                <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => {
+                    setEditForm({ ...editForm, name: e.target.value });
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.name;
+                      return next;
+                    });
+                  }}
+                  className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1 ${fieldErrors.name ? "border-red-400" : "border-gray-200"}`}
+                />
+                {fieldErrors.name && (
+                  <p className="mt-1 text-xs font-medium text-red-500">
+                    {fieldErrors.name}
+                  </p>
+                )}
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Role</label>
-                  <input type="text" value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-gray-50" />
+                  <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                    Role *
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.role}
+                    onChange={(e) => {
+                      setEditForm({ ...editForm, role: e.target.value });
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.role;
+                        return next;
+                      });
+                    }}
+                    className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1 ${fieldErrors.role ? "border-red-400" : "border-gray-200"}`}
+                  />
+                  {fieldErrors.role && (
+                    <p className="mt-1 text-xs font-medium text-red-500">
+                      {fieldErrors.role}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Status</label>
-                  <div className="relative">
-                    <select value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value as any})} className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold appearance-none cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-gray-50 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23bca37f%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[length:12px_auto] bg-[right_16px_center]">
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                      <option value="Terminated">Terminated</option>
-                    </select>
-                  </div>
+                  <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                    Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        status: e.target.value as "Active" | "Inactive",
+                      })
+                    }
+                    className="focus:border-primary focus:ring-primary w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Email</label>
-                <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-gray-50" />
+                <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => {
+                    setEditForm({ ...editForm, email: e.target.value });
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.email;
+                      return next;
+                    });
+                  }}
+                  className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1 ${fieldErrors.email ? "border-red-400" : "border-gray-200"}`}
+                />
+                {fieldErrors.email && (
+                  <p className="mt-1 text-xs font-medium text-red-500">
+                    {fieldErrors.email}
+                  </p>
+                )}
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Phone</label>
-                  <input type="tel" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-gray-50" />
+                  <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                    Phone *
+                  </label>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => {
+                      setEditForm({ ...editForm, phone: e.target.value });
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.phone;
+                        return next;
+                      });
+                    }}
+                    className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1 ${fieldErrors.phone ? "border-red-400" : "border-gray-200"}`}
+                  />
+                  {fieldErrors.phone && (
+                    <p className="mt-1 text-xs font-medium text-red-500">
+                      {fieldErrors.phone}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Salary (QAR)</label>
-                  <input type="number" value={editForm.baseSalary} onChange={e => setEditForm({...editForm, baseSalary: Number(e.target.value)})} className="w-full border border-gray-200 rounded-xl p-3 text-sm font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors bg-gray-50" />
+                  <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
+                    Salary (QAR)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editForm.baseSalary}
+                    onChange={(e) => {
+                      setEditForm({
+                        ...editForm,
+                        baseSalary: Math.max(0, Number(e.target.value) || 0),
+                      });
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.baseSalary;
+                        return next;
+                      });
+                    }}
+                    className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1 ${fieldErrors.baseSalary ? "border-red-400" : "border-gray-200"}`}
+                  />
+                  {fieldErrors.baseSalary && (
+                    <p className="mt-1 text-xs font-medium text-red-500">
+                      {fieldErrors.baseSalary}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 flex gap-3 justify-end">
-              <button 
+            <div className="mt-6 flex gap-2 sm:mt-8 sm:justify-end sm:gap-3">
+              <button
+                type="button"
                 onClick={() => setIsEditing(false)}
                 disabled={isSaving}
-                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                className="h-11 flex-1 rounded-xl bg-gray-100 px-5 text-sm font-semibold transition-colors hover:bg-gray-200 disabled:opacity-50 sm:h-auto sm:flex-none sm:py-2.5"
               >
                 Cancel
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={handleUpdateStaff}
                 disabled={isSaving}
-                className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-semibold transition-colors shadow-md disabled:opacity-50 flex items-center gap-2"
+                className="bg-primary hover:bg-primary-dark flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white shadow-md transition-colors disabled:opacity-50 sm:h-auto sm:flex-none sm:py-2.5"
               >
-                {isSaving && <Loader2 className="w-4 h-4 animate-spin" />} Save Changes
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />} Save
+                Changes
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Action PIN Verification Modal */}
       {actionToConfirm && (
-        <ActionPinModal 
-          onSuccess={actionToConfirm} 
-          onCancel={() => setActionToConfirm(null)} 
+        <ActionPinModal
+          onSuccess={actionToConfirm}
+          onCancel={() => setActionToConfirm(null)}
         />
       )}
     </div>

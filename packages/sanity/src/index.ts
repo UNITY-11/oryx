@@ -10,4 +10,5 @@ export {
   HERO_PROJECTION,
   COUPON_PROJECTION,
   REVIEW_PROJECTION,
+  COMPANY_PROJECTION,
 } from "./projections";

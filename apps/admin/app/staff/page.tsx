@@ -1,24 +1,43 @@
 "use client";
 
-import { useStaff, addAttendance } from "@/features/staff/api/use-staff";
-import { ActionPinModal } from "@/shared/ui/action-pin-modal";
-import { UserCircle2, Loader2, Check, X, Clock, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
+import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import { TopHeader } from "@/shared/ui/top-header";
-import { Staff, AttendanceRecord } from "@/features/staff/types";
+import { addAttendance, useStaff } from "@/features/staff/api/use-staff";
+import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { Toast, type ToastState } from "@/shared/ui/toast";
+import {
+  AlertCircle,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Loader2,
+  Plus,
+  UserCircle2,
+  X,
+} from "lucide-react";
 
-function TimePicker({ value, onChange }: { value: string, onChange: (val: string) => void }) {
-  const [h = 0, m = 0] = value ? value.split(':').map(Number) : [new Date().getHours(), new Date().getMinutes()];
+function TimePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [h = 0, m = 0] = value
+    ? value.split(":").map(Number)
+    : [new Date().getHours(), new Date().getMinutes()];
   const isPM = h >= 12;
   const hour12 = h % 12 === 0 ? 12 : h % 12;
-  
+
   const handleHourChange = (delta: number) => {
     let newH = h + delta;
     if (newH < 0) newH += 24;
     if (newH >= 24) newH -= 24;
-    onChange(`${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+    onChange(
+      `${newH.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
+    );
   };
 
   const handleMinuteChange = (delta: number) => {
@@ -34,289 +53,567 @@ function TimePicker({ value, onChange }: { value: string, onChange: (val: string
     }
     if (newH < 0) newH += 24;
     if (newH >= 24) newH -= 24;
-    onChange(`${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`);
+    onChange(
+      `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`
+    );
   };
 
   const toggleAmPm = () => {
-    let newH = (h + 12) % 24;
-    onChange(`${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+    const newH = (h + 12) % 24;
+    onChange(
+      `${newH.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
+    );
   };
 
   return (
-    <div className="flex items-center justify-center gap-3 select-none">
+    <div className="flex items-center justify-center gap-2 select-none sm:gap-3">
       <div className="flex flex-col items-center gap-1">
-        <button type="button" onClick={() => handleHourChange(1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronUp className="w-6 h-6" /></button>
-        <div className="w-16 h-16 bg-gray-50 border border-primary/10 rounded-2xl flex items-center justify-center text-2xl font-medium text-text-primary shadow-sm">
-          {hour12.toString().padStart(2, '0')}
+        <button
+          type="button"
+          onClick={() => handleHourChange(1)}
+          className="hover:text-primary rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+        >
+          <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+        <div className="text-text-primary border-primary/10 flex h-14 w-14 items-center justify-center rounded-2xl border bg-gray-50 text-xl font-medium shadow-sm sm:h-16 sm:w-16 sm:text-2xl">
+          {hour12.toString().padStart(2, "0")}
         </div>
-        <button type="button" onClick={() => handleHourChange(-1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronDown className="w-6 h-6" /></button>
+        <button
+          type="button"
+          onClick={() => handleHourChange(-1)}
+          className="hover:text-primary rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+        >
+          <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
       </div>
 
-      <span className="text-2xl font-bold text-gray-300 pb-2">:</span>
+      <span className="pb-2 text-2xl font-bold text-gray-300">:</span>
 
       <div className="flex flex-col items-center gap-1">
-        <button type="button" onClick={() => handleMinuteChange(1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronUp className="w-6 h-6" /></button>
-        <div className="w-16 h-16 bg-gray-50 border border-primary/10 rounded-2xl flex items-center justify-center text-2xl font-medium text-text-primary shadow-sm">
-          {m.toString().padStart(2, '0')}
+        <button
+          type="button"
+          onClick={() => handleMinuteChange(1)}
+          className="hover:text-primary rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+        >
+          <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+        <div className="text-text-primary border-primary/10 flex h-14 w-14 items-center justify-center rounded-2xl border bg-gray-50 text-xl font-medium shadow-sm sm:h-16 sm:w-16 sm:text-2xl">
+          {m.toString().padStart(2, "0")}
         </div>
-        <button type="button" onClick={() => handleMinuteChange(-1)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronDown className="w-6 h-6" /></button>
+        <button
+          type="button"
+          onClick={() => handleMinuteChange(-1)}
+          className="hover:text-primary rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+        >
+          <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
       </div>
 
-      <div className="flex flex-col items-center gap-1 ml-2">
-        <button type="button" onClick={toggleAmPm} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronUp className="w-6 h-6" /></button>
-        <div className="w-16 h-16 bg-gray-50 border border-primary/10 rounded-2xl flex items-center justify-center text-xl font-bold text-primary shadow-sm">
-          {isPM ? 'PM' : 'AM'}
+      <div className="ml-1 flex flex-col items-center gap-1 sm:ml-2">
+        <button
+          type="button"
+          onClick={toggleAmPm}
+          className="hover:text-primary rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+        >
+          <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+        <div className="text-primary border-primary/10 flex h-14 w-14 items-center justify-center rounded-2xl border bg-gray-50 text-lg font-bold shadow-sm sm:h-16 sm:w-16 sm:text-xl">
+          {isPM ? "PM" : "AM"}
         </div>
-        <button type="button" onClick={toggleAmPm} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-primary transition-colors"><ChevronDown className="w-6 h-6" /></button>
+        <button
+          type="button"
+          onClick={toggleAmPm}
+          className="hover:text-primary rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+        >
+          <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
       </div>
     </div>
   );
 }
 
 function calculateTotalHours(checkIn: string, checkOut: string): string {
-  const [inH = 0, inM = 0] = checkIn.split(':').map(Number);
-  const [outH = 0, outM = 0] = checkOut.split(':').map(Number);
-  
-  let diff = (outH * 60 + outM) - (inH * 60 + inM);
-  if (diff < 0) {
-    diff += 24 * 60; // Handle overnight shifts
-  }
-  
+  const [inH = 0, inM = 0] = checkIn.split(":").map(Number);
+  const [outH = 0, outM = 0] = checkOut.split(":").map(Number);
+
+  let diff = outH * 60 + outM - (inH * 60 + inM);
+  if (diff < 0) diff += 24 * 60;
+
   const h = Math.floor(diff / 60);
   const m = diff % 60;
   return `${h}h ${m}m`;
 }
 
+function formatTimeLabel(time: string): string {
+  const [h = 0, m = 0] = time.split(":").map(Number);
+  const isPM = h >= 12;
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${m.toString().padStart(2, "0")} ${isPM ? "PM" : "AM"}`;
+}
+
+function nowTime(): string {
+  return new Date().toTimeString().slice(0, 5);
+}
 
 function StaffList() {
-  const { staffList, loading } = useStaff();
+  const { staffList, loading, error, refresh } = useStaff();
   const searchParams = useSearchParams();
-  const searchTerm = searchParams.get('search') || "";
-  
+  const searchTerm = searchParams.get("search") || "";
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [actionToConfirm, setActionToConfirm] = useState<(() => void) | null>(null);
-
-  const filteredStaff = staffList.filter((s) =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
   const [modalState, setModalState] = useState<{
     open: boolean;
     staffId: string | null;
+    staffName: string;
     type: "Present" | "Exit" | "Absent" | null;
-    timeMode: "Now" | "Custom";
+    editTime: boolean;
     customTime: string;
     reason: string;
-  }>({ open: false, staffId: null, type: null, timeMode: "Now", customTime: "", reason: "" });
+  }>({
+    open: false,
+    staffId: null,
+    staffName: "",
+    type: null,
+    editTime: false,
+    customTime: "",
+    reason: "",
+  });
 
-  const handleActionConfirm = async () => {
-    if (!modalState.staffId || !modalState.type) return;
-    if (modalState.type === "Absent" && !modalState.reason.trim()) {
-      alert("Please provide a reason for absence.");
-      return;
-    }
-    
-    const staffId = modalState.staffId;
-    const actionType = modalState.type;
-    
-    setActionToConfirm(() => async () => {
-      setActionToConfirm(null);
-      setActionLoading(staffId + actionType);
-      setModalState(prev => ({ ...prev, open: false }));
-      try {
-        const today = new Date().toISOString().split("T")[0] as string;
-        const timeToLog = modalState.customTime || new Date().toTimeString().slice(0, 5);
-          
-        if (actionType === "Present") {
-          await addAttendance({
-            staffId: staffId,
-            date: today,
-            checkIn: timeToLog,
-            status: "Present",
-          });
-        } else if (actionType === "Exit") {
-          await addAttendance({
-            staffId: staffId,
-            date: today,
-            checkOut: timeToLog,
-            status: "Present",
-          });
-        } else if (actionType === "Absent") {
-          await addAttendance({
-            staffId: staffId,
-            date: today,
-            status: "Absent",
-            reason: modalState.reason.trim(),
-          });
-        }
-        alert(`Action '${actionType}' logged successfully!`);
-        window.location.reload();
-      } catch (err) {
-        console.error(err);
-        alert("Failed to log action.");
-      } finally {
-        setActionLoading(null);
-      }
+  const filteredStaff = staffList.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.phone ?? "").includes(searchTerm)
+  );
+  const {
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    paginatedItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
+  } = usePagination(filteredStaff, 20, searchTerm);
+
+  const openModal = (
+    staffId: string,
+    staffName: string,
+    type: "Present" | "Exit" | "Absent"
+  ) => {
+    setModalState({
+      open: true,
+      staffId,
+      staffName,
+      type,
+      editTime: false,
+      customTime: nowTime(),
+      reason: "",
     });
   };
 
+  const handleConfirm = async () => {
+    if (!modalState.staffId || !modalState.type) return;
+    if (modalState.type === "Absent" && !modalState.reason.trim()) {
+      setToast({
+        type: "error",
+        message: "Please provide a reason for absence.",
+      });
+      return;
+    }
+
+    const staffId = modalState.staffId;
+    const actionType = modalState.type;
+    const timeToLog = modalState.editTime ? modalState.customTime : nowTime();
+
+    setActionLoading(staffId + actionType);
+    setModalState((prev) => ({ ...prev, open: false }));
+
+    try {
+      const today = new Date().toISOString().split("T")[0] as string;
+
+      if (actionType === "Present") {
+        await addAttendance({
+          staffId,
+          date: today,
+          checkIn: timeToLog,
+          status: "Present",
+        });
+        setToast({
+          type: "success",
+          message: `Checked in ${modalState.staffName} at ${formatTimeLabel(timeToLog)}`,
+        });
+      } else if (actionType === "Exit") {
+        await addAttendance({
+          staffId,
+          date: today,
+          checkOut: timeToLog,
+          status: "Present",
+        });
+        setToast({
+          type: "success",
+          message: `Checked out ${modalState.staffName} at ${formatTimeLabel(timeToLog)}`,
+        });
+      } else {
+        await addAttendance({
+          staffId,
+          date: today,
+          status: "Absent",
+          reason: modalState.reason.trim(),
+        });
+        setToast({
+          type: "success",
+          message: `Marked ${modalState.staffName} absent`,
+        });
+      }
+
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      setToast({
+        type: "error",
+        message: "Failed to save attendance. Try again.",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
-    <div className="flex h-full flex-col bg-transparent">
-      <div className="flex-1 overflow-y-auto px-1 md:px-2 pt-4">
-        <div className="w-full">
+    <div className="flex h-full min-h-0 flex-col">
+      <Toast toast={toast} onClose={closeToast} />
 
-          {loading ? (
-            <div className="flex py-20 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 pb-6">
-              {filteredStaff.length === 0 ? (
-                <div className="col-span-full py-16 text-center text-gray-500 bg-white rounded-3xl border border-primary/10 flex flex-col items-center justify-center gap-2">
-                  <UserCircle2 className="w-12 h-12 text-gray-300" />
-                  <p className="font-medium text-lg">No staff members found</p>
-                </div>
-              ) : (
-                filteredStaff.map((staff) => (
-                  <Link 
-                    href={`/staff/${staff.id}`} 
-                    key={staff.id} 
-                    className="group relative bg-white rounded-[2rem] border border-primary/10 transition-all duration-300 overflow-hidden flex flex-col"
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pt-2 sm:pt-4">
+        {loading ? (
+          <div className="text-text-secondary flex h-56 flex-col items-center justify-center px-4 text-center">
+            <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+            <p className="text-sm font-medium">Loading staff...</p>
+          </div>
+        ) : error ? (
+          <div className="border-primary/10 flex h-56 flex-col items-center justify-center rounded-2xl border bg-white px-4 text-center shadow-sm sm:rounded-3xl">
+            <AlertCircle className="mb-3 h-8 w-8 text-red-500" />
+            <p className="text-primary-dark text-sm font-semibold">
+              Couldn’t load staff
+            </p>
+            <p className="text-text-secondary mt-1 max-w-sm text-xs">{error}</p>
+            <button
+              type="button"
+              onClick={refresh}
+              className="bg-primary mt-4 rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm"
+            >
+              Try again
+            </button>
+          </div>
+        ) : totalItems === 0 ? (
+          <div className="border-primary/15 flex h-56 flex-col items-center justify-center rounded-2xl border border-dashed bg-white px-4 text-center sm:rounded-3xl">
+            <UserCircle2 className="text-primary/30 mb-3 h-12 w-12" />
+            <p className="text-primary-dark text-sm font-semibold">
+              {searchTerm ? "No matching staff" : "No staff members yet"}
+            </p>
+            <p className="text-text-secondary mt-1 max-w-sm text-xs">
+              {searchTerm
+                ? "Try a different search term."
+                : "Register your first employee to track attendance."}
+            </p>
+            {!searchTerm && (
+              <Link
+                href="/staff/new"
+                className="bg-primary mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Staff
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+            {paginatedItems.map((staff) => (
+              <div
+                key={staff.id}
+                className="border-primary/10 group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all sm:rounded-[2rem]"
+              >
+                <Link
+                  href={`/staff/${staff.id}`}
+                  className="flex flex-1 flex-col items-center p-4 text-center sm:p-6"
+                >
+                  <div className="border-primary/5 ring-primary/5 bg-primary/5 mb-4 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white shadow-sm ring-4 sm:mb-5 sm:h-24 sm:w-24">
+                    {staff.imageUrl ? (
+                      <img
+                        src={staff.imageUrl}
+                        alt={staff.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <UserCircle2 className="text-primary/40 h-10 w-10" />
+                    )}
+                  </div>
+                  <h3 className="text-text-primary group-hover:text-primary mb-1 font-serif text-lg font-bold transition-colors sm:text-xl">
+                    {staff.name}
+                  </h3>
+                  <p className="text-primary/60 text-[10px] font-bold tracking-widest uppercase sm:text-xs">
+                    {staff.role}
+                  </p>
+                  <span
+                    className={`mt-2 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase ${
+                      staff.status === "Active"
+                        ? "bg-green-50 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
                   >
-                    <div className="p-6 flex-1 flex flex-col items-center text-center">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-primary/5 border-4 border-white ring-4 ring-primary/5 shadow-sm overflow-hidden mb-5">
-                        {staff.imageUrl ? (
-                          <img src={staff.imageUrl} alt={staff.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <UserCircle2 className="h-10 w-10 text-primary/40" />
-                        )}
-                      </div>
-                      <h3 className="text-text-primary font-serif font-bold text-xl mb-1 group-hover:text-primary transition-colors">{staff.name}</h3>
-                      <p className="text-primary/60 text-xs font-bold uppercase tracking-widest mb-6">{staff.role}</p>
+                    {staff.status}
+                  </span>
+                </Link>
 
-                      <div 
-                        className="mt-auto w-full flex items-center justify-center gap-2 pt-5 border-t border-gray-50"
-                        onClick={(e) => e.preventDefault()} // Prevent clicking actions from navigating
+                <div className="flex items-center justify-center gap-2 border-t border-gray-50 px-4 pt-4 pb-4 sm:px-6 sm:pt-5 sm:pb-6">
+                  {!staff.todayAttendance && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openModal(staff.id, staff.name, "Present")
+                        }
+                        disabled={actionLoading !== null}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-green-200/50 bg-green-50 py-2.5 text-xs font-bold text-green-700 shadow-sm transition-all hover:bg-green-100 disabled:opacity-50"
                       >
-                        {!staff.todayAttendance && (
-                          <>
-                            <button 
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Present", timeMode: "Now", customTime: new Date().toTimeString().slice(0, 5), reason: "" })}}
-                              disabled={actionLoading !== null}
-                              className="flex-1 py-2.5 rounded-xl bg-green-50 text-green-700 hover:bg-green-100 border border-green-200/50 text-xs font-bold transition-all flex justify-center items-center gap-1.5 shadow-sm"
-                              title="Check In"
-                            >
-                              {actionLoading === staff.id + "Present" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />} Check In
-                            </button>
-                            <button 
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Absent", timeMode: "Now", customTime: "", reason: "" })}}
-                              disabled={actionLoading !== null}
-                              className="flex-1 py-2.5 rounded-xl bg-primary/5 text-primary-dark hover:bg-primary/10 border border-primary/10 text-xs font-bold transition-all flex justify-center items-center gap-1.5 shadow-sm"
-                              title="Mark Absent"
-                            >
-                              {actionLoading === staff.id + "Absent" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-4 h-4" />} Absent
-                            </button>
-                          </>
+                        {actionLoading === staff.id + "Present" ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
                         )}
+                        Check In
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openModal(staff.id, staff.name, "Absent")
+                        }
+                        disabled={actionLoading !== null}
+                        className="border-primary/10 bg-primary/5 text-primary-dark hover:bg-primary/10 flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                      >
+                        {actionLoading === staff.id + "Absent" ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                        Absent
+                      </button>
+                    </>
+                  )}
 
-                        {staff.todayAttendance?.status === "Present" && !staff.todayAttendance?.checkOut && (
-                          <div className="flex flex-col items-center gap-1.5 w-full">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center justify-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                              IN: <span className="text-black">{staff.todayAttendance.checkIn}</span>
-                            </span>
-                            <button 
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalState({ open: true, staffId: staff.id, type: "Exit", timeMode: "Now", customTime: new Date().toTimeString().slice(0, 5), reason: "" })}}
-                              disabled={actionLoading !== null}
-                              className="w-full py-2.5 rounded-xl bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200/50 text-xs font-bold transition-all flex justify-center items-center gap-1.5 shadow-sm mt-1"
-                              title="Check Out"
-                            >
-                              {actionLoading === staff.id + "Exit" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-4 h-4" />} Check Out
-                            </button>
-                          </div>
-                        )}
-
-                        {(staff.todayAttendance?.status === "Absent" || (staff.todayAttendance?.status === "Present" && staff.todayAttendance?.checkOut) || staff.todayAttendance?.status === "Half Day") && (
-                          <div className="flex flex-col items-center gap-1 w-full pb-1">
-                            <span className={`text-xs font-bold flex items-center gap-1.5 ${
-                              staff.todayAttendance.status === "Present" ? "text-green-600" : 
-                              staff.todayAttendance.status === "Half Day" ? "text-orange-600" : 
-                              "text-red-600"
-                            }`}>
-                              {staff.todayAttendance.status === "Present" ? <Check className="w-3.5 h-3.5" /> : staff.todayAttendance.status === "Half Day" ? <Clock className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                              {staff.todayAttendance.status}
-                            </span>
-                            {(staff.todayAttendance.checkIn || staff.todayAttendance.checkOut) && (
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-[10px] font-bold text-black tracking-wide flex items-center justify-center gap-2 mt-0.5">
-                                  {staff.todayAttendance.checkIn && <span>IN: {staff.todayAttendance.checkIn}</span>}
-                                  {staff.todayAttendance.checkIn && staff.todayAttendance.checkOut && <span>•</span>}
-                                  {staff.todayAttendance.checkOut && <span>OUT: {staff.todayAttendance.checkOut}</span>}
-                                </span>
-                                {staff.todayAttendance.checkIn && staff.todayAttendance.checkOut && (
-                                  <span className="text-xs font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full mt-1">
-                                    Total: {calculateTotalHours(staff.todayAttendance.checkIn, staff.todayAttendance.checkOut)}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                  {staff.todayAttendance?.status === "Present" &&
+                    !staff.todayAttendance?.checkOut && (
+                      <div className="flex w-full flex-col items-center gap-1.5">
+                        <span className="flex items-center justify-center gap-1 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                          IN:{" "}
+                          <span className="text-black">
+                            {staff.todayAttendance.checkIn}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openModal(staff.id, staff.name, "Exit")
+                          }
+                          disabled={actionLoading !== null}
+                          className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border border-orange-200/50 bg-orange-50 py-2.5 text-xs font-bold text-orange-700 shadow-sm transition-all hover:bg-orange-100 disabled:opacity-50"
+                        >
+                          {actionLoading === staff.id + "Exit" ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Clock className="h-4 w-4" />
+                          )}
+                          Check Out
+                        </button>
                       </div>
+                    )}
+
+                  {(staff.todayAttendance?.status === "Absent" ||
+                    (staff.todayAttendance?.status === "Present" &&
+                      staff.todayAttendance?.checkOut) ||
+                    staff.todayAttendance?.status === "Half Day") && (
+                    <div className="flex w-full flex-col items-center gap-1 pb-1">
+                      <span
+                        className={`flex items-center gap-1.5 text-xs font-bold ${
+                          staff.todayAttendance.status === "Present"
+                            ? "text-green-600"
+                            : staff.todayAttendance.status === "Half Day"
+                              ? "text-orange-600"
+                              : "text-red-600"
+                        }`}
+                      >
+                        {staff.todayAttendance.status === "Present" ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : staff.todayAttendance.status === "Half Day" ? (
+                          <Clock className="h-3.5 w-3.5" />
+                        ) : (
+                          <X className="h-3.5 w-3.5" />
+                        )}
+                        {staff.todayAttendance.status}
+                      </span>
+                      {(staff.todayAttendance.checkIn ||
+                        staff.todayAttendance.checkOut) && (
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="mt-0.5 flex items-center justify-center gap-2 text-[10px] font-bold tracking-wide text-black">
+                            {staff.todayAttendance.checkIn && (
+                              <span>IN: {staff.todayAttendance.checkIn}</span>
+                            )}
+                            {staff.todayAttendance.checkIn &&
+                              staff.todayAttendance.checkOut && <span>•</span>}
+                            {staff.todayAttendance.checkOut && (
+                              <span>OUT: {staff.todayAttendance.checkOut}</span>
+                            )}
+                          </span>
+                          {staff.todayAttendance.checkIn &&
+                            staff.todayAttendance.checkOut && (
+                              <span className="bg-primary/5 text-primary mt-1 rounded-full px-2.5 py-1 text-xs font-bold">
+                                Total:{" "}
+                                {calculateTotalHours(
+                                  staff.todayAttendance.checkIn,
+                                  staff.todayAttendance.checkOut
+                                )}
+                              </span>
+                            )}
+                        </div>
+                      )}
                     </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && !error && totalItems > 0 && (
+          <div className="border-primary/10 mb-4 overflow-hidden rounded-2xl border bg-white shadow-sm">
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              from={from}
+              to={to}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
       </div>
 
       {modalState.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl border border-white/20">
-            <h3 className="text-2xl font-serif text-primary mb-6 text-center">
-              {modalState.type === "Present" ? "Check In" : modalState.type === "Exit" ? "Check Out" : "Mark Absent"}
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:px-4">
+          <div className="border-primary/10 w-full max-w-sm rounded-t-[28px] border bg-white p-5 shadow-2xl sm:rounded-[2rem] sm:p-8">
+            <h3 className="text-primary mb-2 text-center font-serif text-xl sm:text-2xl">
+              {modalState.type === "Present"
+                ? "Check In"
+                : modalState.type === "Exit"
+                  ? "Check Out"
+                  : "Mark Absent"}
             </h3>
-            
-            <div className="space-y-6">
+            <p className="text-text-secondary mb-5 text-center text-sm sm:mb-6">
+              {modalState.staffName}
+            </p>
+
+            <div className="space-y-5">
               {modalState.type === "Absent" ? (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <label className="text-primary/60 text-xs uppercase tracking-widest font-semibold mb-3 block text-center">
-                    Reason for Absence
+                <div>
+                  <label className="text-primary/60 mb-3 block text-center text-xs font-semibold tracking-widest uppercase">
+                    Reason for Absence *
                   </label>
                   <textarea
                     value={modalState.reason}
-                    onChange={(e) => setModalState(prev => ({ ...prev, reason: e.target.value }))}
+                    onChange={(e) =>
+                      setModalState((prev) => ({
+                        ...prev,
+                        reason: e.target.value,
+                      }))
+                    }
                     placeholder="E.g., Sick leave, Personal emergency..."
-                    className="w-full p-4 bg-gray-50 border border-primary/10 rounded-2xl text-sm font-medium text-text-primary outline-none focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all min-h-[100px] resize-none"
+                    className="border-primary/10 text-text-primary focus:border-primary/40 focus:ring-primary/10 min-h-[100px] w-full resize-none rounded-2xl border bg-gray-50 p-4 text-sm font-medium transition-all outline-none focus:bg-white focus:ring-4"
+                    autoFocus
                   />
                 </div>
               ) : (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <label className="text-primary/60 text-xs uppercase tracking-widest font-semibold mb-3 block text-center">
-                    Select Time
-                  </label>
-                  <div className="mx-auto w-full pt-4">
-                    <TimePicker 
-                      value={modalState.customTime} 
-                      onChange={(val) => setModalState(prev => ({ ...prev, customTime: val }))} 
-                    />
-                  </div>
+                <div className="text-center">
+                  {!modalState.editTime ? (
+                    <>
+                      <p className="text-primary/60 mb-3 text-xs font-semibold tracking-widest uppercase">
+                        Time
+                      </p>
+                      <p className="text-text-primary mb-4 font-serif text-3xl">
+                        {formatTimeLabel(modalState.customTime || nowTime())}
+                      </p>
+                      <p className="text-text-secondary mb-4 text-sm">
+                        Using current time
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalState((prev) => ({
+                            ...prev,
+                            editTime: true,
+                            customTime: prev.customTime || nowTime(),
+                          }))
+                        }
+                        className="text-primary text-sm font-semibold hover:underline"
+                      >
+                        Edit time
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <label className="text-primary/60 mb-3 block text-xs font-semibold tracking-widest uppercase">
+                        Custom Time
+                      </label>
+                      <div className="pt-2">
+                        <TimePicker
+                          value={modalState.customTime}
+                          onChange={(val) =>
+                            setModalState((prev) => ({
+                              ...prev,
+                              customTime: val,
+                            }))
+                          }
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalState((prev) => ({
+                            ...prev,
+                            editTime: false,
+                            customTime: nowTime(),
+                          }))
+                        }
+                        className="text-primary mt-4 text-sm font-semibold hover:underline"
+                      >
+                        Use current time
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
 
-            <div className="mt-8 flex items-center gap-3">
-              <button 
-                onClick={() => setModalState(prev => ({ ...prev, open: false }))}
-                className="flex-1 py-3.5 text-sm font-semibold text-text-secondary bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+            <div className="mt-6 flex items-center gap-2.5 sm:mt-8 sm:gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setModalState((prev) => ({ ...prev, open: false }))
+                }
+                disabled={actionLoading !== null}
+                className="text-text-secondary h-11 flex-1 rounded-full bg-gray-50 text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-50 sm:h-auto sm:py-3.5"
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleActionConfirm}
-                className="flex-1 py-3.5 text-sm font-semibold text-white bg-primary hover:opacity-90 rounded-full shadow-lg shadow-primary/20 transition-all"
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={actionLoading !== null}
+                className="bg-primary shadow-primary/20 h-11 flex-1 rounded-full text-sm font-semibold text-white shadow-lg transition-all hover:opacity-90 disabled:opacity-50 sm:h-auto sm:py-3.5"
               >
                 Confirm
               </button>
@@ -324,24 +621,19 @@ function StaffList() {
           </div>
         </div>
       )}
-      {/* Action PIN Verification Modal */}
-      {actionToConfirm && (
-        <ActionPinModal 
-          onSuccess={actionToConfirm} 
-          onCancel={() => setActionToConfirm(null)} 
-        />
-      )}
     </div>
   );
 }
 
 export default function StaffPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
       <StaffList />
     </Suspense>
   );

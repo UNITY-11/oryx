@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         phone: body.phone,
         email: "",
         tier: "Bronze",
-        totalSpent: body.amount ?? 0,
+        totalSpent: 0,
         lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
         status: "Active",
       });
@@ -96,7 +96,10 @@ export async function POST(request: Request) {
     try {
       await sanityWriteClient.create(notificationDoc);
     } catch (notifErr) {
-      console.error("Failed to create booking notification in Sanity:", notifErr);
+      console.error(
+        "Failed to create booking notification in Sanity:",
+        notifErr
+      );
       // Don't fail the booking request if only the notification creation fails
     }
 

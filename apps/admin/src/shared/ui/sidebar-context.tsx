@@ -80,7 +80,7 @@ export function MobileMenuButton({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={toggleSidebar}
-      className={`text-primary hover:bg-primary/5 -ml-1 rounded-full p-2 transition-colors md:hidden ${className}`}
+      className={`text-primary-dark hover:bg-primary/5 -ml-1 rounded-full p-2 transition-colors md:hidden ${className}`}
       aria-label="Open menu"
     >
       <Menu className="h-6 w-6" />

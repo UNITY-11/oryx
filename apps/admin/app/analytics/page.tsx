@@ -272,12 +272,12 @@ export default function AnalyticsPage() {
                       >
                         <stop
                           offset="5%"
-                          stopColor="#c8a99c"
+                          stopColor="#8f5c45"
                           stopOpacity={0.8}
                         />
                         <stop
                           offset="95%"
-                          stopColor="#c8a99c"
+                          stopColor="#8f5c45"
                           stopOpacity={0}
                         />
                       </linearGradient>
@@ -316,7 +316,7 @@ export default function AnalyticsPage() {
                         fontSize: "14px",
                       }}
                       itemStyle={{
-                        color: "#c8a99c",
+                        color: "#8f5c45",
                         fontWeight: "bold",
                         fontSize: "16px",
                       }}
@@ -328,7 +328,7 @@ export default function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#c8a99c"
+                      stroke="#8f5c45"
                       strokeWidth={4}
                       fillOpacity={1}
                       fill="url(#colorRevenue)"
@@ -475,7 +475,7 @@ export default function AnalyticsPage() {
                     />
                     <Bar
                       dataKey="bookings"
-                      fill="#c8a99c"
+                      fill="#8f5c45"
                       radius={[8, 8, 0, 0]}
                       barSize={40}
                     />

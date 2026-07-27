@@ -12,3 +12,15 @@
 @theme {
   --color-primary: var(--color-brand-peach);
 }
+
+/* Hide scrollbars everywhere in admin; scrolling still works */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}

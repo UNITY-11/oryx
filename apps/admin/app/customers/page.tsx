@@ -5,7 +5,6 @@ import { CustomersList } from "@features/customers/ui/customers-list";
 
 export default function CustomersPage() {
   const {
-    customers,
     loading,
     error,
     searchQuery,
@@ -15,6 +14,7 @@ export default function CustomersPage() {
     filtered,
     activeCount,
     inactiveCount,
+    reload,
   } = useCustomers();
 
   return (
@@ -28,6 +28,7 @@ export default function CustomersPage() {
       filtered={filtered}
       activeCount={activeCount}
       inactiveCount={inactiveCount}
+      onRetry={reload}
     />
   );
 }

@@ -48,19 +48,36 @@ export async function POST(request: Request) {
 
     let customerId = existingCustomer?._id;
 
-    // 2. If not, create a new customer
+    // 2. If not, create a new customer (spend only counts when booking is Completed)
     if (!customerId && body.phone) {
+      const isCompleted = body.status === "Completed";
       const newCustomer = await sanityClient.create({
         _type: "customer",
         name: body.customerName,
         phone: body.phone,
         email: "",
         tier: "Bronze",
-        totalSpent: body.amount ?? 0,
+        totalSpent: isCompleted ? (body.amount ?? 0) : 0,
         lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
         status: "Active",
       });
       customerId = newCustomer._id;
+    } else if (customerId && body.status === "Completed") {
+      const completed = await sanityClient.fetch(
+        `*[_type == "booking" && phone == $phone && status == "Completed"]{ amount }`,
+        { phone: body.phone || "" }
+      );
+      const priorSpent = (completed as { amount?: number }[]).reduce(
+        (sum, b) => sum + (typeof b.amount === "number" ? b.amount : 0),
+        0
+      );
+      await sanityClient
+        .patch(customerId)
+        .set({
+          totalSpent: priorSpent + (body.amount ?? 0),
+          lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
+        })
+        .commit();
     }
 
     // 3. Create the booking

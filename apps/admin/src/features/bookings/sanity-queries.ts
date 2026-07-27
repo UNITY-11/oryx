@@ -2,7 +2,10 @@ export const BOOKING_PROJECTION = `{
   "id": _id,
   customerName,
   phone,
-  "services": services[]{ name, options },
+  "services": services[]{
+    name,
+    "options": coalesce(options, addons, [])
+  },
   date,
   time,
   status,

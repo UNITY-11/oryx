@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import {
   AlertCircle,
   Calendar as CalendarIcon,
@@ -7,7 +8,6 @@ import {
   ChevronRight,
   Clock,
   Loader2,
-  Menu,
   User,
 } from "lucide-react";
 
@@ -149,9 +149,7 @@ export function CalendarView({
       <div className="shrink-0 pt-4 pb-4">
         <header className="border-primary/10 z-30 flex h-20 w-full shrink-0 items-center justify-between rounded-3xl border bg-white/90 px-6 shadow-sm backdrop-blur-xl lg:px-10">
           <div className="flex flex-1 items-center space-x-4">
-            <button className="text-primary hover:bg-primary/5 -ml-2 rounded-full p-2 transition-colors md:hidden">
-              <Menu className="h-6 w-6" />
-            </button>
+            <MobileMenuButton />
             <div className="hidden flex-col md:flex">
               <h1 className="text-primary-dark font-serif text-2xl font-medium">
                 {currentDate.toLocaleDateString("en-US", {
@@ -174,6 +172,11 @@ export function CalendarView({
                   Today
                 </span>
               </div>
+            </div>
+            <div className="min-w-0 md:hidden">
+              <h1 className="text-primary-dark truncate font-serif text-lg font-medium">
+                Calendar
+              </h1>
             </div>
           </div>
 
@@ -298,24 +301,25 @@ export function CalendarView({
             ))}
 
             {loading && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center pl-64 pointer-events-none">
-                <div className="text-text-secondary bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-primary/10 flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Loading bookings...
+              <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pl-64">
+                <div className="text-text-secondary border-primary/10 flex items-center gap-2 rounded-full border bg-white/90 px-6 py-3 shadow-sm backdrop-blur-sm">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading
+                  bookings...
                 </div>
               </div>
             )}
 
             {!loading && error && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center pl-64 pointer-events-none">
-                <div className="text-red-500 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-red-500/20 flex items-center gap-2">
+              <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pl-64">
+                <div className="flex items-center gap-2 rounded-full border border-red-500/20 bg-white/90 px-6 py-3 text-red-500 shadow-sm backdrop-blur-sm">
                   <AlertCircle className="h-5 w-5" /> {error}
                 </div>
               </div>
             )}
 
             {!loading && !error && todaysBookings.length === 0 && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center pl-64 pointer-events-none">
-                <div className="text-text-secondary bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-primary/10">
+              <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pl-64">
+                <div className="text-text-secondary border-primary/10 rounded-full border bg-white/90 px-6 py-3 shadow-sm backdrop-blur-sm">
                   No bookings scheduled for this date.
                 </div>
               </div>

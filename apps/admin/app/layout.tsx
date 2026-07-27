@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { Suspense } from "react";
 import { Sidebar } from "@/shared/ui/sidebar";
+import { SidebarProvider } from "@/shared/ui/sidebar-context";
 import { TopHeader } from "@/shared/ui/top-header";
 
 const inter = Inter({
@@ -48,20 +49,22 @@ export default function RootLayout({
       >
         {/* Admin App Layout Wrapper */}
         <div className="bg-background relative mx-auto flex h-[100dvh] w-full max-w-[1920px] overflow-hidden shadow-2xl">
-          <Sidebar />
+          <SidebarProvider>
+            <Sidebar />
 
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <Suspense fallback={<div className="h-16" />}>
-              <TopHeader />
-            </Suspense>
-            {/* Main Scrollable Content */}
-            <main
-              id="admin-main-container"
-              className="relative flex h-full w-full flex-1 flex-col overflow-hidden px-4 pt-0 pb-4 md:pr-8 md:pl-4"
-            >
-              {children}
-            </main>
-          </div>
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <Suspense fallback={<div className="h-16" />}>
+                <TopHeader />
+              </Suspense>
+              {/* Main Scrollable Content */}
+              <main
+                id="admin-main-container"
+                className="relative flex h-full w-full flex-1 flex-col overflow-hidden px-4 pt-0 pb-4 md:pr-8 md:pl-4"
+              >
+                {children}
+              </main>
+            </div>
+          </SidebarProvider>
         </div>
       </body>
     </html>

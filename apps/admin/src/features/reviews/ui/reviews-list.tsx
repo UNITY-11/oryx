@@ -1,10 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Loader2, MessageSquare, Star, Trash2, EyeOff, Eye, Edit } from "lucide-react";
-import { Review, updateReview, deleteReview } from "../api";
+import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import {
+  AlertCircle,
+  Edit,
+  Eye,
+  EyeOff,
+  Loader2,
+  MessageSquare,
+  Star,
+  Trash2,
+} from "lucide-react";
+
+import { deleteReview, Review, updateReview } from "../api";
 
 interface ReviewsListProps {
   loading: boolean;
@@ -23,18 +34,29 @@ export function ReviewsList({
 }: ReviewsListProps) {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const {
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    paginatedItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
+  } = usePagination(reviews, 20);
 
   const handleToggleStatus = async (review: Review) => {
     try {
       setIsProcessing(review.id);
       await updateReview(review.id, {
         ...review,
-        status: review.status === "Active" ? "Inactive" : "Active"
+        status: review.status === "Active" ? "Inactive" : "Active",
       });
       router.refresh();
       // Reloading the page might be needed since we rely on `useReviews` hook which fetches on mount,
       // but if we want instant update, we should pass an update function from `useReviews`.
-      // For now, window.location.reload() will work, or we can just let `router.refresh()` do its thing 
+      // For now, window.location.reload() will work, or we can just let `router.refresh()` do its thing
       // if it's hitting server actions, but `useReviews` is a client hook fetching from API.
       // So let's force a reload.
       window.location.reload();
@@ -70,14 +92,14 @@ export function ReviewsList({
               <AlertCircle className="mb-3 h-8 w-8" />
               <p>{error}</p>
             </div>
-          ) : reviews.length === 0 ? (
+          ) : totalItems === 0 ? (
             <div className="text-text-secondary flex h-48 flex-col items-center justify-center">
               <MessageSquare className="text-primary/20 mb-3 h-10 w-10" />
               <p>No reviews found. Add one to get started.</p>
             </div>
           ) : (
-            <div className="border-primary/10 overflow-hidden rounded-2xl border relative">
-              <div className="text-text-secondary border-primary/10 hidden grid-cols-[1fr_2fr_100px_100px_120px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase md:grid sticky top-0 z-10 shadow-sm">
+            <div className="border-primary/10 relative overflow-hidden rounded-2xl border">
+              <div className="text-text-secondary border-primary/10 sticky top-0 z-10 hidden grid-cols-[1fr_2fr_100px_100px_120px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase shadow-sm md:grid">
                 <span>Reviewer</span>
                 <span>Review Text</span>
                 <span className="text-center">Rating</span>
@@ -86,7 +108,7 @@ export function ReviewsList({
               </div>
 
               <div className="divide-primary/5 divide-y">
-                {reviews.map((review) => (
+                {paginatedItems.map((review) => (
                   <div
                     key={review.id}
                     className="hover:bg-primary/5 grid grid-cols-1 items-center gap-4 px-6 py-4 transition-colors md:grid-cols-[1fr_2fr_100px_100px_120px]"
@@ -103,9 +125,11 @@ export function ReviewsList({
                       </span>
                     </div>
 
-                    <div className="hidden md:flex justify-center items-center gap-1">
-                      <span className="text-primary-dark font-medium text-sm">{review.rating}</span>
-                      <Star className="text-yellow-500 h-4 w-4 fill-yellow-500" />
+                    <div className="hidden items-center justify-center gap-1 md:flex">
+                      <span className="text-primary-dark text-sm font-medium">
+                        {review.rating}
+                      </span>
+                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                     </div>
 
                     <div className="hidden text-right md:block">
@@ -119,12 +143,12 @@ export function ReviewsList({
                         {review.status}
                       </span>
                     </div>
-                    
-                    <div className="hidden md:flex items-center justify-end gap-2">
+
+                    <div className="hidden items-center justify-end gap-2 md:flex">
                       <button
                         onClick={() => handleToggleStatus(review)}
                         disabled={isProcessing === review.id}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-gray-400 transition-colors hover:text-gray-600"
                         title={review.status === "Active" ? "Hide" : "Show"}
                       >
                         {review.status === "Active" ? (
@@ -143,7 +167,7 @@ export function ReviewsList({
                       <button
                         onClick={() => handleDelete(review.id)}
                         disabled={isProcessing === review.id}
-                        className="text-red-400 hover:text-red-600 transition-colors"
+                        className="text-red-400 transition-colors hover:text-red-600"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -156,13 +180,24 @@ export function ReviewsList({
           )}
         </div>
 
+        <ListPagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          from={from}
+          to={to}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          onPageChange={setPage}
+        />
+
         <div className="border-primary/5 text-text-secondary flex shrink-0 items-center gap-4 border-t px-6 py-3 text-xs">
           <span className="flex items-center gap-1">
             <MessageSquare className="text-primary h-3 w-3" />
             {activeCount} Active
           </span>
           <span className="text-gray-500">{inactiveCount} Inactive</span>
-          <span className="ml-auto">{reviews.length} total</span>
+          <span className="ml-auto">{totalItems} total</span>
         </div>
       </div>
     </div>

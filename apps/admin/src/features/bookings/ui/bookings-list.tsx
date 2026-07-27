@@ -1,4 +1,5 @@
 import { useRouter, useSearchParams } from "next/navigation";
+import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
 import {
   AlertCircle,
   ArrowUpDown,
@@ -44,6 +45,21 @@ export function BookingsList({
   const setStep = (newStep: number) => {
     router.push(`?action=add&step=${newStep}`);
   };
+  const {
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    paginatedItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
+  } = usePagination(
+    filteredAndSortedBookings,
+    20,
+    `${searchQuery}|${statusFilter}|${sortField}`
+  );
 
   return (
     <div className="flex h-full flex-col space-y-6 md:space-y-8">
@@ -114,7 +130,9 @@ export function BookingsList({
                         />
                       </div>
                     </th>
-                    <th className="py-4 font-medium">Service & Service Options</th>
+                    <th className="py-4 font-medium">
+                      Service & Service Options
+                    </th>
                     <th
                       className="group cursor-pointer py-4 font-medium"
                       onClick={() => toggleSort("date")}
@@ -164,7 +182,7 @@ export function BookingsList({
                         </div>
                       </td>
                     </tr>
-                  ) : filteredAndSortedBookings.length === 0 ? (
+                  ) : totalItems === 0 ? (
                     <tr>
                       <td
                         colSpan={5}
@@ -174,7 +192,7 @@ export function BookingsList({
                       </td>
                     </tr>
                   ) : (
-                    filteredAndSortedBookings.map((booking) => (
+                    paginatedItems.map((booking) => (
                       <tr
                         key={booking.id}
                         onClick={() => router.push(`/bookings/${booking.id}`)}
@@ -200,14 +218,16 @@ export function BookingsList({
                           )}
                           {(booking.services[0]?.options?.length ?? 0) > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1">
-                              {booking.services[0]?.options.map((option, idx) => (
-                                <span
-                                  key={idx}
-                                  className="text-text-secondary inline-block rounded-md bg-gray-100 px-2 py-0.5 text-[10px] tracking-wider uppercase"
-                                >
-                                  + {option}
-                                </span>
-                              ))}
+                              {(booking.services[0]?.options ?? []).map(
+                                (option, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-text-secondary inline-block rounded-md bg-gray-100 px-2 py-0.5 text-[10px] tracking-wider uppercase"
+                                  >
+                                    + {option}
+                                  </span>
+                                )
+                              )}
                             </div>
                           )}
                         </td>
@@ -248,6 +268,17 @@ export function BookingsList({
                 </tbody>
               </table>
             </div>
+
+            <ListPagination
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              from={from}
+              to={to}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+              onPageChange={setPage}
+            />
           </>
         )}
       </div>

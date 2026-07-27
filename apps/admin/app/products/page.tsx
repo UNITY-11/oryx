@@ -5,7 +5,6 @@ import { ProductsGrid } from "@features/products/ui/products-grid";
 
 export default function ProductsPage() {
   const {
-    products,
     loading,
     error,
     searchQuery,
@@ -20,6 +19,7 @@ export default function ProductsPage() {
     activeCount,
     lowStockCount,
     outOfStockCount,
+    reload,
   } = useProducts();
 
   return (
@@ -38,6 +38,7 @@ export default function ProductsPage() {
       activeCount={activeCount}
       lowStockCount={lowStockCount}
       outOfStockCount={outOfStockCount}
+      onRetry={reload}
     />
   );
 }

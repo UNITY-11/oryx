@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { fetchCustomers } from "../api";
 import { Customer, CustomerTier } from "../types";
@@ -18,20 +18,30 @@ export function useCustomers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<CustomerTier | "All">("All");
 
-  useEffect(() => {
+  const reload = useCallback(() => {
+    setLoading(true);
+    setError(null);
     fetchCustomers()
       .then(setCustomers)
-      .catch((err) => setError(err.message))
+      .catch((err) =>
+        setError(
+          err instanceof Error ? err.message : "Failed to load customers"
+        )
+      )
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   const filtered = customers
     .filter((c) => tierFilter === "All" || c.tier === tierFilter)
     .filter(
       (c) =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.phone.includes(searchQuery)
+        (c.email ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.phone ?? "").includes(searchQuery)
     );
 
   const activeCount = customers.filter((c) => c.status === "Active").length;
@@ -48,5 +58,6 @@ export function useCustomers() {
     filtered,
     activeCount,
     inactiveCount,
+    reload,
   };
 }

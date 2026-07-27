@@ -320,8 +320,8 @@ export default function AnalyticsPage() {
                         fontWeight: "bold",
                         fontSize: "16px",
                       }}
-                      formatter={(value: number | string) => [
-                        `QAR ${Number(value).toLocaleString()}`,
+                      formatter={(value) => [
+                        `QAR ${Number(value ?? 0).toLocaleString()}`,
                         "Revenue",
                       ]}
                     />
@@ -379,10 +379,10 @@ export default function AnalyticsPage() {
                           boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                           padding: "12px 16px",
                         }}
-                        formatter={(value: number | string, _name, item) => {
+                        formatter={(value, _name, item) => {
                           const count =
                             (item?.payload as { count?: number })?.count ?? 0;
-                          return [`${value}% (${count})`, "Share"];
+                          return [`${value ?? 0}% (${count})`, "Share"];
                         }}
                       />
                     </PieChart>
@@ -468,8 +468,8 @@ export default function AnalyticsPage() {
                         boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                         padding: "12px 20px",
                       }}
-                      formatter={(value: number | string) => [
-                        `${value} Bookings`,
+                      formatter={(value) => [
+                        `${value ?? 0} Bookings`,
                         "Volume",
                       ]}
                     />

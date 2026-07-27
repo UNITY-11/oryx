@@ -19,10 +19,15 @@ export function TopHeader() {
     pathname === "/analytics" ||
     pathname.startsWith("/bookings/") ||
     pathname === "/billing" ||
+    pathname === "/company" ||
     (pathname.startsWith("/services/") && pathname !== "/services") ||
     (pathname.startsWith("/staff/") && pathname !== "/staff") ||
     (pathname.startsWith("/products/") && pathname !== "/products") ||
-    (pathname.startsWith("/customers/") && pathname !== "/customers")
+    (pathname.startsWith("/customers/") && pathname !== "/customers") ||
+    (pathname.startsWith("/hero/") && pathname !== "/hero") ||
+    (pathname.startsWith("/reviews/") && pathname !== "/reviews")
+    // Coupons disabled for now
+    // || (pathname.startsWith("/coupons/") && pathname !== "/coupons")
   ) {
     return null;
   }

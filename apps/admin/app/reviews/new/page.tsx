@@ -1,28 +1,39 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { ReviewForm } from "@/features/reviews/ui/review-form";
+import { MobileMenuButton } from "@/shared/ui/sidebar-context";
+import { ArrowLeft } from "lucide-react";
 
 export default function NewReviewPage() {
+  const router = useRouter();
+
   return (
-    <div className="flex h-full flex-col space-y-6">
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
-        <div className="border-primary/10 flex shrink-0 flex-col items-center justify-between border-b p-4 md:flex-row md:p-6">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/reviews"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/20 text-primary transition-colors hover:bg-primary/5"
+    <div className="flex h-full min-h-0 flex-col overflow-hidden pt-4">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b px-3 py-3 sm:px-4 sm:py-4 md:flex-row md:items-center md:justify-between md:px-6 md:py-5 lg:px-8">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <MobileMenuButton className="-ml-0" />
+            <button
+              type="button"
+              onClick={() => router.push("/reviews")}
+              className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-[#fcf4f0] transition-colors"
+              aria-label="Back"
             >
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h2 className="text-xl font-medium text-primary">Create Review</h2>
-              <p className="text-sm text-text-secondary">Add a new client testimonial.</p>
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-primary-dark truncate font-serif text-base font-medium sm:text-xl">
+                Create Review
+              </h1>
+              <p className="text-text-secondary truncate text-[11px] sm:text-xs">
+                Add a new client testimonial
+              </p>
             </div>
           </div>
         </div>
-        <div className="scrollbar-hide flex-1 overflow-auto p-4 md:p-6">
+
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <ReviewForm />
         </div>
       </div>

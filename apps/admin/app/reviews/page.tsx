@@ -6,10 +6,12 @@ import { ReviewsList } from "@features/reviews/ui/reviews-list";
 export default function ReviewsPage() {
   const {
     reviews,
+    setReviews,
     loading,
     error,
     activeCount,
     inactiveCount,
+    reload,
   } = useReviews();
 
   return (
@@ -19,6 +21,9 @@ export default function ReviewsPage() {
       reviews={reviews}
       activeCount={activeCount}
       inactiveCount={inactiveCount}
+      onRetry={reload}
+      onReload={reload}
+      onOptimisticUpdate={(updater) => setReviews(updater)}
     />
   );
 }

@@ -16,7 +16,7 @@ import {
   Receipt,
   Settings,
   ShoppingBag,
-  Ticket,
+  // Ticket, // Coupons disabled for now
   UserCircle2,
   UserCog,
   Users,
@@ -48,7 +48,8 @@ const navClusters = [
   ],
   [
     { name: "Hero Section", href: "/hero", icon: ImageIcon },
-    { name: "Coupons", href: "/coupons", icon: Ticket },
+    // Coupons disabled for now — not in use
+    // { name: "Coupons", href: "/coupons", icon: Ticket },
   ],
   [
     { name: "Company", href: "/company", icon: Building2 },

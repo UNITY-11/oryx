@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useSanityListener } from "@shared/hooks/use-sanity-listener";
+
 import { fetchHeroItems } from "../api";
 import { HeroItem } from "../types";
-import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
 export function useHero() {
   const [heroItems, setHeroItems] = useState<HeroItem[]>([]);
@@ -9,9 +10,15 @@ export function useHero() {
   const [error, setError] = useState<string | null>(null);
 
   const reloadHeroItems = () => {
+    setLoading(true);
+    setError(null);
     fetchHeroItems()
       .then(setHeroItems)
-      .catch((err) => setError(err.message))
+      .catch((err) =>
+        setError(
+          err instanceof Error ? err.message : "Failed to load hero slides"
+        )
+      )
       .finally(() => setLoading(false));
   };
 

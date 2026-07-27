@@ -14,7 +14,7 @@ import {
   ImageIcon,
   MessageSquare,
   Receipt,
-  Settings,
+  // Settings, // Settings disabled for now
   ShoppingBag,
   // Ticket, // Coupons disabled for now
   UserCircle2,
@@ -53,7 +53,8 @@ const navClusters = [
   ],
   [
     { name: "Company", href: "/company", icon: Building2 },
-    { name: "Settings", href: "/settings", icon: Settings },
+    // Settings disabled for now — not in use
+    // { name: "Settings", href: "/settings", icon: Settings },
   ],
 ];
 

@@ -48,8 +48,9 @@ export function TopHeader() {
         return "Reviews Management";
       case "/staff":
         return "Staff Management";
-      case "/settings":
-        return "Admin Settings";
+      // Settings disabled for now
+      // case "/settings":
+      //   return "Admin Settings";
       case "/company":
         return "Company Details";
       case "/notifications":

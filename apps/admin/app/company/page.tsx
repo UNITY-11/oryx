@@ -9,6 +9,7 @@ import {
   validateCompany,
   type FieldErrors,
 } from "@/features/company/validation";
+import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
@@ -20,6 +21,7 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  RefreshCw,
   Save,
 } from "lucide-react";
 
@@ -171,55 +173,70 @@ export default function CompanyPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+      <div className="flex h-full min-h-0 flex-col overflow-hidden pt-4">
+        <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
+          <div className="text-text-secondary flex flex-1 flex-col items-center justify-center px-4 text-center">
+            <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
+            <p className="text-sm font-medium">Loading company details...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (loadError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-          <AlertCircle className="h-7 w-7 text-red-500" />
+      <div className="flex h-full min-h-0 flex-col overflow-hidden pt-4">
+        <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+              <AlertCircle className="h-7 w-7 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-primary-dark text-lg font-semibold">
+                Couldn&apos;t load company details
+              </h2>
+              <p className="text-text-secondary mt-1 max-w-sm text-sm">
+                {loadError}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={load}
+              className="bg-primary inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try again
+            </button>
+          </div>
         </div>
-        <div>
-          <h2 className="text-primary-dark text-lg font-semibold">
-            Couldn’t load company details
-          </h2>
-          <p className="text-text-secondary mt-1 text-sm">{loadError}</p>
-        </div>
-        <button
-          type="button"
-          onClick={load}
-          className="bg-primary rounded-full px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90"
-        >
-          Try again
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm md:rounded-[32px]">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden pt-4">
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
         {/* Header */}
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8 md:py-5">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <Building2 className="text-primary h-5 w-5 shrink-0" />
-              <h2 className="text-primary-dark truncate font-serif text-xl font-bold md:text-2xl">
-                Company Details
-              </h2>
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4 md:px-6 md:py-5 lg:px-8">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <MobileMenuButton className="-ml-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Building2 className="text-primary h-5 w-5 shrink-0" />
+                <h2 className="text-primary-dark truncate font-serif text-lg font-bold sm:text-xl md:text-2xl">
+                  Company Details
+                </h2>
+              </div>
+              <p className="text-text-secondary mt-0.5 line-clamp-2 text-xs sm:mt-1 sm:text-sm">
+                {exists
+                  ? "Update your spa’s public business profile"
+                  : "No company profile yet — fill in the details below to create one"}
+              </p>
             </div>
-            <p className="text-text-secondary mt-1 text-sm">
-              {exists
-                ? "Update your spa’s public business profile"
-                : "No company profile yet — fill in the details below to create one"}
-            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden flex-wrap items-center gap-2 sm:flex sm:justify-end">
             {isDirty && (
               <button
                 type="button"
@@ -248,7 +265,7 @@ export default function CompanyPage() {
 
         {/* Empty hint banner */}
         {!exists && (
-          <div className="mx-4 mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:mx-6 md:mx-8">
+          <div className="mx-3 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 sm:mx-5 sm:mt-4 sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm md:mx-6 lg:mx-8">
             Your company profile is empty. Add name, contact, location, and
             WhatsApp so bookings can redirect customers correctly.
           </div>
@@ -258,7 +275,7 @@ export default function CompanyPage() {
         <form
           id="company-form"
           onSubmit={handleSave}
-          className="scrollbar-hide flex-1 space-y-8 overflow-y-auto px-4 py-6 sm:px-6 md:px-8 md:py-8"
+          className="scrollbar-hide min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-4 sm:space-y-8 sm:px-5 sm:py-6 md:px-6 md:py-8 lg:px-8"
         >
           {/* Brand */}
           <section className="space-y-5">
@@ -520,7 +537,7 @@ export default function CompanyPage() {
             )}
           </section>
 
-          <div className="border-primary/10 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
+          <div className="border-primary/10 hidden flex-col-reverse gap-3 border-t pt-6 sm:flex sm:flex-row sm:justify-end">
             {isDirty && (
               <button
                 type="button"
@@ -545,13 +562,41 @@ export default function CompanyPage() {
             </button>
           </div>
         </form>
+
+        {/* Sticky mobile save bar */}
+        <div className="border-primary/10 shrink-0 border-t bg-white p-3 sm:hidden">
+          <div className="flex gap-2">
+            {isDirty && (
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                disabled={saving}
+                className="h-11 flex-1 rounded-full border border-gray-200 text-sm font-medium text-gray-600 disabled:opacity-50"
+              >
+                Discard
+              </button>
+            )}
+            <button
+              type="submit"
+              form="company-form"
+              disabled={saving || !isDirty}
+              className="bg-primary flex h-11 min-w-0 flex-[1.4] items-center justify-center gap-2 rounded-full text-sm font-medium text-white disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving ? "Saving…" : exists ? "Save" : "Create"}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Discard confirm */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm">
-          <div className="border-primary/10 w-full max-w-sm rounded-3xl border bg-white p-6 shadow-xl">
-            <h3 className="text-primary-dark text-lg font-bold">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="border-primary/10 w-full max-w-sm rounded-t-[28px] border bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+            <h3 className="text-primary-dark font-serif text-lg font-bold">
               Discard changes?
             </h3>
             <p className="text-text-secondary mt-2 text-sm">
@@ -561,14 +606,14 @@ export default function CompanyPage() {
               <button
                 type="button"
                 onClick={() => setShowResetConfirm(false)}
-                className="flex-1 rounded-full bg-gray-50 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100"
+                className="h-11 flex-1 rounded-full bg-gray-50 text-sm font-semibold text-gray-600 hover:bg-gray-100"
               >
                 Keep editing
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="flex-1 rounded-full bg-red-500 py-3 text-sm font-semibold text-white hover:bg-red-600"
+                className="h-11 flex-1 rounded-full bg-red-500 text-sm font-semibold text-white hover:bg-red-600"
               >
                 Discard
               </button>

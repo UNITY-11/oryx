@@ -48,8 +48,9 @@ export function TopHeader() {
         return "Reviews Management";
       case "/staff":
         return "Staff Management";
-      case "/settings":
-        return "Admin Settings";
+      // Settings disabled for now
+      // case "/settings":
+      //   return "Admin Settings";
       case "/company":
         return "Company Details";
       case "/notifications":
@@ -81,7 +82,7 @@ export function TopHeader() {
             >
               <ChevronLeft className="text-text-secondary h-5 w-5" />
             </Link>
-            <h1 className="text-primary truncate font-serif text-lg font-medium sm:text-2xl">
+            <h1 className="text-primary-dark truncate font-serif text-lg font-medium sm:text-2xl">
               {bookingStep === 1
                 ? "Select Service"
                 : bookingStep === 2
@@ -103,7 +104,7 @@ export function TopHeader() {
         <div className="flex min-w-0 flex-1 items-center space-x-2 sm:space-x-4">
           <MobileMenuButton />
           <div className="min-w-0">
-            <h1 className="text-primary truncate font-serif text-lg font-medium sm:text-2xl">
+            <h1 className="text-primary-dark truncate font-serif text-lg font-medium sm:text-2xl">
               {getPageTitle()}
             </h1>
           </div>

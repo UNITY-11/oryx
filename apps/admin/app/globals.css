@@ -3,14 +3,23 @@
 
 /*
  * Admin-specific overrides.
- * All shared tokens, base styles, and scrollbar utilities
- * come from @repo/design-tokens.
  *
- * The only admin override: --color-primary uses the peach brand
- * color instead of the deep-gold used on the web.
+ * Shared tokens use a light peach primary that works as a brand
+ * accent on the public site, but fails contrast for admin UI text
+ * and white-on-primary buttons. Admin uses darker warm tones so
+ * visibility stays first.
  */
 @theme {
-  --color-primary: var(--color-brand-peach);
+  /* Darker peach-brown: readable as text, accessible with white on buttons */
+  --color-primary: #8f5c45;
+  /* Muted brown for secondary/supporting copy (replaces low-contrast gold) */
+  --color-text-secondary: #5c463c;
+  /* Keep body text firmly dark */
+  --color-text-primary: var(--color-brand-dark-brown);
+  --color-primary-dark: var(--color-brand-dark-brown);
+  /* Softer page backdrop so cards/text stand out more */
+  --color-background: #f3e6dc;
+  --color-surface: #faf6f2;
 }
 
 /* Hide scrollbars everywhere in admin; scrolling still works */

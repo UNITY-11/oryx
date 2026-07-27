@@ -14,7 +14,7 @@ import {
   ImageIcon,
   MessageSquare,
   Receipt,
-  Settings,
+  // Settings, // Settings disabled for now
   ShoppingBag,
   // Ticket, // Coupons disabled for now
   UserCircle2,
@@ -53,7 +53,8 @@ const navClusters = [
   ],
   [
     { name: "Company", href: "/company", icon: Building2 },
-    { name: "Settings", href: "/settings", icon: Settings },
+    // Settings disabled for now — not in use
+    // { name: "Settings", href: "/settings", icon: Settings },
   ],
 ];
 
@@ -131,7 +132,7 @@ function SidebarNav({
                     className={`flex items-center space-x-3 rounded-2xl px-4 py-3 transition-colors ${
                       isActive
                         ? "bg-primary text-white shadow-sm"
-                        : "text-primary hover:bg-primary/5"
+                        : "text-primary-dark hover:bg-primary/5"
                     }`}
                   >
                     <Icon className="h-5 w-5 shrink-0" />

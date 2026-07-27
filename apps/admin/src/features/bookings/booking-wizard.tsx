@@ -292,8 +292,8 @@ export function BookingWizard({
                             key={s.id}
                             className={`flex flex-col rounded-2xl border transition-all ${
                               isSelected
-                                ? "border-[#e8baa0] bg-[#e8baa0]/5 shadow-sm"
-                                : "border-primary/10 bg-white hover:border-[#e8baa0]/30"
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-primary/10 hover:border-primary/30 bg-white"
                             }`}
                           >
                             <button
@@ -362,14 +362,14 @@ export function BookingWizard({
                                       }}
                                       className={`flex w-full cursor-pointer items-center space-x-3 rounded-xl p-2.5 transition-colors ${
                                         isAddonSelected
-                                          ? "bg-[#e8baa0]/10"
+                                          ? "bg-primary/10"
                                           : "hover:bg-black/5"
                                       }`}
                                     >
                                       <div
                                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-transform duration-300 ${
                                           isAddonSelected
-                                            ? "rotate-45 bg-[#e8baa0] text-white shadow-sm"
+                                            ? "bg-primary rotate-45 text-white shadow-sm"
                                             : "border-primary/20 text-primary hover:border-primary/50 border bg-white"
                                         }`}
                                       >
@@ -382,7 +382,7 @@ export function BookingWizard({
                                       </div>
                                       <div className="flex flex-1 justify-between text-xs">
                                         <span
-                                          className={`truncate pr-2 font-medium ${isAddonSelected ? "text-[#e8baa0]" : "text-primary-dark"}`}
+                                          className={`truncate pr-2 font-medium ${isAddonSelected ? "text-primary" : "text-primary-dark"}`}
                                         >
                                           {" "}
                                           {option.name}
@@ -482,14 +482,14 @@ export function BookingWizard({
                             className={`flex h-8 w-full items-center justify-center rounded-full text-sm transition-all md:h-10 ${
                               isPast
                                 ? "cursor-not-allowed text-gray-300"
-                                : "hover:bg-[#e8baa0]/20"
+                                : "hover:bg-primary/20"
                             } ${
                               isSelected
-                                ? "bg-[#e8baa0] font-medium text-white shadow-md"
+                                ? "bg-primary font-medium text-white shadow-md"
                                 : ""
                             } ${
                               isToday && !isSelected
-                                ? "border border-[#e8baa0]/50 font-medium text-[#e8baa0]"
+                                ? "border-primary/50 text-primary border font-medium"
                                 : ""
                             } ${
                               !isPast && !isSelected && !isToday
@@ -535,8 +535,8 @@ export function BookingWizard({
                               isBooked
                                 ? "border-transparent bg-gray-100 text-gray-400 opacity-40"
                                 : isSelected
-                                  ? "border-[#e8baa0] bg-[#e8baa0] text-white shadow-md"
-                                  : "bg-surface text-text-primary border-[#e8baa0]/30 hover:border-[#e8baa0] hover:shadow-sm"
+                                  ? "border-primary bg-primary text-white shadow-md"
+                                  : "bg-surface text-text-primary border-primary/30 hover:border-primary hover:shadow-sm"
                             } `}
                           >
                             {t}
@@ -699,7 +699,7 @@ export function BookingWizard({
                   setSubmitError(null);
                   setStep(step + 1);
                 }}
-                className="flex h-11 w-full items-center justify-center space-x-2 rounded-full bg-[#e8baa0] px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
+                className="bg-primary flex h-11 w-full items-center justify-center space-x-2 rounded-full px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 <span>Next Step</span>
                 <ChevronRight className="h-5 w-5" />
@@ -713,7 +713,7 @@ export function BookingWizard({
                   customerName.trim().length < 4 ||
                   phone.trim().length < 8
                 }
-                className="flex h-11 w-full items-center justify-center space-x-2 rounded-full bg-[#e8baa0] px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
+                className="bg-primary flex h-11 w-full items-center justify-center space-x-2 rounded-full px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 {submitting ? (
                   <Loader2 className="h-5 w-5 animate-spin" />

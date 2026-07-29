@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
-import { ChevronLeft, Plus, Search } from "lucide-react";
+import { ChevronLeft, Plus } from "lucide-react";
 
 export function TopHeader() {
   const pathname = usePathname();
@@ -21,7 +21,8 @@ export function TopHeader() {
     pathname === "/billing" ||
     pathname === "/company" ||
     (pathname.startsWith("/services/") && pathname !== "/services") ||
-    (pathname.startsWith("/staff/") && pathname !== "/staff") ||
+    // Staff disabled for now
+    // (pathname.startsWith("/staff/") && pathname !== "/staff") ||
     (pathname.startsWith("/products/") && pathname !== "/products") ||
     (pathname.startsWith("/customers/") && pathname !== "/customers") ||
     (pathname.startsWith("/hero/") && pathname !== "/hero") ||
@@ -46,8 +47,9 @@ export function TopHeader() {
         return "Customers Directory";
       case "/reviews":
         return "Reviews Management";
-      case "/staff":
-        return "Staff Management";
+      // Staff disabled for now
+      // case "/staff":
+      //   return "Staff Management";
       // Settings disabled for now
       // case "/settings":
       //   return "Admin Settings";
@@ -111,6 +113,7 @@ export function TopHeader() {
         </div>
 
         <div className="flex shrink-0 items-center space-x-3">
+          {/* Staff disabled for now
           {pathname === "/staff" && (
             <div className="relative mr-2 hidden w-64 md:block">
               <Search className="text-text-secondary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -131,6 +134,7 @@ export function TopHeader() {
               />
             </div>
           )}
+          */}
 
           <div className="border-primary/10 flex items-center pl-3 md:border-l md:pl-5">
             {pathname === "/" && (
@@ -189,6 +193,7 @@ export function TopHeader() {
               </Link>
             )}
 
+            {/* Staff disabled for now
             {pathname === "/staff" && (
               <Link
                 href="/staff/new"
@@ -198,6 +203,7 @@ export function TopHeader() {
                 <span>Add Staff Member</span>
               </Link>
             )}
+            */}
 
             {pathname === "/hero" && (
               <Link

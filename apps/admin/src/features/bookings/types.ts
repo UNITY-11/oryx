@@ -10,6 +10,7 @@ export interface Booking {
   id: string;
   customerName: string;
   phone: string;
+  customerId?: string | null;
   services: BookingService[];
   date: string;
   time: string;

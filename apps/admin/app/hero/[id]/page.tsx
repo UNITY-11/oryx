@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   deleteHeroItem,
@@ -15,6 +21,7 @@ import {
   type HeroFieldErrors,
 } from "@/features/hero/validation";
 import { uploadServiceImage } from "@/features/services/api";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -52,6 +59,7 @@ export default function EditHeroPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [hero, setHero] = useState<EditHeroState | null>(null);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -68,6 +76,8 @@ export default function EditHeroPage({
     fetchHeroItemById(id)
       .then((data) => {
         setHero(data);
+        setInitialSnapshot(formSnapshot(data));
+        setPendingImageFile(null);
         setFieldErrors({});
       })
       .catch((err) =>
@@ -123,8 +133,13 @@ export default function EditHeroPage({
     reader.readAsDataURL(file);
   };
 
+  const isDirty = useMemo(() => {
+    if (!hero) return false;
+    return isFormDirty(hero, initialSnapshot) || Boolean(pendingImageFile);
+  }, [hero, initialSnapshot, pendingImageFile]);
+
   const handleUpdate = async () => {
-    if (!hero) return;
+    if (!hero || !isDirty) return;
 
     const errors = validateHero(hero, {
       hasPendingFile: Boolean(pendingImageFile),
@@ -149,6 +164,7 @@ export default function EditHeroPage({
         subtitle: hero.subtitle?.trim(),
       });
       setHero(result);
+      setInitialSnapshot(formSnapshot(result));
       setPendingImageFile(null);
       setFieldErrors({});
       setToast({ type: "success", message: "Hero slide saved" });
@@ -258,7 +274,7 @@ export default function EditHeroPage({
             <button
               type="button"
               onClick={handleUpdate}
-              disabled={saving}
+              disabled={saving || !isDirty}
               className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-5 sm:text-sm"
             >
               {saving ? (

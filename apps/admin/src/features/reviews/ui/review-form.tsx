@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import { Check, ChevronDown, Loader2, Star } from "lucide-react";
 
@@ -119,12 +120,29 @@ export function ReviewForm({ initialData }: ReviewFormProps) {
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
+  const isEditMode = Boolean(initialData?.id);
+  const [initialSnapshot] = useState(() =>
+    initialData
+      ? formSnapshot({
+          name: initialData.name ?? "",
+          text: initialData.text ?? "",
+          rating: initialData.rating ?? 5,
+          status: initialData.status ?? "Active",
+        })
+      : null
+  );
+
   const [formData, setFormData] = useState<ReviewFormData>({
     name: initialData?.name ?? "",
     text: initialData?.text ?? "",
     rating: initialData?.rating ?? 5,
     status: initialData?.status ?? "Active",
   });
+
+  const isDirty = useMemo(() => {
+    if (!isEditMode) return true;
+    return isFormDirty(formData, initialSnapshot);
+  }, [isEditMode, formData, initialSnapshot]);
 
   const update = <K extends keyof ReviewFormData>(
     key: K,
@@ -141,6 +159,7 @@ export function ReviewForm({ initialData }: ReviewFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditMode && !isDirty) return;
 
     const payload: ReviewFormData = {
       ...formData,
@@ -259,7 +278,7 @@ export function ReviewForm({ initialData }: ReviewFormProps) {
           </button>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || (isEditMode && !isDirty)}
             className="bg-primary inline-flex h-11 items-center justify-center gap-2 rounded-full px-8 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {saving ? (

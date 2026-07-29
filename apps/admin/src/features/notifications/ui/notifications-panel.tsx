@@ -225,18 +225,18 @@ function NotificationDetail({
               </div>
 
               {selectedNotif.bookingData.status === "Pending" && (
-                <div className="border-primary/10 mt-5 flex flex-col gap-2 border-t pt-5 sm:mt-6 sm:flex-row sm:gap-3 sm:pt-6">
+                <div className="border-primary/10 mt-5 flex flex-col gap-2.5 border-t pt-5 sm:mt-6 sm:flex-row sm:gap-3 sm:pt-6">
                   <button
                     type="button"
                     onClick={() => confirmBooking(selectedNotif.id)}
-                    className="bg-primary hover:bg-primary/90 shadow-primary/20 h-11 flex-1 rounded-2xl text-sm font-semibold text-white shadow-md transition-all sm:py-3"
+                    className="bg-primary hover:bg-primary/90 shadow-primary/20 flex h-11 w-full shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-md transition-all sm:h-12 sm:flex-1"
                   >
                     Confirm Booking
                   </button>
                   <button
                     type="button"
                     onClick={() => declineBooking(selectedNotif.id)}
-                    className="text-primary border-primary/30 hover:bg-primary/5 h-11 rounded-2xl border bg-white px-6 text-sm font-semibold transition-colors sm:py-3"
+                    className="text-primary border-primary/30 hover:bg-primary/5 flex h-11 w-full shrink-0 items-center justify-center rounded-full border bg-white text-sm font-semibold transition-colors sm:h-12 sm:w-auto sm:min-w-[7.5rem] sm:px-6"
                   >
                     Decline
                   </button>

@@ -1,8 +1,9 @@
 "use client";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Service, ServiceOption } from "@/features/services/types";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import { createBooking, fetchBookings } from "@features/bookings/api";
@@ -126,6 +127,7 @@ export default function CustomerDetailPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -159,6 +161,8 @@ export default function CustomerDetailPage({
     fetchCustomer(id)
       .then((data) => {
         setCustomer(data);
+        setInitialSnapshot(formSnapshot(data));
+        setPendingAvatarFile(null);
         setFieldErrors({});
       })
       .catch((err) =>
@@ -179,7 +183,13 @@ export default function CustomerDetailPage({
     setSessionsError(null);
     fetchBookings()
       .then((all) =>
-        setSessions(all.filter((b) => b.customerName === customer.name))
+        setSessions(
+          all.filter(
+            (b) =>
+              b.customerId === customer.id ||
+              (customer.phone && b.phone === customer.phone)
+          )
+        )
       )
       .catch((err) =>
         setSessionsError(
@@ -187,7 +197,12 @@ export default function CustomerDetailPage({
         )
       )
       .finally(() => setSessionsLoading(false));
-  }, [customer]);
+  }, [customer?.id, customer?.phone]);
+
+  const isDirty = useMemo(() => {
+    if (!customer) return false;
+    return isFormDirty(customer, initialSnapshot) || Boolean(pendingAvatarFile);
+  }, [customer, initialSnapshot, pendingAvatarFile]);
 
   useEffect(() => {
     if (!showBooking || availableServices.length > 0) return;
@@ -273,6 +288,7 @@ export default function CustomerDetailPage({
   };
 
   const handleSave = async () => {
+    if (!customer || !isDirty) return;
     const errors = validateCustomer(customer);
     if (hasCustomerFieldErrors(errors)) {
       setFieldErrors(errors);
@@ -286,14 +302,16 @@ export default function CustomerDetailPage({
       if (pendingAvatarFile) {
         avatarUrl = await uploadCustomerAvatar(pendingAvatarFile);
       }
+      // Phone is immutable — never send phone updates from the edit page
+      const { phone: _phone, ...editable } = customer;
       const result = await updateCustomer(id, {
-        ...customer,
+        ...editable,
         name: customer.name.trim(),
         email: customer.email.trim(),
-        phone: customer.phone.trim(),
         avatar: avatarUrl,
       });
       setCustomer(result);
+      setInitialSnapshot(formSnapshot(result));
       setPendingAvatarFile(null);
       setFieldErrors({});
       setToast({ type: "success", message: "Customer saved successfully" });
@@ -434,8 +452,8 @@ export default function CustomerDetailPage({
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving}
-              className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-5 sm:text-sm"
+              disabled={saving || !isDirty}
+              className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:text-sm"
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -576,11 +594,15 @@ export default function CustomerDetailPage({
                     <input
                       type="tel"
                       value={customer.phone}
-                      disabled={saving}
-                      onChange={(e) => update("phone", e.target.value)}
-                      className={`${inputClass} ${fieldErrors.phone ? inputErrorClass : ""}`}
+                      readOnly
+                      disabled
+                      aria-readonly="true"
+                      className={`${inputClass} cursor-not-allowed bg-gray-50 text-gray-600`}
                     />
-                    <FieldError message={fieldErrors.phone} />
+                    <p className="text-text-secondary mt-1.5 text-xs">
+                      Phone number cannot be changed. It links this customer to
+                      their bookings.
+                    </p>
                   </div>
                 </div>
 

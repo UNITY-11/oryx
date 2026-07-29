@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import {
   deleteService,
@@ -116,6 +117,7 @@ export default function ServiceDetailPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [service, setService] = useState<Service | null>(null);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -127,10 +129,19 @@ export default function ServiceDetailPage({
 
   useEffect(() => {
     fetchService(id)
-      .then((data) => setService(data))
+      .then((data) => {
+        setService(data);
+        setInitialSnapshot(formSnapshot(data));
+        setPendingImageFile(null);
+      })
       .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const isDirty = useMemo(
+    () => isFormDirty(service, initialSnapshot) || Boolean(pendingImageFile),
+    [service, initialSnapshot, pendingImageFile]
+  );
 
   if (loading) {
     return (
@@ -212,9 +223,10 @@ export default function ServiceDetailPage({
     service.options.length > 0 &&
     !service.options.some((o) => !isOptionValid(o)) &&
     !saving &&
-    !saved;
+    isDirty;
 
   const handleSave = async () => {
+    if (!isDirty) return;
     setSaving(true);
     setSaveError(null);
     try {
@@ -224,6 +236,7 @@ export default function ServiceDetailPage({
       }
       const result = await updateService(id, { ...service, image: imageUrl });
       setService(result);
+      setInitialSnapshot(formSnapshot(result));
       setPendingImageFile(null);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);

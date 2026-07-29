@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   CheckCircle2,
@@ -55,12 +56,29 @@ export function CouponForm({ initialData }: Props) {
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
+  const isEditMode = Boolean(initialData);
+  const [initialSnapshot] = useState(() =>
+    initialData
+      ? formSnapshot({
+          title: initialData.title || "",
+          type: initialData.type || "SPECIAL OFFER",
+          code: initialData.code || "",
+          icon: initialData.icon || "Sparkles",
+        })
+      : null
+  );
+
   const [formData, setFormData] = useState<CouponInput>({
     title: initialData?.title || "",
     type: initialData?.type || "SPECIAL OFFER",
     code: initialData?.code || "",
     icon: initialData?.icon || "Sparkles",
   });
+
+  const isDirty = useMemo(() => {
+    if (!isEditMode) return true;
+    return isFormDirty(formData, initialSnapshot);
+  }, [isEditMode, formData, initialSnapshot]);
 
   const update = <K extends keyof CouponInput>(
     key: K,
@@ -77,6 +95,7 @@ export function CouponForm({ initialData }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditMode && !isDirty) return;
     const payload: CouponInput = {
       ...formData,
       type: formData.type.trim(),
@@ -216,7 +235,7 @@ export function CouponForm({ initialData }: Props) {
         </button>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || (isEditMode && !isDirty)}
           className="bg-primary hover:bg-primary-dark flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
         >
           {loading ? (

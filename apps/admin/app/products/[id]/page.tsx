@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -128,6 +129,7 @@ export default function ProductDetailPage({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -144,6 +146,8 @@ export default function ProductDetailPage({
     fetchProduct(id)
       .then((data) => {
         setProduct(data);
+        setInitialSnapshot(formSnapshot(data));
+        setPendingImageFile(null);
         setFieldErrors({});
       })
       .catch((err) =>
@@ -189,8 +193,13 @@ export default function ProductDetailPage({
     reader.readAsDataURL(file);
   };
 
+  const isDirty = useMemo(() => {
+    if (!product) return false;
+    return isFormDirty(product, initialSnapshot) || Boolean(pendingImageFile);
+  }, [product, initialSnapshot, pendingImageFile]);
+
   const handleSave = async () => {
-    if (!product) return;
+    if (!product || !isDirty) return;
     const errors = validateProduct(product);
     if (hasProductFieldErrors(errors)) {
       setFieldErrors(errors);
@@ -212,6 +221,7 @@ export default function ProductDetailPage({
         image: imageUrl,
       });
       setProduct(result);
+      setInitialSnapshot(formSnapshot(result));
       setPendingImageFile(null);
       setFieldErrors({});
       setToast({ type: "success", message: "Product saved successfully" });
@@ -364,7 +374,7 @@ export default function ProductDetailPage({
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !isDirty}
               className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-5 sm:text-sm"
             >
               {saving ? (

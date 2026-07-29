@@ -18,7 +18,7 @@ import {
   ShoppingBag,
   // Ticket, // Coupons disabled for now
   UserCircle2,
-  UserCog,
+  // UserCog, // Staff disabled for now
   Users,
   X,
 } from "lucide-react";
@@ -41,7 +41,8 @@ const navClusters = [
     { name: "Products", href: "/products", icon: ShoppingBag },
   ],
   [
-    { name: "Staff", href: "/staff", icon: UserCog },
+    // Staff disabled for now — not in use
+    // { name: "Staff", href: "/staff", icon: UserCog },
     { name: "Customers", href: "/customers", icon: Users },
     { name: "Reviews", href: "/reviews", icon: MessageSquare },
     { name: "Notifications", href: "/notifications", icon: Bell },

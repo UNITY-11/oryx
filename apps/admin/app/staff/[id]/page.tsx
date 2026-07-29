@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchAttendanceReason } from "@/features/staff/api";
@@ -17,6 +17,7 @@ import {
   validateStaff,
   type StaffFieldErrors,
 } from "@/features/staff/validation";
+import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { ActionPinModal } from "@/shared/ui/action-pin-modal";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
@@ -95,6 +96,7 @@ export default function StaffDetailPage({
     status: "Active" as "Active" | "Inactive",
     joinedDate: "",
   });
+  const [editFormSnapshot, setEditFormSnapshot] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<StaffFieldErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [actionToConfirm, setActionToConfirm] = useState<(() => void) | null>(
@@ -102,6 +104,11 @@ export default function StaffDetailPage({
   );
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
+
+  const isEditDirty = useMemo(
+    () => isFormDirty(editForm, editFormSnapshot),
+    [editForm, editFormSnapshot]
+  );
 
   if (loading) {
     return (
@@ -143,7 +150,7 @@ export default function StaffDetailPage({
   }
 
   const handleEditClick = () => {
-    setEditForm({
+    const form = {
       name: staff.name,
       role: staff.role,
       email: staff.email || "",
@@ -151,12 +158,15 @@ export default function StaffDetailPage({
       baseSalary: staff.baseSalary,
       status: staff.status,
       joinedDate: staff.joinedDate,
-    });
+    };
+    setEditForm(form);
+    setEditFormSnapshot(formSnapshot(form));
     setFieldErrors({});
     setIsEditing(true);
   };
 
   const handleUpdateStaff = async () => {
+    if (!isEditDirty) return;
     const errors = validateStaff(editForm);
     if (hasStaffFieldErrors(errors)) {
       setFieldErrors(errors);
@@ -932,7 +942,7 @@ export default function StaffDetailPage({
               <button
                 type="button"
                 onClick={handleUpdateStaff}
-                disabled={isSaving}
+                disabled={isSaving || !isEditDirty}
                 className="bg-primary hover:bg-primary-dark flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white shadow-md transition-colors disabled:opacity-50 sm:h-auto sm:flex-none sm:py-2.5"
               >
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin" />} Save

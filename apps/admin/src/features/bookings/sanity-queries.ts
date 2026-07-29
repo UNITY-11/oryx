@@ -1,7 +1,14 @@
 export const BOOKING_PROJECTION = `{
   "id": _id,
-  customerName,
+  "customerName": coalesce(
+    *[_type == "customer" && (
+      _id == ^.customerId ||
+      (defined(^.phone) && ^.phone != "" && phone == ^.phone)
+    )][0].name,
+    customerName
+  ),
   phone,
+  customerId,
   "services": services[]{
     name,
     "options": coalesce(options, addons, [])

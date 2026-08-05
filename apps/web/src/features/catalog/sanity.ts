@@ -1,11 +1,11 @@
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { Category, Item } from "@/shared/types";
-import { 
-  PRODUCT_PROJECTION, 
-  SERVICE_PROJECTION, 
-  HERO_PROJECTION, 
+import {
   COUPON_PROJECTION,
-  REVIEW_PROJECTION
+  HERO_PROJECTION,
+  PRODUCT_PROJECTION,
+  REVIEW_PROJECTION,
+  SERVICE_PROJECTION,
 } from "@repo/sanity";
 
 const PLACEHOLDER_IMAGE = "/images/services/image.png";
@@ -32,6 +32,7 @@ type SanityService = {
   image?: string | null;
   pricingTiers?: SanityPricingTier[];
   options?: SanityOption[];
+  featured?: boolean;
 };
 
 type SanityProduct = {
@@ -50,7 +51,6 @@ export const ACTIVE_SERVICES_QUERY = `*[_type == "service" && status == "Active"
 export const ACTIVE_PRODUCTS_QUERY = `*[_type == "product" && status == "Active"] | order(name asc) ${PRODUCT_PROJECTION}`;
 export const SERVICE_BY_ID_QUERY = `*[_type == "service" && _id == $id][0] ${SERVICE_PROJECTION}`;
 export const PRODUCT_BY_ID_QUERY = `*[_type == "product" && _id == $id][0] ${PRODUCT_PROJECTION}`;
-
 
 export const HERO_LIST_QUERY = `*[_type == "hero"] | order(order asc) ${HERO_PROJECTION}`;
 
@@ -75,9 +75,10 @@ export function mapServiceToItem(service: SanityService): Item {
     name: service.name,
     description: service.description || service.shortDescription || "",
     price: firstTier?.price ?? 0,
-    category: asCategory(service.category, "Massage"),
+    category: asCategory(service.name, "Service"),
     imageUrl: service.image || PLACEHOLDER_IMAGE,
     isProduct: false,
+    featured: service.featured ?? false,
     options,
   };
 }
@@ -145,8 +146,6 @@ export async function fetchHeroItems(): Promise<HeroItem[]> {
   return items ?? [];
 }
 
-
-
 export const COUPON_LIST_QUERY = `*[_type == "coupon"] | order(_createdAt desc) ${COUPON_PROJECTION}`;
 
 export type Coupon = {
@@ -162,8 +161,6 @@ export async function fetchCoupons(): Promise<Coupon[]> {
   const items = await sanityClient.fetch<Coupon[]>(COUPON_LIST_QUERY);
   return items ?? [];
 }
-
-
 
 export const REVIEW_LIST_QUERY = `*[_type == "review" && status == "Active"] | order(createdAt desc) ${REVIEW_PROJECTION}`;
 

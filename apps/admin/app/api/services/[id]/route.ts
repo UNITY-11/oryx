@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { SERVICE_BY_ID_QUERY } from "@/features/services/sanity-queries";
-import { ServiceOption, ServiceCategory } from "@/features/services/types";
+import { ServiceOption } from "@/features/services/types";
+import {
+  hasServiceFieldErrors,
+  normalizeServiceInput,
+  validateService,
+} from "@/features/services/validation";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys<T extends { id: string }>(
@@ -37,11 +42,31 @@ export async function PATCH(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { id: _ignore, ...fields } = body;
+    const input = normalizeServiceInput(body);
+    const errors = validateService(input);
 
-    const patch: Record<string, unknown> = { ...fields };
-    if (fields.price !== undefined) patch.price = fields.price;
-    if (fields.options) patch.options = withKeys<ServiceOption>(fields.options);
+    if (hasServiceFieldErrors(errors)) {
+      return NextResponse.json(
+        { error: "Please fix the highlighted fields", errors },
+        { status: 400 }
+      );
+    }
+
+    const patch: Record<string, unknown> = {
+      name: input.name,
+      category: input.name.trim(),
+      status: input.status,
+      description: input.description,
+      shortDescription: input.shortDescription ?? "",
+      image: input.image,
+      price: input.price ?? 0,
+      options: withKeys<ServiceOption>(input.options),
+      preparationTime: input.preparationTime ?? 0,
+      cleanupTime: input.cleanupTime ?? 0,
+      maxCapacity: input.maxCapacity ?? 1,
+      tags: input.tags ?? [],
+      featured: Boolean(input.featured),
+    };
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(SERVICE_BY_ID_QUERY, { id });

@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Building2,
   LayoutDashboard,
-  ShoppingBag,
+  // ShoppingBag, // Products disabled for now
 } from "lucide-react";
 
 interface NavLinkProps {
@@ -96,12 +96,14 @@ export default function NotFound() {
                 desc="View overall statistics"
                 icon={<LayoutDashboard className="h-5 w-5" />}
               />
+              {/* Products disabled for now
               <NavLink
                 href="/products"
                 title="Products"
                 desc="Manage your inventory"
                 icon={<ShoppingBag className="h-5 w-5" />}
               />
+              */}
               <NavLink
                 href="/company"
                 title="Company"

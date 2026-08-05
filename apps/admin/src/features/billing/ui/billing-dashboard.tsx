@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import {
   AlertCircle,
@@ -38,6 +38,14 @@ interface BillingDashboardProps {
   handleComplete: (id: string) => void;
   handleWhatsApp: (booking: BillingBooking) => void;
   billable: BillingBooking[];
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  totalItems: number;
+  from: number;
+  to: number;
+  hasPrev: boolean;
+  hasNext: boolean;
   totalRevenue: number;
   startedCount: number;
   completedCount: number;
@@ -61,6 +69,14 @@ export function BillingDashboard({
   handleComplete,
   handleWhatsApp,
   billable,
+  page,
+  setPage,
+  totalPages,
+  totalItems,
+  from,
+  to,
+  hasPrev,
+  hasNext,
   totalRevenue,
   startedCount,
   completedCount,
@@ -68,17 +84,6 @@ export function BillingDashboard({
   selectedTotal,
 }: BillingDashboardProps) {
   const router = useRouter();
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(billable, 20, `${search}|${filter}`);
 
   return (
     <>
@@ -212,7 +217,7 @@ export function BillingDashboard({
                   </div>
 
                   <div className="divide-primary/5 divide-y">
-                    {paginatedItems.map((booking) => {
+                    {billable.map((booking) => {
                       const total = getTotal(booking, services);
                       const isStarted = booking.status === "Started";
 

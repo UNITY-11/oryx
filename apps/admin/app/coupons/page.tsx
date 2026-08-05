@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { deleteCoupon, fetchCoupons } from "@/features/coupons/api";
+import { deleteCoupon, fetchCouponsPage } from "@/features/coupons/api";
 import { Coupon } from "@/features/coupons/types";
+import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 import { useSanityListener } from "@/shared/hooks/use-sanity-listener";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
@@ -16,6 +17,7 @@ import {
   Loader2,
   Plus,
   Scissors,
+  Search,
   Sparkles,
   Star,
   Ticket,
@@ -42,44 +44,42 @@ function getIcon(iconName: string) {
 }
 
 export default function CouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const fetchPage = useCallback(
+    (params: { q: string; page: number; pageSize: number }) =>
+      fetchCouponsPage({
+        q: params.q,
+        page: params.page,
+        pageSize: params.pageSize,
+      }),
+    []
+  );
+
+  const {
+    items: coupons,
+    setItems: setCoupons,
+    loading,
+    error,
+    searchQuery,
+    setSearchQuery,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
+    reload: loadCoupons,
+  } = usePaginatedList(fetchPage);
+
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(coupons, 20);
-
-  const loadCoupons = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchCoupons();
-      setCoupons(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load coupons");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadCoupons();
-  }, [loadCoupons]);
-
   useSanityListener('*[_type == "coupon"]', loadCoupons);
+
+  const hasSearch = Boolean(searchQuery.trim());
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
@@ -113,12 +113,24 @@ export default function CouponsPage() {
               Manage promotional banners and discount codes.
             </p>
           </div>
-          <Link
-            href="/coupons/new"
-            className="bg-primary hover:bg-primary-dark inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold text-white transition-colors sm:h-10 sm:w-auto"
-          >
-            <Plus className="h-4 w-4" /> Add Coupon
-          </Link>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-56">
+              <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search coupons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none"
+              />
+            </div>
+            <Link
+              href="/coupons/new"
+              className="bg-primary hover:bg-primary-dark inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold text-white transition-colors sm:h-10 sm:w-auto"
+            >
+              <Plus className="h-4 w-4" /> Add Coupon
+            </Link>
+          </div>
         </div>
 
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
@@ -148,22 +160,26 @@ export default function CouponsPage() {
             <div className="border-primary/15 flex h-56 flex-col items-center justify-center rounded-2xl border border-dashed bg-[#fcf4f0]/40 px-4 text-center sm:rounded-3xl">
               <Ticket className="text-primary/30 mb-3 h-10 w-10" />
               <p className="text-primary-dark text-sm font-semibold">
-                No coupons yet
+                {hasSearch ? "No matching coupons" : "No coupons yet"}
               </p>
               <p className="text-text-secondary mt-1 max-w-sm text-xs">
-                Create your first promotional offer to display on the site.
+                {hasSearch
+                  ? "Try a different search term."
+                  : "Create your first promotional offer to display on the site."}
               </p>
-              <Link
-                href="/coupons/new"
-                className="bg-primary mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Coupon
-              </Link>
+              {!hasSearch && (
+                <Link
+                  href="/coupons/new"
+                  className="bg-primary mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Coupon
+                </Link>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {paginatedItems.map((coupon) => (
+              {coupons.map((coupon) => (
                 <div
                   key={coupon.id}
                   className="border-primary/15 relative w-full overflow-hidden rounded-2xl border bg-white shadow-sm"

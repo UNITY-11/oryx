@@ -3,22 +3,13 @@
 import { useRef, useState } from "react";
 import { ImageIcon, Plus, Trash2, Upload, X } from "lucide-react";
 
-import { ServiceOption, Service, ServiceCategory } from "./types";
+import { Service, ServiceOption } from "./types";
 
 interface AddServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddService: (service: Service) => void;
 }
-
-const CATEGORIES: ServiceCategory[] = [
-  "Massage",
-  "Facial",
-  "Body Treatment",
-  "Hair",
-  "Nails",
-  "Package",
-];
 
 export function AddServiceModal({
   isOpen,
@@ -30,7 +21,6 @@ export function AddServiceModal({
 
   const [form, setForm] = useState({
     name: "",
-    category: "Massage" as ServiceCategory,
     shortDescription: "",
     description: "",
     preparationTime: 10,
@@ -51,10 +41,7 @@ export function AddServiceModal({
     reader.readAsDataURL(file);
   };
 
-
-
-  const addOption = () =>
-    setOptions([...options, { name: "", price: 0 }]);
+  const addOption = () => setOptions([...options, { name: "", price: 0 }]);
   const removeOption = (idx: number) =>
     setOptions(options.filter((_, i) => i !== idx));
   const updateOption = (
@@ -62,7 +49,9 @@ export function AddServiceModal({
     field: keyof Omit<ServiceOption, "id">,
     value: string | number
   ) =>
-    setOptions(options.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
+    setOptions(
+      options.map((a, i) => (i === idx ? { ...a, [field]: value } : a))
+    );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +60,7 @@ export function AddServiceModal({
     const newService: Service = {
       id: `SVC-${String(Date.now()).slice(-4)}`,
       name: form.name,
-      category: form.category,
+      category: form.name.trim(),
       status: "Active",
       shortDescription: form.shortDescription,
       description: form.description,
@@ -86,6 +75,7 @@ export function AddServiceModal({
         .map((t) => t.trim())
         .filter(Boolean),
       createdAt: new Date().toISOString().split("T")[0] || "",
+      featured: false,
     };
     onAddService(newService);
     onClose();
@@ -167,27 +157,6 @@ export function AddServiceModal({
                   className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="text-text-secondary mb-2 block text-sm font-medium">
-                  Category
-                </label>
-                <select
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      category: e.target.value as ServiceCategory,
-                    })
-                  }
-                  className="border-primary/20 focus:border-primary text-primary-dark w-full appearance-none rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {/* Short Description */}
@@ -204,8 +173,6 @@ export function AddServiceModal({
                 className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
               />
             </div>
-
-
 
             {/* Service Options */}
             <div>
@@ -234,7 +201,9 @@ export function AddServiceModal({
                   >
                     <input
                       value={option.name}
-                      onChange={(e) => updateOption(idx, "name", e.target.value)}
+                      onChange={(e) =>
+                        updateOption(idx, "name", e.target.value)
+                      }
                       placeholder="ServiceOption name"
                       className="border-primary/20 focus:border-primary text-primary-dark placeholder:text-primary/40 rounded-xl border bg-transparent px-3 py-2.5 text-sm focus:outline-none"
                     />

@@ -1,10 +1,44 @@
 import { NextResponse } from "next/server";
 import { COMPANY_QUERY } from "@/features/company/sanity-queries";
-import { COMPANY_DOC_ID, type CompanyInput } from "@/features/company/types";
+import {
+  COMPANY_DOC_ID,
+  type CompanyInput,
+  type SocialLink,
+} from "@/features/company/types";
 import { hasFieldErrors, validateCompany } from "@/features/company/validation";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
+
+function withKeys<T extends { id: string }>(
+  items: T[] | undefined
+): (T & { _key: string })[] {
+  return (items ?? []).map((item) => ({ ...item, _key: item.id }));
+}
+
+function normalizeSocialLinks(value: unknown): SocialLink[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const link = item as Record<string, unknown>;
+      const url = typeof link.url === "string" ? link.url.trim() : "";
+      const platform =
+        typeof link.platform === "string" && link.platform.trim()
+          ? link.platform.trim()
+          : "Other";
+      const id =
+        typeof link.id === "string" && link.id.trim()
+          ? link.id.trim()
+          : `social-${index}`;
+
+      if (!url) return null;
+
+      return { id, platform, url } satisfies SocialLink;
+    })
+    .filter((link): link is SocialLink => link !== null);
+}
 
 function normalizeInput(body: Record<string, unknown>): CompanyInput {
   const str = (key: string) =>
@@ -17,6 +51,7 @@ function normalizeInput(body: Record<string, unknown>): CompanyInput {
     phone: str("phone"),
     whatsapp: str("whatsapp"),
     website: str("website"),
+    socialLinks: normalizeSocialLinks(body.socialLinks),
     addressLine1: str("addressLine1"),
     addressLine2: str("addressLine2"),
     city: str("city"),
@@ -59,6 +94,7 @@ export async function PUT(request: Request) {
       _id: COMPANY_DOC_ID,
       _type: "company" as const,
       ...input,
+      socialLinks: withKeys<SocialLink>(input.socialLinks),
       updatedAt: now,
     };
 

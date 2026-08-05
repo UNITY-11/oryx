@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
-import { fetchBookings, updateBooking } from "../../bookings/api";
-import { Booking } from "../../bookings/types";
+import {
+  fetchBookings,
+  fetchBookingsPage,
+  updateBooking,
+} from "../../bookings/api";
+import { Booking, getBookingDisplayId } from "../../bookings/types";
 import { fetchServices } from "../../services/api";
 import { Service } from "../../services/types";
 
@@ -16,19 +21,51 @@ export function getServiceLineItems(
 ) {
   return booking.services.map((svc) => {
     const obj = catalog.find((r) => r.name === svc.name);
-    const base = obj?.price || 0;
     const addonItems = (svc.options || []).map((aName) => {
       const a = (obj?.options || []).find((ad) => ad.name === aName);
       return { name: aName, price: a?.price || 0 };
     });
-    return { name: svc.name, base, options: addonItems };
+    return { name: svc.name, base: 0, options: addonItems };
   });
 }
 
 export function getTotal(booking: BillingBooking, catalog: Service[]) {
   return getServiceLineItems(booking, catalog).reduce(
-    (sum, s) => sum + s.base + s.options.reduce((a, ad) => a + ad.price, 0),
+    (sum, s) => sum + s.options.reduce((a, ad) => a + ad.price, 0),
     0
+  );
+}
+
+export function openWhatsAppInvoice(
+  booking: BillingBooking,
+  catalog: Service[]
+) {
+  const lines = getServiceLineItems(booking, catalog);
+  const servicesText = lines
+    .map((s) => {
+      if (s.options.length > 0) {
+        const optionsText = s.options
+          .map((a) => `• ${a.name}: QAR ${a.price}`)
+          .join("\n");
+        return `*${s.name}*\n${optionsText}`;
+      }
+      return `• ${s.name}`;
+    })
+    .join("\n\n");
+  const total = getTotal(booking, catalog);
+  const bill =
+    `*🌿 Oryx Spa — Invoice*\n\n` +
+    `Invoice #: ${getBookingDisplayId(booking)}\n` +
+    `Date: ${booking.date}  |  Time: ${booking.time}\n` +
+    `Client: ${booking.customerName}\n\n` +
+    `*Services:*\n${servicesText}\n\n` +
+    `*Total: QAR ${total}*\n\n` +
+    `Thank you for choosing Oryx Spa! We look forward to seeing you again. 🌸`;
+  const phone = booking.phone.replace(/\D/g, "");
+  if (!phone) return;
+  window.open(
+    `https://wa.me/${phone}?text=${encodeURIComponent(bill)}`,
+    "_blank"
   );
 }
 
@@ -50,29 +87,31 @@ export function buildInvoiceHTML(
         ? "110mm"
         : "80mm";
   const lineItemsHtml = lines
-    .map(
-      (svc) =>
-        `<div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-      <span style="font-weight:600;color:#452c1e;">${svc.name}</span>
-      <span style="font-weight:600;color:#452c1e;">QAR ${svc.base}</span>
-    </div>` +
-        svc.options
-          .map(
-            (a) =>
-              `<div style="display:flex;justify-content:space-between;padding-left:12px;margin-bottom:4px;">
-        <span style="font-size:11px;color:#86634f;">↳ ${a.name}</span>
-        <span style="font-size:11px;color:#86634f;">+QAR ${a.price}</span>
+    .map((svc) => {
+      const categoryHeader = `<div style="margin-bottom:4px;">
+      <span style="font-weight:700;color:#452c1e;font-size:11px;">${svc.name}</span>
+    </div>`;
+      if (svc.options.length === 0) {
+        return categoryHeader;
+      }
+      const optionsHtml = svc.options
+        .map(
+          (a) =>
+            `<div style="display:flex;justify-content:space-between;padding-left:8px;margin-bottom:4px;">
+        <span style="font-size:11px;color:#452c1e;">${a.name}</span>
+        <span style="font-size:11px;font-weight:600;color:#452c1e;">QAR ${a.price}</span>
       </div>`
-          )
-          .join("")
-    )
+        )
+        .join("");
+      return `<div style="margin-bottom:8px;">${categoryHeader}${optionsHtml}</div>`;
+    })
     .join("");
 
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8"/>
-  <title>Invoice ${booking.id}</title>
+  <title>Invoice ${getBookingDisplayId(booking)}</title>
   <style>
     @page { size: ${rollWidth} auto; margin: 0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -105,7 +144,7 @@ export function buildInvoiceHTML(
     <hr class="dash"/>
     <div class="center">
       <div style="font-size:13px;font-weight:700;color:#452c1e;">INVOICE</div>
-      <div class="inv-num">${booking.id}</div>
+      <div class="inv-num">${getBookingDisplayId(booking)}</div>
       <div style="font-size:9px;color:#86634f;margin-top:2px;">${date}</div>
       <span class="pill" style="margin-top:4px;display:inline-block;">${booking.status}</span>
     </div>
@@ -130,102 +169,88 @@ export function buildInvoiceHTML(
 }
 
 export function useBillingData() {
-  const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterStatus>("All");
   const [selected, setSelected] = useState<BillingBooking | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
-  const reloadBookings = () => {
+  const fetchPage = useCallback(
+    (params: { q: string; page: number; pageSize: number }) =>
+      fetchBookingsPage({
+        q: params.q,
+        page: params.page,
+        pageSize: params.pageSize,
+        status: filter,
+        billable: true,
+      }),
+    [filter]
+  );
+
+  const list = usePaginatedList(fetchPage, {
+    extraParams: { status: filter, billable: "1" },
+    extraDeps: [filter],
+  });
+
+  const reloadStats = useCallback(() => {
+    setStatsLoading(true);
+    setStatsError(null);
     Promise.all([fetchBookings(), fetchServices()])
       .then(([b, s]) => {
         setBookings(b);
         setServices(s);
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    reloadBookings();
+      .catch((err) =>
+        setStatsError(err instanceof Error ? err.message : "Failed to load")
+      )
+      .finally(() => setStatsLoading(false));
   }, []);
 
+  useEffect(() => {
+    reloadStats();
+  }, [reloadStats]);
+
   useSanityListener('*[_type == "booking"]', () => {
-    fetchBookings().then(setBookings).catch(console.error);
+    reloadStats();
+    list.reload();
   });
 
   const handleComplete = async (id: string) => {
-    setBookings((prev) =>
+    list.setItems((prev) =>
       prev.map((b) => (b.id === id ? { ...b, status: "Completed" } : b))
     );
     try {
       await updateBooking(id, { status: "Completed" });
+      list.reload();
+      reloadStats();
     } catch {
       // best-effort
     }
   };
 
   const handleWhatsApp = (booking: BillingBooking) => {
-    const lines = getServiceLineItems(booking, services);
-    const servicesText = lines
-      .map((s) => {
-        const addonsText = s.options
-          .map((a) => `   ↳ ${a.name}: QAR ${a.price}`)
-          .join("\n");
-        return `• ${s.name}: QAR ${s.base}${addonsText ? "\n" + addonsText : ""}`;
-      })
-      .join("\n");
-    const total = getTotal(booking, services);
-    const bill =
-      `*🌿 Oryx Spa — Invoice*\n\n` +
-      `Invoice #: ${booking.id}\n` +
-      `Date: ${booking.date}  |  Time: ${booking.time}\n` +
-      `Client: ${booking.customerName}\n\n` +
-      `*Services:*\n${servicesText}\n\n` +
-      `*Total: QAR ${total}*\n\n` +
-      `Thank you for choosing Oryx Spa! We look forward to seeing you again. 🌸`;
-    const phone = booking.phone.replace(/\D/g, "");
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(bill)}`,
-      "_blank"
-    );
+    openWhatsAppInvoice(booking, services);
   };
-
-  const billable = bookings
-    .filter((b) => {
-      const matchStatus =
-        filter === "All"
-          ? b.status === "Started" || b.status === "Completed"
-          : b.status === filter;
-      const matchSearch =
-        !search ||
-        b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-        b.id.toLowerCase().includes(search.toLowerCase());
-      return matchStatus && matchSearch;
-    })
-    .sort((a, b) => {
-      if (a.status === b.status) return b.date.localeCompare(a.date);
-      return a.status === "Started" ? -1 : 1;
-    });
 
   const totalRevenue = bookings
     .filter((b) => b.status === "Started" || b.status === "Completed")
     .reduce((s, b) => s + getTotal(b, services), 0);
-  const startedCount = bookings.filter((b) => b.status === "Started").length;
-  const completedCount = bookings.filter(
-    (b) => b.status === "Completed"
-  ).length;
+  const startedCount =
+    list.meta?.startedCount ??
+    bookings.filter((b) => b.status === "Started").length;
+  const completedCount =
+    list.meta?.completedCount ??
+    bookings.filter((b) => b.status === "Completed").length;
 
   const selectedLines = selected ? getServiceLineItems(selected, services) : [];
   const selectedTotal = selected ? getTotal(selected, services) : 0;
 
   return {
-    search,
-    setSearch,
+    search: list.searchQuery,
+    setSearch: list.setSearchQuery,
     filter,
     setFilter,
     selected,
@@ -234,11 +259,19 @@ export function useBillingData() {
     setShowPrintModal,
     bookings,
     services,
-    loading,
-    error,
+    loading: list.loading || statsLoading,
+    error: list.error || statsError,
     handleComplete,
     handleWhatsApp,
-    billable,
+    billable: list.items,
+    page: list.page,
+    setPage: list.setPage,
+    totalPages: list.totalPages,
+    totalItems: list.totalItems,
+    from: list.from,
+    to: list.to,
+    hasPrev: list.hasPrev,
+    hasNext: list.hasNext,
     totalRevenue,
     startedCount,
     completedCount,

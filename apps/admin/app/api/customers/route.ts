@@ -1,11 +1,60 @@
 import { NextResponse } from "next/server";
-import { CUSTOMERS_LIST_QUERY } from "@/features/customers/sanity-queries";
+import {
+  buildCustomersListQueries,
+  CUSTOMERS_LIST_QUERY,
+} from "@/features/customers/sanity-queries";
+import {
+  buildPaginatedResponse,
+  digitsOnly,
+  parsePaginationSearchParams,
+  toGroqSearchPattern,
+} from "@/shared/lib/pagination";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
   try {
-    const customers = await sanityClient.fetch(CUSTOMERS_LIST_QUERY);
-    return NextResponse.json(customers);
+    const { searchParams } = new URL(request.url);
+    const { paginated, page, pageSize, q } =
+      parsePaginationSearchParams(searchParams);
+
+    if (!paginated) {
+      const customers = await sanityClient.fetch(CUSTOMERS_LIST_QUERY);
+      return NextResponse.json(customers);
+    }
+
+    const tier = searchParams.get("tier") || "All";
+    const phoneDigits = digitsOnly(q);
+    const pattern = toGroqSearchPattern(q);
+    const phonePattern = phoneDigits.length >= 3 ? `*${phoneDigits}*` : "";
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+
+    const { listQuery, countQuery, activeCountQuery, inactiveCountQuery } =
+      buildCustomersListQueries({ q, phoneDigits, tier, start, end });
+
+    const queryParams = {
+      q,
+      pattern: pattern || "*",
+      phoneDigits: phoneDigits.length >= 3 ? phoneDigits : "",
+      phonePattern: phonePattern || "*",
+      tier,
+    };
+
+    const [items, total, activeCount, inactiveCount] = await Promise.all([
+      sanityClient.fetch(listQuery, queryParams),
+      sanityClient.fetch<number>(countQuery, queryParams),
+      sanityClient.fetch<number>(activeCountQuery),
+      sanityClient.fetch<number>(inactiveCountQuery),
+    ]);
+
+    return NextResponse.json(
+      buildPaginatedResponse(items, total, page, pageSize, {
+        activeCount,
+        inactiveCount,
+      })
+    );
   } catch (error) {
     console.error("Failed to fetch customers:", error);
     return NextResponse.json(

@@ -1,9 +1,9 @@
-import type { CompanyInput } from "./types";
+import { validatePhoneValue } from "@/shared/lib/phone";
+
+import type { CompanyInput, SocialLink } from "./types";
 
 export type FieldErrors = Partial<Record<keyof CompanyInput, string>>;
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^\+?[\d\s()-]{8,20}$/;
 const URL_RE = /^https?:\/\/.+/i;
 
 function digitsOnly(value: string): string {
@@ -35,23 +35,17 @@ export function validateCompany(data: CompanyInput): FieldErrors {
     errors.email = "Enter a valid email address";
   }
 
-  if (isBlank(data.phone)) {
-    errors.phone = "Phone number is required";
-  } else if (
-    !PHONE_RE.test(data.phone.trim()) ||
-    digitsOnly(data.phone).length < 8
-  ) {
-    errors.phone = "Enter a valid phone number (at least 8 digits)";
-  }
+  const phoneError = validatePhoneValue(data.phone, {
+    required: true,
+    label: "phone number",
+  });
+  if (phoneError) errors.phone = phoneError;
 
-  if (isBlank(data.whatsapp)) {
-    errors.whatsapp = "WhatsApp number is required";
-  } else if (
-    !PHONE_RE.test(data.whatsapp.trim()) ||
-    digitsOnly(data.whatsapp).length < 8
-  ) {
-    errors.whatsapp = "Enter a valid WhatsApp number with country code";
-  }
+  const whatsappError = validatePhoneValue(data.whatsapp, {
+    required: true,
+    label: "WhatsApp number",
+  });
+  if (whatsappError) errors.whatsapp = whatsappError;
 
   if (!isBlank(data.website) && !URL_RE.test(data.website.trim())) {
     errors.website = "Website must start with http:// or https://";
@@ -77,7 +71,24 @@ export function validateCompany(data: CompanyInput): FieldErrors {
     errors.mapEmbedUrl = "Embed URL must start with http:// or https://";
   }
 
+  const socialError = validateSocialLinks(data.socialLinks);
+  if (socialError) {
+    errors.socialLinks = socialError;
+  }
+
   return errors;
+}
+
+export function validateSocialLinks(links: SocialLink[]): string | undefined {
+  for (const link of links) {
+    if (!link.url.trim()) {
+      return "Each social link needs a URL";
+    }
+    if (!URL_RE.test(link.url.trim())) {
+      return `${link.platform} link must start with http:// or https://`;
+    }
+  }
+  return undefined;
 }
 
 export function hasFieldErrors(errors: FieldErrors): boolean {

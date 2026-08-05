@@ -3,7 +3,87 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Brush, Calendar, Home, Phone, Scissors } from "lucide-react";
+import { Home, Phone, Scissors } from "lucide-react";
+
+const leftNavItem = {
+  name: "Services",
+  href: "/services",
+  icon: Scissors,
+};
+
+const centerNavItem = {
+  name: "Home",
+  href: "/",
+  icon: Home,
+};
+
+const rightNavItem = {
+  name: "Contact",
+  href: "/contact",
+  icon: Phone,
+};
+
+const desktopNavItems = [centerNavItem, leftNavItem, rightNavItem];
+
+function SideLink({
+  href,
+  name,
+  icon: Icon,
+  isActive,
+}: {
+  href: string;
+  name: string;
+  icon: typeof Home;
+  isActive: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex w-full flex-row items-center justify-start space-x-4 rounded-2xl px-4 py-3 transition-colors focus:outline-none ${
+        isActive
+          ? "text-primary bg-background/10"
+          : "text-background hover:text-primary hover:bg-background/5"
+      }`}
+    >
+      <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+      <span className="text-sm font-medium">{name}</span>
+    </Link>
+  );
+}
+
+function MobileTab({
+  href,
+  name,
+  icon: Icon,
+  isActive,
+  variant = "default",
+}: {
+  href: string;
+  name: string;
+  icon: typeof Home;
+  isActive: boolean;
+  variant?: "default" | "center";
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors focus:outline-none ${
+        isActive ? "text-primary" : "text-background hover:text-primary"
+      }`}
+    >
+      <div className="flex h-10 w-10 items-center justify-center">
+        {variant === "center" ? (
+          <div className="shadow-spa bg-background flex h-10 w-10 items-center justify-center rounded-full">
+            <Icon className="h-5 w-5 text-white" strokeWidth={2.5} />
+          </div>
+        ) : (
+          <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+        )}
+      </div>
+      <span className="text-[10px] leading-none font-medium">{name}</span>
+    </Link>
+  );
+}
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -29,7 +109,6 @@ export function BottomNav() {
       })
       .then((item) => {
         if (!cancelled) {
-          // Hide bottom nav on service detail pages, keep it for products
           setHideForService(Boolean(item) && !item?.isProduct);
         }
       })
@@ -46,80 +125,63 @@ export function BottomNav() {
     return null;
   }
 
-  const navItems = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Services", href: "/services", icon: Scissors },
-    { name: "Contact", href: "/contact", icon: Phone, isCenter: true },
-    { name: "Products", href: "/products", icon: Brush },
-    { name: "Booking", href: "/booking", icon: Calendar },
-  ];
+  const isHomeActive = pathname === centerNavItem.href;
+  const isServicesActive = pathname === leftNavItem.href;
+  const isContactActive = pathname === rightNavItem.href;
 
   return (
-    <nav
-      className="relative w-full rounded-t-4xl bg-white backdrop-blur-xl md:flex md:h-full md:flex-col md:rounded-none md:bg-transparent md:pt-12"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
-      {/* Flawless S-curve hump that merges with the button's border */}
-      <svg
-        className="absolute -top-[14px] left-1/2 -translate-x-1/2 w-[100px] h-[16px] text-white pointer-events-none md:hidden"
-        viewBox="0 0 110 16"
-        fill="white"
+    <>
+      <nav
+        aria-label="Main navigation"
+        className="fixed inset-x-0 bottom-0 z-[100] md:hidden"
+        style={{
+          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+        }}
       >
-        <path d="M0 16 Q 15 16 25 8 T 55 0 T 85 8 T 110 16 Z" />
-      </svg>
-      {/* Desktop Logo */}
-      <div className="mb-12 hidden flex-col items-center justify-center md:flex">
-        <h1 className="text-surface font-serif text-4xl">ORYX</h1>
-        <p className="text-text-secondary mt-1 text-xs tracking-widest uppercase">
-          Spa & Salon
-        </p>
-      </div>
+        <div className="mx-auto max-w-md px-4">
+          <div className="flex items-stretch rounded-2xl border border-white/80 bg-white px-1 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+            <MobileTab
+              href={leftNavItem.href}
+              name={leftNavItem.name}
+              icon={leftNavItem.icon}
+              isActive={isServicesActive}
+            />
+            <MobileTab
+              href={centerNavItem.href}
+              name={centerNavItem.name}
+              icon={centerNavItem.icon}
+              isActive={isHomeActive}
+              variant="center"
+            />
+            <MobileTab
+              href={rightNavItem.href}
+              name={rightNavItem.name}
+              icon={rightNavItem.icon}
+              isActive={isContactActive}
+            />
+          </div>
+        </div>
+      </nav>
 
-      <div className="flex h-16 w-full items-center justify-between px-6 md:h-auto md:flex-col md:items-stretch md:gap-6 md:px-8">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
-
-          if (item.isCenter) {
-            return (
-              <div key={item.href} className="relative -top-4 flex flex-col items-center justify-center md:top-0 md:w-full shrink-0">
-                <Link
-                  href={item.href}
-                  className="relative flex flex-col items-center justify-center focus:outline-none rounded-full border-[6px] border-white bg-white md:border-none md:bg-transparent z-10"
-                >
-                  <div
-                    className={`shadow-spa flex h-14 w-14 items-center justify-center rounded-full transition-colors md:h-12 md:w-full md:rounded-2xl ${isActive ? "bg-background md:bg-[#c29a63]" : "bg-background md:bg-background"} md:space-x-3`}
-                  >
-                    <Icon
-                      className="text-white h-6 w-6 md:h-5 md:w-5"
-                      strokeWidth={2.5}
-                    />
-                    <span className="text-white hidden text-sm font-medium md:block">
-                      {item.name}
-                    </span>
-                  </div>
-                </Link>
-              </div>
-            );
-          }
-
-          return (
-            <Link
+      <nav className="hidden h-full w-full flex-col bg-transparent pt-12 md:flex">
+        <div className="mb-12 flex flex-col items-center justify-center">
+          <h1 className="text-surface font-serif text-4xl">ORYX</h1>
+          <p className="text-text-secondary mt-1 text-xs tracking-widest uppercase">
+            Spa & Salon
+          </p>
+        </div>
+        <div className="flex w-full flex-col items-stretch gap-6 px-8">
+          {desktopNavItems.map((item) => (
+            <SideLink
               key={item.href}
               href={item.href}
-              className={`flex w-12 flex-col items-center justify-center space-y-1 transition-colors focus:outline-none md:w-full md:flex-row md:justify-start md:space-y-0 md:space-x-4 md:rounded-2xl md:px-4 md:py-3 ${isActive ? "text-primary md:bg-background/10" : "text-background hover:text-primary md:hover:bg-background/5"}`}
-            >
-              <Icon
-                className="h-6 w-6 transition-transform hover:scale-110 md:h-5 md:w-5 md:hover:scale-100"
-                strokeWidth={isActive ? 2.5 : 2}
-              />
-              <span className="text-[10px] font-medium md:text-sm md:font-medium">
-                {item.name}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+              name={item.name}
+              icon={item.icon}
+              isActive={pathname === item.href}
+            />
+          ))}
+        </div>
+      </nav>
+    </>
   );
 }

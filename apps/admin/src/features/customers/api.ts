@@ -1,10 +1,27 @@
 import { parseOrThrow, uploadImage } from "@/shared/lib/api-helpers";
+import {
+  buildFetchPageQuery,
+  type PaginatedResponse,
+} from "@/shared/lib/pagination";
 
 import type { Customer } from "./types";
 
 export async function fetchCustomers(): Promise<Customer[]> {
   const res = await fetch("/api/customers", { cache: "no-store" });
   return parseOrThrow<Customer[]>(res, "Failed to load customers");
+}
+
+export async function fetchCustomersPage(params: {
+  q?: string;
+  tier?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<
+  PaginatedResponse<Customer, { activeCount: number; inactiveCount: number }>
+> {
+  const qs = buildFetchPageQuery(params);
+  const res = await fetch(`/api/customers?${qs}`, { cache: "no-store" });
+  return parseOrThrow(res, "Failed to load customers");
 }
 
 export async function fetchCustomer(id: string): Promise<Customer> {

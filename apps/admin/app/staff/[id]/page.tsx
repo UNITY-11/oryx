@@ -19,6 +19,7 @@ import {
 } from "@/features/staff/validation";
 import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
 import { ActionPinModal } from "@/shared/ui/action-pin-modal";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -881,18 +882,18 @@ export default function StaffDetailPage({
                   <label className="mb-1 block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                     Phone *
                   </label>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     value={editForm.phone}
-                    onChange={(e) => {
-                      setEditForm({ ...editForm, phone: e.target.value });
+                    onChange={(phone) => {
+                      setEditForm({ ...editForm, phone });
                       setFieldErrors((prev) => {
                         const next = { ...prev };
                         delete next.phone;
                         return next;
                       });
                     }}
-                    className={`focus:border-primary focus:ring-primary w-full rounded-xl border bg-gray-50 p-3 text-sm font-semibold transition-colors outline-none focus:ring-1 ${fieldErrors.phone ? "border-red-400" : "border-gray-200"}`}
+                    hasError={Boolean(fieldErrors.phone)}
+                    className="rounded-xl"
                   />
                   {fieldErrors.phone && (
                     <p className="mt-1 text-xs font-medium text-red-500">

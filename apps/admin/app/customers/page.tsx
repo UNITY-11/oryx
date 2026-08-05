@@ -14,6 +14,14 @@ export default function CustomersPage() {
     filtered,
     activeCount,
     inactiveCount,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
     reload,
   } = useCustomers();
 
@@ -28,6 +36,14 @@ export default function CustomersPage() {
       filtered={filtered}
       activeCount={activeCount}
       inactiveCount={inactiveCount}
+      page={page}
+      setPage={setPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      from={from}
+      to={to}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
       onRetry={reload}
     />
   );

@@ -1,55 +1,37 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
+import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 
-import { fetchServices } from "../api";
-import { Service, ServiceCategory } from "../types";
-
-export const CATEGORY_FILTERS: Array<ServiceCategory | "All"> = [
-  "All",
-  "Massage",
-  "Facial",
-  "Body Treatment",
-  "Hair",
-  "Nails",
-  "Package",
-];
+import { fetchServicesPage } from "../api";
 
 export function useServices() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<ServiceCategory | "All">(
-    "All"
+  const fetchPage = useCallback(
+    (params: { q: string; page: number; pageSize: number }) =>
+      fetchServicesPage({
+        q: params.q,
+        page: params.page,
+        pageSize: params.pageSize,
+      }),
+    []
   );
 
-  useEffect(() => {
-    fetchServices()
-      .then(setServices)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const filtered = services
-    .filter((s) => categoryFilter === "All" || s.category === categoryFilter)
-    .filter(
-      (s) =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-  const activeCount = services.filter((s) => s.status === "Active").length;
-  const inactiveCount = services.filter((s) => s.status === "Inactive").length;
+  const list = usePaginatedList(fetchPage);
 
   return {
-    services,
-    loading,
-    error,
-    searchQuery,
-    setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
-    filtered,
-    activeCount,
-    inactiveCount,
+    loading: list.loading,
+    error: list.error,
+    searchQuery: list.searchQuery,
+    setSearchQuery: list.setSearchQuery,
+    filtered: list.items,
+    activeCount: list.meta?.activeCount ?? 0,
+    inactiveCount: list.meta?.inactiveCount ?? 0,
+    page: list.page,
+    setPage: list.setPage,
+    totalPages: list.totalPages,
+    totalItems: list.totalItems,
+    from: list.from,
+    to: list.to,
+    hasPrev: list.hasPrev,
+    hasNext: list.hasNext,
+    reload: list.reload,
   };
 }

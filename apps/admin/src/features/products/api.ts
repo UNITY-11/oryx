@@ -1,10 +1,31 @@
 import { parseOrThrow, uploadImage } from "@/shared/lib/api-helpers";
+import {
+  buildFetchPageQuery,
+  type PaginatedResponse,
+} from "@/shared/lib/pagination";
 
 import type { Product } from "./types";
 
 export async function fetchProducts(): Promise<Product[]> {
   const res = await fetch("/api/products", { cache: "no-store" });
   return parseOrThrow<Product[]>(res, "Failed to load products");
+}
+
+export async function fetchProductsPage(params: {
+  q?: string;
+  category?: string;
+  sort?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<
+  PaginatedResponse<
+    Product,
+    { activeCount: number; lowStockCount: number; outOfStockCount: number }
+  >
+> {
+  const qs = buildFetchPageQuery(params);
+  const res = await fetch(`/api/products?${qs}`, { cache: "no-store" });
+  return parseOrThrow(res, "Failed to load products");
 }
 
 export async function fetchProduct(id: string): Promise<Product> {

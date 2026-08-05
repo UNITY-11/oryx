@@ -1,10 +1,33 @@
 import { parseOrThrow } from "@/shared/lib/api-helpers";
 
+import type {
+  BookingsPageResponse,
+  FetchBookingsPageParams,
+} from "./api/bookings-list-types";
 import type { Booking } from "./types";
 
 export async function fetchBookings(): Promise<Booking[]> {
   const res = await fetch("/api/bookings", { cache: "no-store" });
   return parseOrThrow<Booking[]>(res, "Failed to load bookings");
+}
+
+export async function fetchBookingsPage(
+  params: FetchBookingsPageParams
+): Promise<BookingsPageResponse> {
+  const qs = new URLSearchParams();
+  qs.set("paginated", "1");
+  qs.set("page", String(params.page ?? 1));
+  qs.set("pageSize", String(params.pageSize ?? 20));
+  if (params.q?.trim()) qs.set("q", params.q.trim());
+  if (params.status && params.status !== "All") qs.set("status", params.status);
+  if (params.billable) qs.set("billable", "1");
+  if (params.sort) qs.set("sort", params.sort);
+  if (params.order) qs.set("order", params.order);
+
+  const res = await fetch(`/api/bookings?${qs.toString()}`, {
+    cache: "no-store",
+  });
+  return parseOrThrow<BookingsPageResponse>(res, "Failed to load bookings");
 }
 
 export async function fetchBooking(id: string): Promise<Booking> {

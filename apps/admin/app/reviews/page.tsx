@@ -9,8 +9,18 @@ export default function ReviewsPage() {
     setReviews,
     loading,
     error,
+    searchQuery,
+    setSearchQuery,
     activeCount,
     inactiveCount,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
     reload,
   } = useReviews();
 
@@ -19,8 +29,18 @@ export default function ReviewsPage() {
       loading={loading}
       error={error}
       reviews={reviews}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
       activeCount={activeCount}
       inactiveCount={inactiveCount}
+      page={page}
+      setPage={setPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      from={from}
+      to={to}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
       onRetry={reload}
       onReload={reload}
       onOptimisticUpdate={(updater) => setReviews(updater)}

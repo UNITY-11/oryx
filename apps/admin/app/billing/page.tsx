@@ -20,11 +20,19 @@ export default function BillingPage() {
     handleComplete,
     handleWhatsApp,
     billable,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
     totalRevenue,
     startedCount,
     completedCount,
     selectedLines,
-    selectedTotal
+    selectedTotal,
   } = useBillingData();
 
   return (
@@ -44,6 +52,14 @@ export default function BillingPage() {
       handleComplete={handleComplete}
       handleWhatsApp={handleWhatsApp}
       billable={billable}
+      page={page}
+      setPage={setPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      from={from}
+      to={to}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
       totalRevenue={totalRevenue}
       startedCount={startedCount}
       completedCount={completedCount}

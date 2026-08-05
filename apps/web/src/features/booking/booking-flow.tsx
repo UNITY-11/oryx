@@ -33,7 +33,7 @@ function CartItemCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-white rounded-soft border-primary/5 overflow-hidden border shadow-sm">
+    <div className="rounded-soft border-primary/5 overflow-hidden border bg-white shadow-sm">
       <div
         className="hover:bg-primary/5 flex cursor-pointer items-center justify-between p-4 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -94,40 +94,41 @@ function CartItemCard({
               </div>
             )}
 
-            {cartItem.selectedOptions && cartItem.selectedOptions.length > 0 && (
-              <div className="mt-3 space-y-1">
-                <p className="text-text-secondary mb-1 text-xs font-medium uppercase">
-                  Service Options:
-                </p>
-                {cartItem.selectedOptions.map((option) => (
-                  <div
-                    key={option.id}
-                    className="text-text-secondary flex items-center justify-between rounded border border-gray-100 bg-white p-2 text-sm"
-                  >
-                    <span>+ {option.name}</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="font-medium">QAR {option.price}</span>
-                      <button
-                        onClick={() => {
-                          const newAddons = cartItem.selectedOptions?.filter(
-                            (a) => a.id !== option.id
-                          );
-                          removeItem(cartItem.id);
-                          addItem(
-                            cartItem.item,
-                            cartItem.selectedVariant,
-                            newAddons
-                          );
-                        }}
-                        className="text-text-secondary hover:text-primary hover:bg-primary/10 rounded-full p-1 transition-colors"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+            {cartItem.selectedOptions &&
+              cartItem.selectedOptions.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <p className="text-text-secondary mb-1 text-xs font-medium uppercase">
+                    Service Options:
+                  </p>
+                  {cartItem.selectedOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      className="text-text-secondary flex items-center justify-between rounded border border-gray-100 bg-white p-2 text-sm"
+                    >
+                      <span>+ {option.name}</span>
+                      <div className="flex items-center space-x-3">
+                        <span className="font-medium">QAR {option.price}</span>
+                        <button
+                          onClick={() => {
+                            const newAddons = cartItem.selectedOptions?.filter(
+                              (a) => a.id !== option.id
+                            );
+                            removeItem(cartItem.id);
+                            addItem(
+                              cartItem.item,
+                              cartItem.selectedVariant,
+                              newAddons
+                            );
+                          }}
+                          className="text-text-secondary hover:text-primary hover:bg-primary/10 rounded-full p-1 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
 
             <div className="mt-4">
               <Link
@@ -321,10 +322,10 @@ export function BookingFlow({
       throw new Error(body?.error ?? "Failed to create booking");
     }
 
-    return res.json() as Promise<{ id: string }>;
+    return res.json() as Promise<{ id: string; bookingCode?: string }>;
   };
 
-  const completeLocalBooking = (createdId: string) => {
+  const completeLocalBooking = (createdId: string, bookingCode?: string) => {
     addBooking({
       id: createdId,
       cartItems,
@@ -342,7 +343,7 @@ export function BookingFlow({
         }),
       time: selectedTime || "",
       status: "upcoming",
-      bookingRef: `#ORYX-${createdId.slice(-5).toUpperCase()}`,
+      bookingRef: bookingCode ?? createdId,
     });
     setStep("success");
     clearCart();
@@ -358,7 +359,7 @@ export function BookingFlow({
     setBookingError(null);
     try {
       const created = await persistBookingToSanity(user.name, user.phone);
-      completeLocalBooking(created.id);
+      completeLocalBooking(created.id, created.bookingCode);
     } catch (err) {
       setBookingError(
         err instanceof Error ? err.message : "Failed to create booking"
@@ -377,7 +378,7 @@ export function BookingFlow({
     try {
       setUser({ id: "u1", name, phone, channel });
       const created = await persistBookingToSanity(name, phone);
-      completeLocalBooking(created.id);
+      completeLocalBooking(created.id, created.bookingCode);
     } catch (err) {
       setBookingError(
         err instanceof Error ? err.message : "Failed to create booking"
@@ -399,11 +400,10 @@ export function BookingFlow({
     }
   };
 
-  if (!isMounted)
-    return <div className="flex-1 bg-white md:bg-transparent" />;
+  if (!isMounted) return <div className="flex-1 bg-white md:bg-transparent" />;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-background md:bg-white md:flex-row">
+    <div className="bg-background relative flex h-full flex-col overflow-hidden md:flex-row md:bg-white">
       {/* LEFT COLUMN - MAIN FLOW */}
       <div
         className={`relative flex h-full min-h-0 flex-1 flex-col overflow-hidden ${step !== "success" ? "md:border-primary/10 md:border-r" : ""}`}
@@ -412,16 +412,16 @@ export function BookingFlow({
           <>
             {(!isIntegrated || step !== "services") && (
               <div
-                className={`absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 bg-background md:bg-white`}
+                className={`bg-background absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 md:bg-white`}
               >
                 <button
                   onClick={handleBack}
-                  className={`absolute left-6 flex items-center justify-center rounded-full p-2 transition-colors text-white md:text-text-secondary hover:bg-white/20 md:hover:bg-black/5`}
+                  className={`md:text-text-secondary absolute left-6 flex items-center justify-center rounded-full p-2 text-white transition-colors hover:bg-white/20 md:hover:bg-black/5`}
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <h1
-                  className={`text-center font-serif text-3xl font-medium text-white md:text-primary-dark`}
+                  className={`md:text-primary-dark text-center font-serif text-3xl font-medium text-white`}
                 >
                   Book Session
                 </h1>
@@ -429,83 +429,83 @@ export function BookingFlow({
             )}
             {/* Spacer to push content below fixed header */}
             {(!isIntegrated || step !== "services") && (
-              <div className="h-[76px] w-full shrink-0 md:bg-background" />
+              <div className="md:bg-background h-[76px] w-full shrink-0" />
             )}
           </>
         )}
 
         {/* 1. SERVICES SELECTION */}
         {step === "services" && (
-          <div className="flex-1 flex flex-col min-h-0 md:bg-white">
+          <div className="flex min-h-0 flex-1 flex-col md:bg-white">
             <div
               className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-32 md:pb-0"
               data-lenis-prevent
             >
               {cartItems.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center space-y-6 px-6 pt-20 text-center">
-                <ClipboardList className="text-primary/20 h-16 w-16" />
-                <div>
-                  <h3 className="text-primary-dark mb-2 font-serif text-2xl">
-                    Your booking is empty
-                  </h3>
-                  <p className="text-text-secondary text-sm">
-                    Explore our services and add them to your booking.
-                  </p>
-                </div>
-                <Link
-                  href="/services"
-                  className="bg-primary text-surface rounded-full px-8 py-3 font-medium"
-                >
-                  Explore Services
-                </Link>
-              </div>
-            ) : (
-              <div className="flex min-h-full flex-col pt-4">
-                <div className="mb-6 px-4 space-y-2">
-                  {cartItems.map((cartItem) => (
-                    <CartItemCard
-                      key={cartItem.id}
-                      cartItem={cartItem}
-                      setItemToDelete={setItemToDelete}
-                      removeItem={removeItem}
-                      addItem={addItem}
-                    />
-                  ))}
-                </div>
-                {/* Mobile Billing (hidden on Desktop) */}
-                <div className="mt-auto space-y-6 px-6 pt-4 pb-8 md:hidden">
+                <div className="flex h-full flex-col items-center justify-center space-y-6 px-6 pt-20 text-center">
+                  <ClipboardList className="text-primary/20 h-16 w-16" />
+                  <div>
+                    <h3 className="text-primary-dark mb-2 font-serif text-2xl">
+                      Your booking is empty
+                    </h3>
+                    <p className="text-text-secondary text-sm">
+                      Explore our services and add them to your booking.
+                    </p>
+                  </div>
                   <Link
                     href="/services"
-                    className="bg-background text-white hover:bg-background/80 flex w-full items-center justify-center rounded-xl py-3.5 font-medium transition-colors border-2 "
+                    className="bg-primary text-surface rounded-full px-8 py-3 font-medium"
                   >
-                    <Plus className="mr-2 h-5 w-5" />
-                    Add More Services
+                    Explore Services
                   </Link>
+                </div>
+              ) : (
+                <div className="flex min-h-full flex-col pt-4">
+                  <div className="mb-6 space-y-2 px-4">
+                    {cartItems.map((cartItem) => (
+                      <CartItemCard
+                        key={cartItem.id}
+                        cartItem={cartItem}
+                        setItemToDelete={setItemToDelete}
+                        removeItem={removeItem}
+                        addItem={addItem}
+                      />
+                    ))}
+                  </div>
+                  {/* Mobile Billing (hidden on Desktop) */}
+                  <div className="mt-auto space-y-6 px-6 pt-4 pb-8 md:hidden">
+                    <Link
+                      href="/services"
+                      className="bg-background hover:bg-background/80 flex w-full items-center justify-center rounded-xl border-2 py-3.5 font-medium text-white transition-colors"
+                    >
+                      <Plus className="mr-2 h-5 w-5" />
+                      Add More Services
+                    </Link>
 
-                  <div className="bg-white rounded-3xl space-y-3 p-4 pb-10">
-                    <h3 className="text-primary-dark mb-4 font-serif text-lg">
-                      Billing Details
-                    </h3>
-                    <div className="text-text-secondary flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>QAR {total}</span>
-                    </div>
-                    <div className="text-text-secondary flex justify-between text-sm">
-                      <span>Taxes & Fees</span>
-                      <span>QAR 0.00</span>
+                    <div className="space-y-3 rounded-3xl bg-white p-4 pb-10">
+                      <h3 className="text-primary-dark mb-4 font-serif text-lg">
+                        Billing Details
+                      </h3>
+                      <div className="text-text-secondary flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>QAR {total}</span>
+                      </div>
+                      <div className="text-text-secondary flex justify-between text-sm">
+                        <span>Taxes & Fees</span>
+                        <span>QAR 0.00</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
 
             {/* Desktop Add More Services Button */}
             {cartItems.length > 0 && (
-              <div className="hidden md:block p-8 pt-4 bg-white border-t border-primary/5 shrink-0 z-10">
+              <div className="border-primary/5 z-10 hidden shrink-0 border-t bg-white p-8 pt-4 md:block">
                 <Link
                   href="/services"
-                  className="bg-background hover:opacity-90 flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all"
+                  className="bg-background flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90"
                 >
                   <Plus className="mr-2 h-5 w-5" />
                   Add More Services
@@ -581,6 +581,21 @@ export function BookingFlow({
                     const isToday =
                       dateObj.toDateString() === today.toDateString();
 
+                    let dayClass =
+                      "flex h-10 w-full items-center justify-center rounded-full text-sm transition-all ";
+                    if (isPast) {
+                      dayClass += "cursor-not-allowed text-gray-300";
+                    } else if (isSelected) {
+                      dayClass +=
+                        "bg-primary text-white font-medium shadow-md hover:bg-primary-dark hover:text-white";
+                    } else if (isToday) {
+                      dayClass +=
+                        "border border-primary text-primary font-medium hover:bg-primary/20 hover:text-primary-dark hover:border-primary";
+                    } else {
+                      dayClass +=
+                        "text-text-primary hover:bg-primary/20 hover:text-primary-dark";
+                    }
+
                     return (
                       <button
                         key={d}
@@ -589,7 +604,7 @@ export function BookingFlow({
                           setSelectedDate(dateObj);
                           setSelectedTime(null);
                         }}
-                        className={`flex h-10 w-full items-center justify-center rounded-full text-sm transition-all ${isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-primary/10"} ${isSelected ? "bg-primary text-surface hover:bg-primary font-medium shadow-md" : ""} ${isToday && !isSelected ? "border-primary/30 text-primary border font-medium" : ""} ${!isPast && !isSelected && !isToday ? "text-text-primary" : ""} `}
+                        className={dayClass}
                       >
                         {d}
                       </button>
@@ -602,11 +617,11 @@ export function BookingFlow({
             {/* Time Slots */}
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-white font-serif text-lg">
+                <h3 className="font-serif text-lg text-white">
                   Available Times
                 </h3>
                 {selectedDate && (
-                  <span className="text-white text-sm font-medium">
+                  <span className="text-sm font-medium text-white">
                     {selectedDate.toLocaleString("default", {
                       weekday: "short",
                       month: "short",
@@ -617,7 +632,7 @@ export function BookingFlow({
               </div>
 
               {dynamicTimeSlots.length > 0 ? (
-                <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-5 pb-24">
+                <div className="grid grid-cols-3 gap-3 pb-24 md:grid-cols-4 lg:grid-cols-5">
                   {dynamicTimeSlots.map((time) => {
                     const isBooked = dynamicBookedSlots.includes(time);
                     const isSelected = selectedTime === time;
@@ -626,12 +641,13 @@ export function BookingFlow({
                         key={time}
                         disabled={isBooked}
                         onClick={() => setSelectedTime(time)}
-                        className={`rounded-soft border py-2.5 text-sm font-medium transition-colors ${isBooked
-                          ? "border-transparent bg-gray-100 text-gray-400 opacity-40"
-                          : isSelected
-                            ? "bg-primary border-primary text-surface shadow-md"
-                            : "bg-surface border-primary/20 text-text-primary hover:border-primary hover:shadow-sm"
-                          } `}
+                        className={`rounded-soft border py-2.5 text-sm font-medium transition-colors ${
+                          isBooked
+                            ? "border-transparent bg-gray-100 text-gray-400 opacity-40"
+                            : isSelected
+                              ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
+                              : "bg-surface border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark hover:shadow-sm"
+                        } `}
                       >
                         {time}
                       </button>
@@ -650,11 +666,10 @@ export function BookingFlow({
         {/* 3. AUTH / OTP */}
         {step === "auth" && (
           <div
-            className="scrollbar-hide flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto bg-background pt-4 pb-32 md:bg-white md:py-0"
+            className="scrollbar-hide bg-background flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto pt-4 pb-32 md:bg-white md:py-0"
             data-lenis-prevent
           >
             {/* Top Pink Banner (Mobile only) */}
-
 
             <div className="md:border-primary/10 relative z-10 mx-auto w-[calc(100%-2.5rem)] max-w-[420px] rounded-[2.5rem] bg-white p-8 pb-10 shadow-xl md:border">
               {/* Heading */}
@@ -678,7 +693,7 @@ export function BookingFlow({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter full name"
-                    className="focus:ring-primary/50 text-text-primary w-full rounded-xl border border-primary bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
+                    className="focus:ring-primary/50 text-text-primary border-primary w-full rounded-xl border bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
                   />
                 </div>
 
@@ -693,17 +708,15 @@ export function BookingFlow({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+974 1234 5678"
-                    className="focus:ring-primary/50 text-text-primary w-full rounded-xl border border-primary bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
+                    className="focus:ring-primary/50 text-text-primary border-primary w-full rounded-xl border bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
                   />
                 </div>
-
-
 
                 {/* Verify & Confirm (Mobile Only) */}
                 <div className="pt-6 md:hidden">
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-primary py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
+                    className="bg-primary w-full rounded-xl py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
                   >
                     Verify & Confirm
                   </button>
@@ -715,18 +728,18 @@ export function BookingFlow({
 
         {/* 4. SUCCESS */}
         {step === "success" && (
-          <div className="flex h-full w-full flex-1 flex-col items-center justify-center space-y-4 bg-background px-6 text-center md:bg-background">
+          <div className="bg-background md:bg-background flex h-full w-full flex-1 flex-col items-center justify-center space-y-4 px-6 text-center">
             <CheckCircle2 className="text-primary h-24 w-24" />
             <h2 className="text-primary-dark mt-4 font-serif text-3xl md:text-4xl">
               Booking Confirmed!
             </h2>
             <p className="text-text-secondary mx-auto max-w-md">
-              Your appointment has been successfully scheduled. We will contact you
-              shortly on your mobile number.
+              Your appointment has been successfully scheduled. We will contact
+              you shortly on your mobile number.
             </p>
             <Link
               href="/"
-              className="bg-primary text-white hover:opacity-90 mt-8 inline-block rounded-xl px-8 py-3.5 font-medium shadow-md transition-all"
+              className="bg-primary mt-8 inline-block rounded-xl px-8 py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
             >
               Return to Home
             </Link>
@@ -742,65 +755,67 @@ export function BookingFlow({
             data-lenis-prevent
           >
             <div className="space-y-8">
-            <div>
-              <h3 className="text-primary-dark border-primary/10 mb-6 border-b pb-4 font-serif text-2xl">
-                Order Summary
-              </h3>
+              <div>
+                <h3 className="text-primary-dark border-primary/10 mb-6 border-b pb-4 font-serif text-2xl">
+                  Order Summary
+                </h3>
 
-              <div
-                className="scrollbar-hide max-h-[300px] space-y-4 overflow-y-auto pr-2"
-                data-lenis-prevent
-              >
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-start justify-between text-sm"
-                  >
-                    <div className="flex flex-col pr-4">
-                      <span className="text-text-primary leading-tight font-medium">
-                        {item.item.name}
-                      </span>
-                      {item.selectedVariant && (
-                        <span className="text-text-secondary mt-1 text-xs">
-                          {item.selectedVariant.name}
+                <div
+                  className="scrollbar-hide max-h-[300px] space-y-4 overflow-y-auto pr-2"
+                  data-lenis-prevent
+                >
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between text-sm"
+                    >
+                      <div className="flex flex-col pr-4">
+                        <span className="text-text-primary leading-tight font-medium">
+                          {item.item.name}
                         </span>
-                      )}
+                        {item.selectedVariant && (
+                          <span className="text-text-secondary mt-1 text-xs">
+                            {item.selectedVariant.name}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-primary shrink-0 font-semibold">
+                        QAR {item.totalPrice}
+                      </span>
                     </div>
-                    <span className="text-primary shrink-0 font-semibold">
-                      QAR {item.totalPrice}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="border-primary/5 space-y-4 rounded-2xl border bg-white p-6 shadow-sm">
-              <h4 className="text-primary-dark mb-2 font-serif text-lg">
-                Billing Details
-              </h4>
-              <div className="text-text-secondary flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span>QAR {total}</span>
-              </div>
-              <div className="text-text-secondary flex justify-between text-sm">
-                <span>Taxes & Fees</span>
-                <span>QAR 0.00</span>
-              </div>
-              <div className="text-text-primary border-primary/10 flex justify-between border-t pt-4 text-lg font-medium">
-                <span>Total</span>
-                <span className="text-primary-dark font-bold">QAR {total}</span>
+              <div className="border-primary/5 space-y-4 rounded-2xl border bg-white p-6 shadow-sm">
+                <h4 className="text-primary-dark mb-2 font-serif text-lg">
+                  Billing Details
+                </h4>
+                <div className="text-text-secondary flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>QAR {total}</span>
+                </div>
+                <div className="text-text-secondary flex justify-between text-sm">
+                  <span>Taxes & Fees</span>
+                  <span>QAR 0.00</span>
+                </div>
+                <div className="text-text-primary border-primary/10 flex justify-between border-t pt-4 text-lg font-medium">
+                  <span>Total</span>
+                  <span className="text-primary-dark font-bold">
+                    QAR {total}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-          
-        {/* Desktop Action Button */}
-          <div className="p-8 pt-4 bg-gray-50/50 border-t border-primary/5 shrink-0 z-10">
+
+          {/* Desktop Action Button */}
+          <div className="border-primary/5 z-10 shrink-0 border-t bg-gray-50/50 p-8 pt-4">
             {step === "services" ? (
               <button
                 onClick={() => setStep("time")}
                 disabled={cartItems.length === 0}
-                className="bg-background hover:opacity-90 flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+                className="bg-background flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
               >
                 Proceed to Time <ChevronRight className="ml-2 h-5 w-5" />
               </button>
@@ -814,7 +829,7 @@ export function BookingFlow({
                 <button
                   disabled={!selectedTime || bookingSubmitting}
                   onClick={handleCheckout}
-                  className="bg-primary hover:opacity-90 flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all disabled:opacity-50"
+                  className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
                 >
                   {bookingSubmitting ? (
                     <>
@@ -839,7 +854,7 @@ export function BookingFlow({
                   type="submit"
                   form="auth-form"
                   disabled={bookingSubmitting}
-                  className="flex w-full items-center justify-center rounded-xl bg-primary py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+                  className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
                 >
                   {bookingSubmitting ? (
                     <>
@@ -861,7 +876,7 @@ export function BookingFlow({
       {/* CART FLOATING ACTION (Mobile Only) */}
       {cartItems.length > 0 && (step === "services" || step === "time") && (
         <div className="animate-in slide-in-from-bottom-5 absolute right-0 bottom-[100px] left-0 z-40 mx-auto w-full max-w-md px-6 md:hidden">
-          <div className="bg-white border-t border-gray-100 rounded-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] text-gray-900 flex items-center justify-between p-4">
+          <div className="flex items-center justify-between rounded-3xl border-t border-gray-100 bg-white p-4 text-gray-900 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col">
               <span className="flex items-center text-sm font-medium">
                 <ClipboardList className="mr-2 h-4 w-4" /> {cartItems.length}{" "}
@@ -872,7 +887,7 @@ export function BookingFlow({
             {step === "services" ? (
               <button
                 onClick={() => setStep("time")}
-                className="bg-primary text-white hover:opacity-90 border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors"
+                className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
               >
                 Book the services <ChevronRight className="ml-1 h-4 w-4" />
               </button>
@@ -880,7 +895,7 @@ export function BookingFlow({
               <button
                 disabled={!selectedTime || bookingSubmitting}
                 onClick={handleCheckout}
-                className="bg-primary text-white hover:opacity-90 border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+                className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
               >
                 {bookingSubmitting ? (
                   <>

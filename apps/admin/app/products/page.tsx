@@ -19,6 +19,14 @@ export default function ProductsPage() {
     activeCount,
     lowStockCount,
     outOfStockCount,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
     reload,
   } = useProducts();
 
@@ -38,6 +46,14 @@ export default function ProductsPage() {
       activeCount={activeCount}
       lowStockCount={lowStockCount}
       outOfStockCount={outOfStockCount}
+      page={page}
+      setPage={setPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      from={from}
+      to={to}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
       onRetry={reload}
     />
   );

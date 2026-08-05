@@ -1,5 +1,5 @@
 import { useRouter, useSearchParams } from "next/navigation";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import {
   AlertCircle,
   ArrowUpDown,
@@ -8,8 +8,39 @@ import {
   Search,
 } from "lucide-react";
 
+import type { BookingsSortField } from "../api/bookings-list-types";
 import { BookingWizard } from "../booking-wizard";
 import { Booking, BookingStatus } from "../types";
+
+const STATUS_FILTERS: Array<BookingStatus | "All"> = [
+  "All",
+  "Pending",
+  "Confirmed",
+  "Started",
+  "Completed",
+  "Cancelled",
+];
+
+function statusBadgeClass(status: BookingStatus) {
+  if (status === "Confirmed")
+    return "border-green-200 bg-green-50 text-green-700";
+  if (status === "Pending")
+    return "border-yellow-200 bg-yellow-50 text-yellow-700";
+  if (status === "Started") return "border-blue-200 bg-blue-50 text-blue-700";
+  if (status === "Completed")
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  return "border-red-200 bg-red-50 text-red-700";
+}
+
+function formatBookingDate(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 interface BookingsListProps {
   loading: boolean;
@@ -18,10 +49,18 @@ interface BookingsListProps {
   setSearchQuery: (query: string) => void;
   statusFilter: BookingStatus | "All";
   setStatusFilter: (status: BookingStatus | "All") => void;
-  sortField: "id" | "date" | "amount" | "customerName";
-  toggleSort: (field: "id" | "date" | "amount" | "customerName") => void;
-  filteredAndSortedBookings: Booking[];
-  handleAddBooking: (booking: Booking) => void;
+  sortField: BookingsSortField;
+  toggleSort: (field: BookingsSortField) => void;
+  bookings: Booking[];
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  totalItems: number;
+  from: number;
+  to: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  handleAddBooking: () => void;
   createBooking: (payload: any) => Promise<Booking>;
 }
 
@@ -34,7 +73,15 @@ export function BookingsList({
   setStatusFilter,
   sortField,
   toggleSort,
-  filteredAndSortedBookings,
+  bookings,
+  page,
+  setPage,
+  totalPages,
+  totalItems,
+  from,
+  to,
+  hasPrev,
+  hasNext,
   handleAddBooking,
   createBooking,
 }: BookingsListProps) {
@@ -45,25 +92,9 @@ export function BookingsList({
   const setStep = (newStep: number) => {
     router.push(`?action=add&step=${newStep}`);
   };
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(
-    filteredAndSortedBookings,
-    20,
-    `${searchQuery}|${statusFilter}|${sortField}`
-  );
 
   return (
     <div className="flex h-full flex-col space-y-6 md:space-y-8">
-      {/* Combined Table and Filters */}
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {isAdding ? (
           <BookingWizard
@@ -71,51 +102,105 @@ export function BookingsList({
             setStep={setStep}
             onCancel={() => router.push("/bookings")}
             onSubmit={async (payload) => {
-              const created = await createBooking(payload);
-              handleAddBooking(created);
+              await createBooking(payload);
+              handleAddBooking();
               router.push("/bookings");
             }}
           />
         ) : (
           <>
-            {/* Filters and Search Bar */}
-            <div className="border-primary/10 z-10 flex shrink-0 flex-col items-center justify-between gap-4 border-b p-4 md:flex-row md:p-6">
-              <div className="relative w-full shrink-0 md:w-96">
+            <div className="border-primary/10 z-10 flex shrink-0 flex-col gap-4 border-b p-4 md:p-6">
+              <div className="relative w-full md:max-w-md">
                 <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
                 <input
-                  type="text"
-                  placeholder="Search by customer or ID..."
+                  type="search"
+                  placeholder="Search name, phone, service, or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 transition-colors focus:ring-1 focus:outline-none"
+                  className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/60 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 transition-colors focus:ring-1 focus:outline-none"
                 />
               </div>
 
-              <div className="scrollbar-hide flex w-full shrink-0 items-center space-x-2 overflow-x-auto pb-2 md:w-auto md:pb-0">
-                <div className="text-text-secondary flex items-center px-2">
+              <div className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto pb-1">
+                <div className="text-text-secondary flex shrink-0 items-center px-1">
                   <Filter className="mr-2 h-4 w-4" />
-                  <span className="text-sm font-medium">Status:</span>
+                  <span className="text-sm font-medium">Status</span>
                 </div>
-                {["All", "Confirmed", "Pending", "Completed", "Cancelled"].map(
-                  (status) => (
-                    <button
-                      key={status}
-                      onClick={() => setStatusFilter(status as any)}
-                      className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                        statusFilter === status
-                          ? "bg-primary border-primary text-white shadow-sm"
-                          : "text-primary-dark border-primary/10 hover:bg-primary/10 bg-primary/5"
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  )
-                )}
+                {STATUS_FILTERS.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setStatusFilter(status)}
+                    className={`rounded-full border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      statusFilter === status
+                        ? "bg-primary border-primary text-white shadow-sm"
+                        : "text-primary-dark border-primary/10 hover:bg-primary/10 bg-primary/5"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Data Table */}
-            <div className="scrollbar-hide flex-1 overflow-auto">
+            {/* Mobile cards */}
+            <div className="scrollbar-hide flex-1 space-y-3 overflow-auto p-4 md:hidden">
+              {loading ? (
+                <div className="text-text-secondary flex items-center justify-center gap-2 py-12">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading
+                  bookings...
+                </div>
+              ) : error ? (
+                <div className="flex items-center justify-center gap-2 py-12 text-red-500">
+                  <AlertCircle className="h-5 w-5" /> {error}
+                </div>
+              ) : totalItems === 0 ? (
+                <div className="text-text-secondary py-12 text-center">
+                  No bookings found matching your filters.
+                </div>
+              ) : (
+                bookings.map((booking) => (
+                  <button
+                    key={booking.id}
+                    type="button"
+                    onClick={() => router.push(`/bookings/${booking.id}`)}
+                    className="border-primary/10 hover:border-primary/25 w-full rounded-2xl border bg-[#fcf4f0] p-4 text-left transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-primary-dark truncate font-semibold">
+                          {booking.customerName}
+                        </p>
+                        <p className="text-text-secondary mt-0.5 truncate text-sm">
+                          {booking.phone || "No phone"}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusBadgeClass(booking.status)}`}
+                      >
+                        {booking.status}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-end justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-text-primary truncate text-sm font-medium">
+                          {booking.services[0]?.name || "Custom Session"}
+                        </p>
+                        <p className="text-text-secondary mt-0.5 text-xs">
+                          {formatBookingDate(booking.date)} · {booking.time}
+                        </p>
+                      </div>
+                      <p className="text-primary-dark shrink-0 text-sm font-semibold">
+                        QAR {booking.amount}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="scrollbar-hide hidden flex-1 overflow-auto md:block">
               <table className="w-full min-w-[900px] border-collapse text-left">
                 <thead className="sticky top-0 z-10 bg-[#fcf4f0]">
                   <tr className="border-primary/10 text-text-secondary border-b text-xs tracking-wider uppercase">
@@ -130,9 +215,7 @@ export function BookingsList({
                         />
                       </div>
                     </th>
-                    <th className="py-4 font-medium">
-                      Service & Service Options
-                    </th>
+                    <th className="py-4 font-medium">Service</th>
                     <th
                       className="group cursor-pointer py-4 font-medium"
                       onClick={() => toggleSort("date")}
@@ -192,7 +275,7 @@ export function BookingsList({
                       </td>
                     </tr>
                   ) : (
-                    paginatedItems.map((booking) => (
+                    bookings.map((booking) => (
                       <tr
                         key={booking.id}
                         onClick={() => router.push(`/bookings/${booking.id}`)}
@@ -233,28 +316,13 @@ export function BookingsList({
                         </td>
                         <td className="text-text-secondary py-5">
                           <p className="font-medium">
-                            {new Date(booking.date).toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
+                            {formatBookingDate(booking.date)}
                           </p>
                           <p className="mt-0.5 text-sm">{booking.time}</p>
                         </td>
                         <td className="py-5">
                           <span
-                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
-                              booking.status === "Confirmed"
-                                ? "border-green-200 bg-green-50 text-green-700"
-                                : booking.status === "Pending"
-                                  ? "border-yellow-200 bg-yellow-50 text-yellow-700"
-                                  : booking.status === "Completed"
-                                    ? "border-blue-200 bg-blue-50 text-blue-700"
-                                    : "border-red-200 bg-red-50 text-red-700"
-                            }`}
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${statusBadgeClass(booking.status)}`}
                           >
                             {booking.status}
                           </span>

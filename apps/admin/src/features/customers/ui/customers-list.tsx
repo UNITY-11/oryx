@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import {
   AlertCircle,
   Loader2,
@@ -25,6 +25,14 @@ interface CustomersListProps {
   filtered: Customer[];
   activeCount: number;
   inactiveCount: number;
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  totalItems: number;
+  from: number;
+  to: number;
+  hasPrev: boolean;
+  hasNext: boolean;
   onRetry?: () => void;
 }
 
@@ -46,20 +54,16 @@ export function CustomersList({
   filtered,
   activeCount,
   inactiveCount,
+  page,
+  setPage,
+  totalPages,
+  totalItems,
+  from,
+  to,
+  hasPrev,
+  hasNext,
   onRetry,
 }: CustomersListProps) {
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(filtered, 20, `${searchQuery}|${tierFilter}`);
-
   const hasFilters = Boolean(searchQuery.trim()) || tierFilter !== "All";
 
   return (
@@ -154,7 +158,7 @@ export function CustomersList({
               </div>
 
               <div className="divide-primary/5 divide-y">
-                {paginatedItems.map((customer) => (
+                {filtered.map((customer) => (
                   <Link
                     key={customer.id}
                     href={`/customers/${customer.id}`}

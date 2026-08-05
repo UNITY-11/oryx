@@ -2,13 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchCompany, saveCompany } from "@/features/company/api";
-import { EMPTY_COMPANY, type CompanyInput } from "@/features/company/types";
+import {
+  EMPTY_COMPANY,
+  SOCIAL_PLATFORMS,
+  type CompanyInput,
+  type SocialLink,
+  type SocialPlatform,
+} from "@/features/company/types";
 import {
   hasFieldErrors,
   toWhatsAppLink,
   validateCompany,
   type FieldErrors,
 } from "@/features/company/validation";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -21,8 +28,11 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  Plus,
   RefreshCw,
   Save,
+  Share2,
+  Trash2,
 } from "lucide-react";
 
 const inputClass =
@@ -33,6 +43,57 @@ const errorClass = "mt-1.5 text-xs font-medium text-red-500";
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className={errorClass}>{message}</p>;
+}
+
+function newSocialLink(): SocialLink {
+  return {
+    id: `social-${Date.now()}`,
+    platform: "Instagram",
+    url: "",
+  };
+}
+
+function mapCompanyInput(company: {
+  name?: string;
+  tagline?: string;
+  email?: string;
+  phone?: string;
+  whatsapp?: string;
+  website?: string;
+  socialLinks?: SocialLink[];
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  mapUrl?: string;
+  mapEmbedUrl?: string;
+}): CompanyInput {
+  return {
+    name: company.name || "",
+    tagline: company.tagline || "",
+    email: company.email || "",
+    phone: company.phone || "",
+    whatsapp: company.whatsapp || "",
+    website: company.website || "",
+    socialLinks: (company.socialLinks ?? []).map((link, index) => ({
+      id:
+        link.id ||
+        (link as SocialLink & { _key?: string })._key ||
+        `social-${index}`,
+      platform: (link.platform as SocialPlatform) || "Other",
+      url: link.url || "",
+    })),
+    addressLine1: company.addressLine1 || "",
+    addressLine2: company.addressLine2 || "",
+    city: company.city || "",
+    state: company.state || "",
+    country: company.country || "",
+    postalCode: company.postalCode || "",
+    mapUrl: company.mapUrl || "",
+    mapEmbedUrl: company.mapEmbedUrl || "",
+  };
 }
 
 export default function CompanyPage() {
@@ -54,22 +115,7 @@ export default function CompanyPage() {
     try {
       const company = await fetchCompany();
       if (company) {
-        const next: CompanyInput = {
-          name: company.name || "",
-          tagline: company.tagline || "",
-          email: company.email || "",
-          phone: company.phone || "",
-          whatsapp: company.whatsapp || "",
-          website: company.website || "",
-          addressLine1: company.addressLine1 || "",
-          addressLine2: company.addressLine2 || "",
-          city: company.city || "",
-          state: company.state || "",
-          country: company.country || "",
-          postalCode: company.postalCode || "",
-          mapUrl: company.mapUrl || "",
-          mapEmbedUrl: company.mapEmbedUrl || "",
-        };
+        const next = mapCompanyInput(company);
         setForm(next);
         setInitialSnapshot(JSON.stringify(next));
         setExists(true);
@@ -110,6 +156,50 @@ export default function CompanyPage() {
     });
   };
 
+  const addSocialLink = () => {
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: [...prev.socialLinks, newSocialLink()],
+    }));
+    setFieldErrors((prev) => {
+      if (!prev.socialLinks) return prev;
+      const next = { ...prev };
+      delete next.socialLinks;
+      return next;
+    });
+  };
+
+  const updateSocialLink = (
+    id: string,
+    patch: Partial<Pick<SocialLink, "platform" | "url">>
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: prev.socialLinks.map((link) =>
+        link.id === id ? { ...link, ...patch } : link
+      ),
+    }));
+    setFieldErrors((prev) => {
+      if (!prev.socialLinks) return prev;
+      const next = { ...prev };
+      delete next.socialLinks;
+      return next;
+    });
+  };
+
+  const removeSocialLink = (id: string) => {
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: prev.socialLinks.filter((link) => link.id !== id),
+    }));
+    setFieldErrors((prev) => {
+      if (!prev.socialLinks) return prev;
+      const next = { ...prev };
+      delete next.socialLinks;
+      return next;
+    });
+  };
+
   const handleReset = () => {
     const snapshot = JSON.parse(initialSnapshot) as CompanyInput;
     setForm(snapshot);
@@ -120,7 +210,11 @@ export default function CompanyPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errors = validateCompany(form);
+    const payload: CompanyInput = {
+      ...form,
+      socialLinks: form.socialLinks.filter((link) => link.url.trim()),
+    };
+    const errors = validateCompany(payload);
     if (hasFieldErrors(errors)) {
       setFieldErrors(errors);
       setToast({ type: "error", message: "Please fix the highlighted fields" });
@@ -129,23 +223,8 @@ export default function CompanyPage() {
 
     setSaving(true);
     try {
-      const saved = await saveCompany(form);
-      const next: CompanyInput = {
-        name: saved.name || "",
-        tagline: saved.tagline || "",
-        email: saved.email || "",
-        phone: saved.phone || "",
-        whatsapp: saved.whatsapp || "",
-        website: saved.website || "",
-        addressLine1: saved.addressLine1 || "",
-        addressLine2: saved.addressLine2 || "",
-        city: saved.city || "",
-        state: saved.state || "",
-        country: saved.country || "",
-        postalCode: saved.postalCode || "",
-        mapUrl: saved.mapUrl || "",
-        mapEmbedUrl: saved.mapEmbedUrl || "",
-      };
+      const saved = await saveCompany(payload);
+      const next = mapCompanyInput(saved);
       setForm(next);
       setInitialSnapshot(JSON.stringify(next));
       setFieldErrors({});
@@ -340,13 +419,13 @@ export default function CompanyPage() {
                 <label className={labelClass} htmlFor="company-phone">
                   Phone <span className="text-red-500">*</span>
                 </label>
-                <input
+                <PhoneInput
                   id="company-phone"
-                  type="tel"
                   value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  placeholder="+974 4000 0000"
-                  className={`${inputClass} ${fieldErrors.phone ? "border-red-400" : ""}`}
+                  onChange={(phone) => update("phone", phone)}
+                  hasError={Boolean(fieldErrors.phone)}
+                  placeholder="4000 0000"
+                  className="rounded-xl"
                 />
                 <FieldError message={fieldErrors.phone} />
               </div>
@@ -357,13 +436,13 @@ export default function CompanyPage() {
                     WhatsApp number <span className="text-red-500">*</span>
                   </span>
                 </label>
-                <input
+                <PhoneInput
                   id="company-whatsapp"
-                  type="tel"
                   value={form.whatsapp}
-                  onChange={(e) => update("whatsapp", e.target.value)}
-                  placeholder="+974 5555 1234"
-                  className={`${inputClass} ${fieldErrors.whatsapp ? "border-red-400" : ""}`}
+                  onChange={(whatsapp) => update("whatsapp", whatsapp)}
+                  hasError={Boolean(fieldErrors.whatsapp)}
+                  placeholder="5555 1234"
+                  className="rounded-xl"
                 />
                 <FieldError message={fieldErrors.whatsapp} />
                 <p className="text-text-secondary mt-1.5 text-xs">
@@ -397,6 +476,85 @@ export default function CompanyPage() {
                 <FieldError message={fieldErrors.website} />
               </div>
             </div>
+          </section>
+
+          {/* Social media */}
+          <section className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-primary-dark flex items-center gap-2 text-sm font-bold tracking-wider uppercase">
+                <Share2 className="h-4 w-4" />
+                Social media links
+              </h3>
+              <button
+                type="button"
+                onClick={addSocialLink}
+                className="border-primary/20 text-primary hover:bg-primary/5 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add link
+              </button>
+            </div>
+
+            {form.socialLinks.length === 0 ? (
+              <div className="border-primary/10 rounded-2xl border border-dashed bg-gray-50/80 px-4 py-8 text-center">
+                <Share2 className="text-primary/30 mx-auto mb-2 h-8 w-8" />
+                <p className="text-text-secondary text-sm">
+                  No social links yet. Add Facebook, Instagram, and other
+                  profiles.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {form.socialLinks.map((link) => (
+                  <div
+                    key={link.id}
+                    className="border-primary/10 grid grid-cols-1 gap-3 rounded-2xl border bg-gray-50/50 p-3 sm:grid-cols-[180px_1fr_auto] sm:items-start sm:p-4"
+                  >
+                    <div>
+                      <label className={labelClass}>Platform</label>
+                      <select
+                        value={link.platform}
+                        onChange={(e) =>
+                          updateSocialLink(link.id, {
+                            platform: e.target.value as SocialPlatform,
+                          })
+                        }
+                        className={inputClass}
+                      >
+                        {SOCIAL_PLATFORMS.map((platform) => (
+                          <option key={platform} value={platform}>
+                            {platform}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Profile URL</label>
+                      <input
+                        type="url"
+                        value={link.url}
+                        onChange={(e) =>
+                          updateSocialLink(link.id, { url: e.target.value })
+                        }
+                        placeholder="https://instagram.com/oryxspa"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="flex justify-end sm:pt-7">
+                      <button
+                        type="button"
+                        onClick={() => removeSocialLink(link.id)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 text-red-500 transition-colors hover:bg-red-50"
+                        title="Remove link"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <FieldError message={fieldErrors.socialLinks} />
           </section>
 
           {/* Location */}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isValidPhone } from "@/shared/lib/phone";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import {
   AlertCircle,
   ChevronLeft,
@@ -93,10 +95,14 @@ export function BookingWizard({
   const selectedServicesList = services.filter((s) =>
     selectedServiceIds.includes(s.id)
   );
-  const basePrice = selectedServicesList.reduce(
-    (sum, s) => sum + (s.price ?? 0),
-    0
-  );
+  const optionsTotal = selectedServicesList.reduce((sum, service) => {
+    return (
+      sum +
+      service.options
+        .filter((a) => selectedOptions.includes(a.id))
+        .reduce((s, a) => s + a.price, 0)
+    );
+  }, 0);
   const filteredServices = services.filter((s) =>
     s.name.toLowerCase().includes(serviceSearchQuery.toLowerCase())
   );
@@ -211,13 +217,12 @@ export function BookingWizard({
       );
       return { name: service.name, options: options.map((a) => a.name) };
     });
-    const addonsCost = selectedServicesList.reduce((sum, service) => {
+    const amount = selectedServicesList.reduce((sum, service) => {
       const options = service.options.filter((a) =>
         selectedOptions.includes(a.id)
       );
       return sum + options.reduce((s, a) => s + a.price, 0);
     }, 0);
-    const amount = basePrice + addonsCost;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -339,8 +344,10 @@ export function BookingWizard({
                                 <span className="text-primary-dark block truncate text-sm font-medium">
                                   {s.name}
                                 </span>
-                                <span className="text-primary text-sm font-medium">
-                                  QAR {s.price ?? 0}
+                                <span className="text-text-secondary text-xs">
+                                  {(s.options?.length ?? 0) > 0
+                                    ? `From QAR ${Math.min(...s.options.map((o) => o.price))}`
+                                    : "Select options"}
                                 </span>
                               </div>
                             </button>
@@ -388,7 +395,7 @@ export function BookingWizard({
                                           {option.name}
                                         </span>
                                         <span className="text-text-secondary font-medium whitespace-nowrap">
-                                          + QAR {option.price}
+                                          QAR {option.price}
                                         </span>
                                       </div>
                                     </button>
@@ -576,16 +583,10 @@ export function BookingWizard({
                     <label className="text-primary-dark mb-1.5 block text-sm font-medium">
                       Phone Number
                     </label>
-                    <input
-                      required
-                      type="tel"
+                    <PhoneInput
                       value={phone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[a-zA-Z]/g, "");
-                        setPhone(val);
-                      }}
-                      className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 px-4 py-3 shadow-sm transition-colors focus:bg-white focus:outline-none"
-                      placeholder="+974 5555 0000"
+                      onChange={setPhone}
+                      placeholder="5555 0000"
                     />
                   </div>
                 </div>
@@ -628,9 +629,6 @@ export function BookingWizard({
                           <span className="min-w-0 truncate">
                             {service.name}
                           </span>
-                          <span className="shrink-0">
-                            QAR {service.price || 0}
-                          </span>
                         </div>
                         {serviceAddons.map((option) => (
                           <div
@@ -638,11 +636,18 @@ export function BookingWizard({
                             className="text-text-secondary mt-1 flex justify-between gap-2 pl-2 text-xs"
                           >
                             <span className="min-w-0 truncate">
-                              + {option.name}
+                              {option.name}
                             </span>
-                            <span className="shrink-0">QAR {option.price}</span>
+                            <span className="text-primary-dark shrink-0 font-medium">
+                              QAR {option.price}
+                            </span>
                           </div>
                         ))}
+                        {serviceAddons.length === 0 && (
+                          <p className="text-text-secondary mt-1 pl-2 text-xs italic">
+                            No options selected
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -668,16 +673,7 @@ export function BookingWizard({
                       Total Estimated Amount
                     </p>
                     <p className="text-primary-dark font-serif text-xl sm:text-2xl">
-                      QAR{" "}
-                      {basePrice +
-                        selectedServicesList.reduce((sum, service) => {
-                          return (
-                            sum +
-                            service.options
-                              .filter((a) => selectedOptions.includes(a.id))
-                              .reduce((s, a) => s + a.price, 0)
-                          );
-                        }, 0)}
+                      QAR {optionsTotal}
                     </p>
                   </div>
                   <p className="text-text-secondary shrink-0 text-xs md:hidden">
@@ -711,7 +707,7 @@ export function BookingWizard({
                 disabled={
                   submitting ||
                   customerName.trim().length < 4 ||
-                  phone.trim().length < 8
+                  !isValidPhone(phone)
                 }
                 className="bg-primary flex h-11 w-full items-center justify-center space-x-2 rounded-full px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"
               >

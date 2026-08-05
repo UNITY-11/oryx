@@ -5,16 +5,21 @@ import { ServicesGrid } from "@features/services/ui/services-grid";
 
 export default function ServicesPage() {
   const {
-    services,
     loading,
     error,
     searchQuery,
     setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
     filtered,
     activeCount,
     inactiveCount,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
   } = useServices();
 
   return (
@@ -23,11 +28,17 @@ export default function ServicesPage() {
       error={error}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
-      categoryFilter={categoryFilter}
-      setCategoryFilter={setCategoryFilter}
       filtered={filtered}
       activeCount={activeCount}
       inactiveCount={inactiveCount}
+      page={page}
+      setPage={setPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      from={from}
+      to={to}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
     />
   );
 }

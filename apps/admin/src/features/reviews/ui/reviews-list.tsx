@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
@@ -12,6 +12,7 @@ import {
   Loader2,
   MessageSquare,
   Plus,
+  Search,
   Star,
   Trash2,
 } from "lucide-react";
@@ -22,8 +23,18 @@ interface ReviewsListProps {
   loading: boolean;
   error: string | null;
   reviews: Review[];
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
   activeCount: number;
   inactiveCount: number;
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  totalItems: number;
+  from: number;
+  to: number;
+  hasPrev: boolean;
+  hasNext: boolean;
   onRetry?: () => void;
   onReload?: () => void;
   onOptimisticUpdate?: (updater: (reviews: Review[]) => Review[]) => void;
@@ -39,8 +50,18 @@ export function ReviewsList({
   loading,
   error,
   reviews,
+  searchQuery,
+  setSearchQuery,
   activeCount,
   inactiveCount,
+  page,
+  setPage,
+  totalPages,
+  totalItems,
+  from,
+  to,
+  hasPrev,
+  hasNext,
   onRetry,
   onReload,
   onOptimisticUpdate,
@@ -50,18 +71,7 @@ export function ReviewsList({
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(reviews, 20);
-
+  const hasSearch = Boolean(searchQuery.trim());
   const applyLocalUpdate = useCallback(
     (updater: (items: Review[]) => Review[]) => {
       if (onOptimisticUpdate) {
@@ -123,6 +133,19 @@ export function ReviewsList({
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
+        <div className="border-primary/10 flex shrink-0 border-b p-3 sm:p-4 md:p-6">
+          <div className="relative w-full md:max-w-sm">
+            <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
+            <input
+              type="text"
+              placeholder="Search reviews..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
+            />
+          </div>
+        </div>
+
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
           {loading ? (
             <div className="text-text-secondary flex h-56 flex-col items-center justify-center px-4 text-center">
@@ -152,18 +175,22 @@ export function ReviewsList({
             <div className="border-primary/15 flex h-56 flex-col items-center justify-center rounded-2xl border border-dashed bg-[#fcf4f0]/40 px-4 text-center sm:rounded-3xl">
               <MessageSquare className="text-primary/30 mb-3 h-10 w-10" />
               <p className="text-primary-dark text-sm font-semibold">
-                No reviews yet
+                {hasSearch ? "No matching reviews" : "No reviews yet"}
               </p>
               <p className="text-text-secondary mt-1 max-w-sm text-xs">
-                Add your first client testimonial to showcase on the site.
+                {hasSearch
+                  ? "Try a different search term."
+                  : "Add your first client testimonial to showcase on the site."}
               </p>
-              <Link
-                href="/reviews/new"
-                className="bg-primary mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Review
-              </Link>
+              {!hasSearch && (
+                <Link
+                  href="/reviews/new"
+                  className="bg-primary mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Review
+                </Link>
+              )}
             </div>
           ) : (
             <div className="border-primary/10 overflow-hidden rounded-2xl border">
@@ -176,7 +203,7 @@ export function ReviewsList({
               </div>
 
               <div className="divide-primary/5 divide-y">
-                {paginatedItems.map((review) => (
+                {reviews.map((review) => (
                   <div
                     key={review.id}
                     className="hover:bg-primary/5 grid grid-cols-1 gap-3 px-3.5 py-4 transition-colors sm:gap-4 sm:px-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_80px_90px_100px] lg:items-center"

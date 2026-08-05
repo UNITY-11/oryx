@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Star, Loader2 } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
+
 import { useReviews } from "./use-reviews";
 
 export function TestimonialCarousel() {
@@ -56,7 +57,7 @@ export function TestimonialCarousel() {
 
   return (
     <div
-      className="relative flex h-[250px] w-full items-center justify-center overflow-hidden md:h-[280px]"
+      className="relative flex h-[250px] w-full items-center justify-center overflow-hidden md:h-[280px] lg:h-[340px]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={onTouchStart}
@@ -68,7 +69,7 @@ export function TestimonialCarousel() {
           <Loader2 className="text-primary h-8 w-8 animate-spin" />
         </div>
       ) : reviews.length === 0 ? (
-        <div className="flex h-full w-full items-center justify-center text-text-secondary">
+        <div className="text-text-secondary flex h-full w-full items-center justify-center">
           No reviews available.
         </div>
       ) : (
@@ -127,7 +128,7 @@ export function TestimonialCarousel() {
           return (
             <div
               key={testimonial.id}
-              className="border-primary/10 absolute flex w-full max-w-[340px] cursor-pointer flex-col rounded-[32px] border bg-white p-6 shadow-sm transition-all duration-700 ease-in-out md:max-w-[380px] md:px-8 md:py-5"
+              className="border-primary/10 absolute flex w-full max-w-[340px] cursor-pointer flex-col rounded-[32px] border bg-white p-6 shadow-sm transition-all duration-700 ease-in-out md:max-w-[380px] md:px-8 md:py-5 lg:max-w-[480px] lg:rounded-[36px] lg:p-10 lg:shadow-md"
               style={{
                 transform: `translateX(${translateX}) scale(${scale})`,
                 opacity,
@@ -143,7 +144,7 @@ export function TestimonialCarousel() {
                 {[...Array(testimonial.rating || 5)].map((_, i) => (
                   <Star
                     key={i}
-                    className="fill-[#e5c37a] text-[#e5c37a] h-4 w-4 md:h-5 md:w-5"
+                    className="h-4 w-4 fill-[#e5c37a] text-[#e5c37a] md:h-5 md:w-5"
                   />
                 ))}
               </div>

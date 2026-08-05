@@ -1,43 +1,73 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { DEFAULT_PAGE_SIZE } from "@/shared/ui/list-pagination";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
-import { createBooking, fetchBookings } from "../api";
+import { createBooking, fetchBookingsPage } from "../api";
 import { Booking, BookingStatus } from "../types";
+import type { BookingsSortField } from "./bookings-list-types";
 
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const reloadBookings = () => {
-    fetchBookings()
-      .then(setBookings)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    reloadBookings();
-  }, []);
-
-  useSanityListener('*[_type == "booking"]', reloadBookings);
-
-  // Filter & Sort State
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "All">(
     "All"
   );
-  const [sortField, setSortField] = useState<
-    "id" | "date" | "amount" | "customerName"
-  >("id");
+  const [sortField, setSortField] = useState<BookingsSortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Handlers
-  const handleAddBooking = (newBooking: Booking) => {
-    setBookings([newBooking, ...bookings]);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, sortField, sortOrder]);
+
+  const loadBookings = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchBookingsPage({
+      q: debouncedSearch,
+      status: statusFilter,
+      page,
+      pageSize: DEFAULT_PAGE_SIZE,
+      sort: sortField,
+      order: sortOrder,
+    })
+      .then((result) => {
+        setBookings(result.items);
+        setTotalItems(result.total);
+        setTotalPages(result.totalPages);
+        if (page > result.totalPages) {
+          setPage(result.totalPages);
+        }
+      })
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load bookings")
+      )
+      .finally(() => setLoading(false));
+  }, [debouncedSearch, statusFilter, page, sortField, sortOrder]);
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  useSanityListener('*[_type == "booking"]', loadBookings);
+
+  const handleAddBooking = () => {
+    setPage(1);
+    loadBookings();
   };
 
-  const toggleSort = (field: typeof sortField) => {
+  const toggleSort = (field: BookingsSortField) => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -46,30 +76,9 @@ export function useBookings() {
     }
   };
 
-  // Derived State
-  const filteredAndSortedBookings = bookings
-    .filter((b) => statusFilter === "All" || b.status === statusFilter)
-    .filter(
-      (b) =>
-        b.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.id.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      let comparison = 0;
-      if (sortField === "date") {
-        // Compare date + time
-        const dateA = new Date(`${a.date}T${a.time}`).getTime();
-        const dateB = new Date(`${b.date}T${b.time}`).getTime();
-        comparison = dateA - dateB;
-      } else if (sortField === "amount") {
-        comparison = a.amount - b.amount;
-      } else if (sortField === "customerName") {
-        comparison = a.customerName.localeCompare(b.customerName);
-      } else if (sortField === "id") {
-        comparison = a.id.localeCompare(b.id);
-      }
-      return sortOrder === "asc" ? comparison : -comparison;
-    });
+  const pageSize = DEFAULT_PAGE_SIZE;
+  const from = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, totalItems);
 
   return {
     loading,
@@ -79,9 +88,19 @@ export function useBookings() {
     statusFilter,
     setStatusFilter,
     sortField,
+    sortOrder,
     toggleSort,
-    filteredAndSortedBookings,
+    bookings,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev: page > 1,
+    hasNext: page < totalPages,
     handleAddBooking,
     createBooking,
+    reloadBookings: loadBookings,
   };
 }

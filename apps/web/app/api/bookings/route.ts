@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sanityWriteClient } from "@/shared/lib/sanity/client";
+import { generateNextBookingCode } from "@repo/sanity";
 
 type BookingServiceInput = {
   name: string;
@@ -54,8 +55,11 @@ export async function POST(request: Request) {
       customerId = newCustomer._id;
     }
 
+    const bookingCode = await generateNextBookingCode(sanityWriteClient);
+
     const doc = {
       _type: "booking",
+      bookingCode,
       customerName: body.customerName.trim(),
       phone: body.phone ?? "",
       customerId: customerId ?? null,
@@ -103,7 +107,10 @@ export async function POST(request: Request) {
       // Don't fail the booking request if only the notification creation fails
     }
 
-    return NextResponse.json({ ...doc, id: created._id }, { status: 201 });
+    return NextResponse.json(
+      { ...doc, id: created._id, bookingCode, createdAt: created._createdAt },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create booking error details:", error);
     return NextResponse.json(

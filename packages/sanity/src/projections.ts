@@ -20,7 +20,8 @@ export const SERVICE_PROJECTION = `{
   cleanupTime,
   maxCapacity,
   tags,
-  createdAt
+  createdAt,
+  featured
 }`;
 
 export const PRODUCT_PROJECTION = `{
@@ -80,5 +81,24 @@ export const COMPANY_PROJECTION = `{
   postalCode,
   mapUrl,
   mapEmbedUrl,
+  socialLinks[]{
+    "id": _key,
+    platform,
+    url
+  },
+  updatedAt
+}`;
+
+export const PROMOTIONAL_BANNER_PROJECTION = `{
+  "id": _id,
+  title,
+  description,
+  image,
+  status,
+  socialLinks[]{
+    "id": _key,
+    platform,
+    url
+  },
   updatedAt
 }`;

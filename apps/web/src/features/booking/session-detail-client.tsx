@@ -62,7 +62,6 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
   const sessionTime = booking.time;
 
   const primaryItem = booking.cartItems[0]?.item;
-  const options = booking.cartItems.flatMap((c) => c.selectedOptions || []);
   const subtotal = booking.totalPrice;
 
   if (!primaryItem) return null;
@@ -138,7 +137,7 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
             </div>
 
             <div className="mt-4 flex items-start text-sm">
-              <MapPin className="mt-0.5 mr-3 h-4 w-4 shrink-0 text-primary" />
+              <MapPin className="text-primary mt-0.5 mr-3 h-4 w-4 shrink-0" />
               <div>
                 <p className="text-text-primary font-medium">
                   ORYX Spa & Salon Main Branch
@@ -165,42 +164,60 @@ export function SessionDetailClient({ id }: SessionDetailClientProps) {
             </h3>
 
             <div className="mb-4 space-y-3 text-sm">
-              {booking.cartItems.map((cartItem, idx) => (
-                <div
-                  key={`item-${idx}`}
-                  className="flex items-start justify-between"
-                >
-                  <div>
-                    <span className="text-text-primary font-medium">
-                      1x {cartItem.item.name}
-                    </span>
-                    {cartItem.selectedVariant && (
-                      <span className="text-text-secondary mt-0.5 block text-xs">
-                        {cartItem.selectedVariant.name}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-text-primary">
-                    QAR{" "}
-                    {cartItem.item.price +
-                      (cartItem.selectedVariant?.price || 0)}
-                  </span>
-                </div>
-              ))}
+              {booking.cartItems.map((cartItem, idx) => {
+                const options = cartItem.selectedOptions || [];
+                const hasOptions = options.length > 0;
+                const isService = !cartItem.item.isProduct;
 
-              {options.map((option, idx) => (
-                <div key={idx} className="flex items-start justify-between">
-                  <div>
-                    <span className="text-text-primary font-medium">
-                      1x {option.name}
-                    </span>
-                    <span className="text-text-secondary mt-0.5 block text-[10px] tracking-wide uppercase">
-                      Service Option
+                // Services are categories: show options as priced lines only.
+                if (isService && hasOptions) {
+                  return (
+                    <div key={`item-${idx}`} className="space-y-2">
+                      <span className="text-text-primary font-semibold">
+                        {cartItem.item.name}
+                      </span>
+                      {options.map((option, oIdx) => (
+                        <div
+                          key={oIdx}
+                          className="flex items-start justify-between pl-2"
+                        >
+                          <div>
+                            <span className="text-text-primary font-medium">
+                              {option.name}
+                            </span>
+                          </div>
+                          <span className="text-text-primary">
+                            QAR {option.price}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={`item-${idx}`}
+                    className="flex items-start justify-between"
+                  >
+                    <div>
+                      <span className="text-text-primary font-medium">
+                        1x {cartItem.item.name}
+                      </span>
+                      {cartItem.selectedVariant && (
+                        <span className="text-text-secondary mt-0.5 block text-xs">
+                          {cartItem.selectedVariant.name}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-text-primary">
+                      QAR{" "}
+                      {(cartItem.item.isProduct ? cartItem.item.price : 0) +
+                        (cartItem.selectedVariant?.price || 0)}
                     </span>
                   </div>
-                  <span className="text-text-primary">QAR {option.price}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="text-text-secondary space-y-2 border-t border-gray-200 pt-4 text-sm">

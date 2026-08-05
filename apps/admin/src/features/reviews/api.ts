@@ -1,4 +1,8 @@
 import { parseOrThrow } from "@/shared/lib/api-helpers";
+import {
+  buildFetchPageQuery,
+  type PaginatedResponse,
+} from "@/shared/lib/pagination";
 
 export interface Review {
   id: string;
@@ -13,6 +17,18 @@ export interface Review {
 export async function fetchReviews(): Promise<Review[]> {
   const res = await fetch("/api/reviews", { cache: "no-store" });
   return parseOrThrow<Review[]>(res, "Failed to load reviews");
+}
+
+export async function fetchReviewsPage(params: {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<
+  PaginatedResponse<Review, { activeCount: number; inactiveCount: number }>
+> {
+  const qs = buildFetchPageQuery(params);
+  const res = await fetch(`/api/reviews?${qs}`, { cache: "no-store" });
+  return parseOrThrow(res, "Failed to load reviews");
 }
 
 export async function fetchReviewById(id: string): Promise<Review> {

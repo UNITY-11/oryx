@@ -16,6 +16,7 @@
     "@repo/ui": "workspace:*",
     "@sanity/client": "^7.23.2",
     "lenis": "^1.3.25",
+    "libphonenumber-js": "^1.13.10",
     "lucide-react": "^1.24.0",
     "next": "16.2.0",
     "react": "^19.2.0",

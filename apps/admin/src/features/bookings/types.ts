@@ -8,6 +8,7 @@ export interface BookingService {
 
 export interface Booking {
   id: string;
+  bookingCode?: string;
   customerName: string;
   phone: string;
   customerId?: string | null;
@@ -16,4 +17,12 @@ export interface Booking {
   time: string;
   status: BookingStatus;
   amount: number;
+  createdAt?: string;
+}
+
+/** Human-readable booking reference for display (invoice, UI). */
+export function getBookingDisplayId(
+  booking: Pick<Booking, "id" | "bookingCode">
+) {
+  return booking.bookingCode ?? booking.id;
 }

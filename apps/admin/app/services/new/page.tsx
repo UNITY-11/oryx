@@ -1,100 +1,38 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { createService, uploadServiceImage } from "@features/services/api";
-import { ServiceCategory, ServiceOption } from "@features/services/types";
+import { ServiceOption } from "@features/services/types";
+import {
+  hasServiceFieldErrors,
+  isOptionComplete,
+  parseOptionalDuration,
+  parsePositivePrice,
+  validateService,
+  validateServiceImageFile,
+  type OptionFieldErrors,
+  type ServiceFieldErrors,
+} from "@features/services/validation";
 import {
   AlertCircle,
   ArrowLeft,
   Ban,
-  Check,
   CheckCircle,
-  ChevronDown,
   Clock,
   ImageIcon,
   Loader2,
   Plus,
   Save,
+  Star,
   Upload,
   Users,
   X,
 } from "lucide-react";
 
-const CATEGORIES: ServiceCategory[] = [
-  "Massage",
-  "Facial",
-  "Body Treatment",
-  "Hair",
-  "Nails",
-  "Package",
-];
-
-/* ── Custom Category Dropdown ── */
-function CategoryDropdown({
-  value,
-  onChange,
-}: {
-  value: ServiceCategory;
-  onChange: (v: ServiceCategory) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    };
-    const handleScroll = () => setOpen(false);
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("scroll", handleScroll, true);
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("scroll", handleScroll, true);
-    };
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="border-primary/40 hover:border-primary focus:border-primary text-primary-dark flex w-full items-center justify-between rounded-2xl border bg-transparent px-4 py-3 text-sm transition-colors focus:outline-none"
-      >
-        <span>{value}</span>
-        <ChevronDown
-          className={`text-primary/60 h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        <div className="border-primary/10 absolute top-full right-0 left-0 z-20 mt-2 overflow-hidden rounded-2xl border bg-white shadow-xl">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onChange(cat);
-                setOpen(false);
-              }}
-              className={`hover:bg-primary/5 flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${cat === value ? "text-primary font-medium" : "text-primary-dark"}`}
-            >
-              <span>{cat}</span>
-              {cat === value && <Check className="text-primary h-4 w-4" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 interface NewServiceState {
   name: string;
-  category: ServiceCategory;
   description: string;
   image: string | null;
   preparationTime: number;
@@ -103,11 +41,11 @@ interface NewServiceState {
   price: number;
   options: ServiceOption[];
   status: "Active" | "Inactive";
+  featured: boolean;
 }
 
 const DEFAULT_STATE: NewServiceState = {
   name: "",
-  category: "Massage",
   description: "",
   image: null,
   preparationTime: 10,
@@ -116,7 +54,15 @@ const DEFAULT_STATE: NewServiceState = {
   price: 0,
   options: [],
   status: "Active",
+  featured: false,
 };
+
+const errorClass = "mt-1.5 text-xs font-medium text-red-500";
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className={errorClass}>{message}</p>;
+}
 
 export default function NewServicePage() {
   const router = useRouter();
@@ -125,17 +71,41 @@ export default function NewServicePage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ServiceFieldErrors>({});
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
 
   const update = <K extends keyof NewServiceState>(
     key: K,
     value: NewServiceState[K]
-  ) => setService((prev) => ({ ...prev, [key]: value }));
+  ) => {
+    setService((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[key as keyof ServiceFieldErrors]) return prev;
+      const next = { ...prev };
+      delete next[key as keyof ServiceFieldErrors];
+      return next;
+    });
+  };
 
   /* Image */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const mediaError = validateServiceImageFile(file);
+    if (mediaError) {
+      setFieldErrors((prev) => ({ ...prev, image: mediaError }));
+      setSaveError(mediaError);
+      e.target.value = "";
+      return;
+    }
+
+    setFieldErrors((prev) => {
+      if (!prev.image) return prev;
+      const next = { ...prev };
+      delete next.image;
+      return next;
+    });
     setPendingImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => update("image", reader.result as string);
@@ -145,12 +115,9 @@ export default function NewServicePage() {
   const optionsScrollRef = useRef<HTMLDivElement>(null);
 
   /* ServiceOptions */
-  const isOptionValid = (o: ServiceOption) =>
-    o.name.trim().length >= 5 && o.price > 0;
-
   const addOption = () => {
     const current = service.options || [];
-    if (current.some((o) => !isOptionValid(o))) return;
+    if (current.some((o) => !isOptionComplete(o))) return;
     update("options", [
       ...current,
       { id: `a-${Date.now()}`, name: "", price: 0, duration: undefined },
@@ -171,18 +138,49 @@ export default function NewServicePage() {
     id: string,
     field: keyof ServiceOption,
     value: string | number | undefined
-  ) =>
+  ) => {
     update(
       "options",
       (service.options || []).map((a) =>
         a.id === id ? { ...a, [field]: value } : a
       )
     );
+    setFieldErrors((prev) => {
+      const fieldName = field as keyof OptionFieldErrors;
+      if (!prev.optionErrors?.[id]?.[fieldName]) return prev;
+      const nextOptionErrors = { ...prev.optionErrors };
+      const optionError = { ...nextOptionErrors[id] };
+      delete optionError[fieldName];
+      if (Object.keys(optionError).length === 0) {
+        delete nextOptionErrors[id];
+      } else {
+        nextOptionErrors[id] = optionError;
+      }
+      const next: ServiceFieldErrors = {
+        ...prev,
+        optionErrors: nextOptionErrors,
+      };
+      if (Object.keys(nextOptionErrors).length === 0) {
+        delete next.optionErrors;
+        delete next.options;
+      }
+      return next;
+    });
+  };
 
   const handleCreate = async () => {
-    if (!service.name.trim()) return;
+    const errors = validateService(service, {
+      hasPendingImage: Boolean(pendingImageFile),
+    });
+    if (hasServiceFieldErrors(errors)) {
+      setFieldErrors(errors);
+      setSaveError("Please fix the highlighted fields");
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
+    setFieldErrors({});
     try {
       let imageUrl = service.image;
       if (pendingImageFile) {
@@ -192,9 +190,9 @@ export default function NewServicePage() {
       setSaved(true);
       setTimeout(() => router.push("/services"), 1200);
     } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : "Failed to create service"
-      );
+      const error = err as Error & { fieldErrors?: ServiceFieldErrors };
+      if (error.fieldErrors) setFieldErrors(error.fieldErrors);
+      setSaveError(error.message || "Failed to create service");
       setSaving(false);
     }
   };
@@ -247,16 +245,25 @@ export default function NewServicePage() {
             </button>
 
             <button
+              type="button"
+              onClick={() => update("featured", !service.featured)}
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-2 text-xs font-semibold transition-colors sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm ${
+                service.featured
+                  ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                  : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              <Star
+                className={`h-4 w-4 ${service.featured ? "fill-current" : ""}`}
+              />
+              <span className="hidden sm:inline">
+                {service.featured ? "Featured" : "Normal"}
+              </span>
+            </button>
+
+            <button
               onClick={handleCreate}
-              disabled={
-                !service.name.trim() ||
-                !service.description.trim() ||
-                !service.image ||
-                !service.options ||
-                service.options.length === 0 ||
-                service.options.some((o) => !isOptionValid(o)) ||
-                saving
-              }
+              disabled={saving}
               className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 sm:gap-2 sm:px-6 sm:py-2.5 sm:text-sm ${
                 saved
                   ? "bg-green-500 text-white"
@@ -330,40 +337,34 @@ export default function NewServicePage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={handleImageChange}
                 />
                 <p className="text-text-secondary mt-2 text-center text-[10px]">
                   Click to choose from gallery
                 </p>
+                <FieldError message={fieldErrors.image} />
               </div>
             </div>
 
             {/* RIGHT — Details */}
             <div className="flex min-w-0 flex-1 flex-col gap-8 lg:h-full lg:max-h-[calc(100vh-250px)]">
-              {/* Name & Category */}
-              <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
-                    Service Name *
-                  </label>
-                  <input
-                    value={service.name}
-                    onChange={(e) => update("name", e.target.value)}
-                    placeholder="e.g. Signature Massage"
-                    className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/30 w-full rounded-2xl border bg-transparent px-4 py-3 text-base font-medium focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
-                    Category
-                  </label>
-                  <CategoryDropdown
-                    value={service.category}
-                    onChange={(v) => update("category", v)}
-                  />
-                </div>
+              {/* Name */}
+              <div className="shrink-0">
+                <label className="text-text-secondary mb-2 block text-xs font-semibold tracking-wider uppercase">
+                  Service Name *
+                </label>
+                <input
+                  value={service.name}
+                  onChange={(e) => update("name", e.target.value)}
+                  placeholder="e.g. Signature Massage"
+                  maxLength={100}
+                  className={`border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/30 w-full rounded-2xl border bg-transparent px-4 py-3 text-base font-medium focus:outline-none ${
+                    fieldErrors.name ? "border-red-400" : ""
+                  }`}
+                />
+                <FieldError message={fieldErrors.name} />
               </div>
 
               {/* Description */}
@@ -375,9 +376,13 @@ export default function NewServicePage() {
                   value={service.description}
                   onChange={(e) => update("description", e.target.value)}
                   rows={5}
+                  maxLength={3000}
                   placeholder="Describe the service experience..."
-                  className="border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/30 w-full resize-none rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none"
+                  className={`border-primary/40 focus:border-primary text-primary-dark placeholder:text-primary/30 w-full resize-none rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none ${
+                    fieldErrors.description ? "border-red-400" : ""
+                  }`}
                 />
+                <FieldError message={fieldErrors.description} />
               </div>
 
               {/* ServiceOptions */}
@@ -386,6 +391,7 @@ export default function NewServicePage() {
                   <label className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
                     Service Options
                   </label>
+                  <FieldError message={fieldErrors.options} />
                 </div>
                 {!service.options || service.options.length === 0 ? (
                   <div className="border-primary/40 text-text-secondary flex flex-col items-center justify-center rounded-2xl border border-dashed p-8 text-center text-sm">
@@ -425,7 +431,17 @@ export default function NewServicePage() {
                                 updateOption(option.id, "name", e.target.value)
                               }
                               placeholder="e.g. Hot Stone"
-                              className="text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none sm:border-0 sm:px-2"
+                              maxLength={80}
+                              className={`text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none sm:border-0 sm:px-2 ${
+                                fieldErrors.optionErrors?.[option.id]?.name
+                                  ? "border-red-400"
+                                  : ""
+                              }`}
+                            />
+                            <FieldError
+                              message={
+                                fieldErrors.optionErrors?.[option.id]?.name
+                              }
                             />
                           </div>
                           <div className="grid grid-cols-[1fr_1fr_44px] gap-2 sm:contents">
@@ -435,18 +451,29 @@ export default function NewServicePage() {
                               </label>
                               <input
                                 type="number"
-                                value={option.duration || ""}
+                                min={0}
+                                step={1}
+                                value={option.duration ?? ""}
                                 onChange={(e) =>
                                   updateOption(
                                     option.id,
                                     "duration",
-                                    e.target.value === ""
-                                      ? undefined
-                                      : Number(e.target.value)
+                                    parseOptionalDuration(e.target.value)
                                   )
                                 }
                                 placeholder="-"
-                                className="text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none sm:border-0 sm:px-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                className={`text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none sm:border-0 sm:px-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                                  fieldErrors.optionErrors?.[option.id]
+                                    ?.duration
+                                    ? "border-red-400"
+                                    : ""
+                                }`}
+                              />
+                              <FieldError
+                                message={
+                                  fieldErrors.optionErrors?.[option.id]
+                                    ?.duration
+                                }
                               />
                             </div>
                             <div>
@@ -455,16 +482,27 @@ export default function NewServicePage() {
                               </label>
                               <input
                                 type="number"
+                                min={0}
+                                step={0.01}
                                 value={option.price === 0 ? "" : option.price}
                                 onChange={(e) =>
                                   updateOption(
                                     option.id,
                                     "price",
-                                    Number(e.target.value)
+                                    parsePositivePrice(e.target.value)
                                   )
                                 }
                                 placeholder="0"
-                                className="text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm font-medium focus:outline-none sm:border-0 sm:px-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                className={`text-primary-dark border-primary/10 w-full rounded-xl border bg-transparent px-3 py-2 text-sm font-medium focus:outline-none sm:border-0 sm:px-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                                  fieldErrors.optionErrors?.[option.id]?.price
+                                    ? "border-red-400"
+                                    : ""
+                                }`}
+                              />
+                              <FieldError
+                                message={
+                                  fieldErrors.optionErrors?.[option.id]?.price
+                                }
                               />
                             </div>
                             <button
@@ -483,7 +521,7 @@ export default function NewServicePage() {
                         onClick={addOption}
                         className="text-primary hover:bg-primary/5 flex w-full items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition-colors disabled:opacity-50"
                         disabled={(service.options || []).some(
-                          (o) => !isOptionValid(o)
+                          (o) => !isOptionComplete(o)
                         )}
                       >
                         <Plus className="h-4 w-4" /> Add Option

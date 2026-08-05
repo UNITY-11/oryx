@@ -16,6 +16,7 @@ export interface Item {
   imageUrl: string;
   isProduct?: boolean;
   options?: ItemVariant[];
+  featured?: boolean;
 }
 
 export interface User {

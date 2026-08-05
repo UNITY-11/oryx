@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
-import { BOOKINGS_LIST_QUERY } from "@/features/bookings/sanity-queries";
+import {
+  BOOKINGS_LIST_QUERY,
+  buildBookingsListQueries,
+  toGroqSearchPattern,
+} from "@/features/bookings/sanity-queries";
 import type { BookingService } from "@/features/bookings/types";
+import {
+  buildPaginatedResponse,
+  parsePaginationSearchParams,
+} from "@/shared/lib/pagination";
 import { sanityClient } from "@/shared/lib/sanity/client";
+import { generateNextBookingCode } from "@repo/sanity";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +21,78 @@ function withKeys(services: BookingService[] | undefined) {
   }));
 }
 
-export async function GET() {
+function digitsOnly(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+export async function GET(request: Request) {
   try {
-    const bookings = await sanityClient.fetch(BOOKINGS_LIST_QUERY);
-    return NextResponse.json(bookings);
+    const { searchParams } = new URL(request.url);
+    const paginated = searchParams.get("paginated") === "1";
+
+    if (!paginated) {
+      const bookings = await sanityClient.fetch(BOOKINGS_LIST_QUERY);
+      return NextResponse.json(bookings);
+    }
+
+    const { page, pageSize, q } = parsePaginationSearchParams(searchParams);
+    const status = searchParams.get("status") || "All";
+    const billable = searchParams.get("billable") === "1";
+    const sort = (searchParams.get("sort") || "createdAt") as
+      "createdAt" | "date" | "amount" | "customerName" | "id";
+    const order = searchParams.get("order") === "asc" ? "asc" : "desc";
+
+    const phoneDigits = digitsOnly(q);
+    const pattern = toGroqSearchPattern(q);
+    const phonePattern = phoneDigits.length >= 3 ? `*${phoneDigits}*` : "";
+
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+
+    const { listQuery, countQuery, startedCountQuery, completedCountQuery } =
+      buildBookingsListQueries({
+        q,
+        phoneDigits: phoneDigits.length >= 3 ? phoneDigits : "",
+        status,
+        billable,
+        sort,
+        order,
+        start,
+        end,
+      });
+
+    const queryParams = {
+      q,
+      pattern: pattern || "*",
+      phoneDigits: phoneDigits.length >= 3 ? phoneDigits : "",
+      phonePattern: phonePattern || "*",
+      status,
+      billable,
+    };
+
+    const fetches: Promise<unknown>[] = [
+      sanityClient.fetch(listQuery, queryParams),
+      sanityClient.fetch<number>(countQuery, queryParams),
+    ];
+    if (billable) {
+      fetches.push(sanityClient.fetch<number>(startedCountQuery));
+      fetches.push(sanityClient.fetch<number>(completedCountQuery));
+    }
+
+    const results = await Promise.all(fetches);
+    const items = results[0];
+    const total = results[1] as number;
+
+    const meta = billable
+      ? {
+          startedCount: results[2] as number,
+          completedCount: results[3] as number,
+        }
+      : undefined;
+
+    return NextResponse.json(
+      buildPaginatedResponse(items as unknown[], total, page, pageSize, meta)
+    );
   } catch (error) {
     console.error("Failed to fetch bookings:", error);
     return NextResponse.json(
@@ -80,9 +157,12 @@ export async function POST(request: Request) {
         .commit();
     }
 
+    const bookingCode = await generateNextBookingCode(sanityClient);
+
     // 3. Create the booking
     const doc = {
       _type: "booking",
+      bookingCode,
       customerName: body.customerName,
       phone: body.phone ?? "",
       customerId: customerId ?? null, // link the booking to the customer
@@ -94,7 +174,15 @@ export async function POST(request: Request) {
     };
 
     const created = await sanityClient.create(doc);
-    return NextResponse.json({ ...doc, id: created._id }, { status: 201 });
+    return NextResponse.json(
+      {
+        ...doc,
+        id: created._id,
+        bookingCode,
+        createdAt: created._createdAt,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create booking:", error);
     return NextResponse.json(

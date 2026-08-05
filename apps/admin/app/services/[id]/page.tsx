@@ -10,101 +10,41 @@ import {
   updateService,
   uploadServiceImage,
 } from "@features/services/api";
+import { Service, ServiceOption } from "@features/services/types";
 import {
-  Service,
-  ServiceCategory,
-  ServiceOption,
-} from "@features/services/types";
+  hasServiceFieldErrors,
+  isOptionComplete,
+  parseOptionalDuration,
+  parsePositivePrice,
+  validateService,
+  validateServiceImageFile,
+  type OptionFieldErrors,
+  type ServiceFieldErrors,
+} from "@features/services/validation";
 import {
   AlertCircle,
   ArrowLeft,
   Ban,
-  Check,
   CheckCircle,
-  ChevronDown,
   ImageIcon,
   Loader2,
   Plus,
   Save,
+  Star,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
 
-const CATEGORIES: ServiceCategory[] = [
-  "Massage",
-  "Facial",
-  "Body Treatment",
-  "Hair",
-  "Nails",
-  "Package",
-];
-
 const fieldLabel =
   "text-text-secondary mb-2 block text-[11px] font-semibold tracking-wider uppercase";
 const fieldControl =
   "border-primary/30 focus:border-primary text-primary-dark h-11 w-full rounded-xl border bg-white px-3.5 text-sm outline-none transition-colors focus:ring-4 focus:ring-primary/10 sm:rounded-2xl";
+const errorClass = "mt-1.5 text-xs font-medium text-red-500";
 
-function CategoryDropdown({
-  value,
-  onChange,
-}: {
-  value: ServiceCategory;
-  onChange: (v: ServiceCategory) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    };
-    const handleScroll = () => setOpen(false);
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("scroll", handleScroll, true);
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("scroll", handleScroll, true);
-    };
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={`${fieldControl} flex items-center justify-between text-left`}
-      >
-        <span className="truncate">{value}</span>
-        <ChevronDown
-          className={`text-primary/60 ml-2 h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        <div className="border-primary/10 absolute top-full right-0 left-0 z-20 mt-1.5 overflow-hidden rounded-xl border bg-white shadow-xl sm:rounded-2xl">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onChange(cat);
-                setOpen(false);
-              }}
-              className={`hover:bg-primary/5 flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm transition-colors ${
-                cat === value ? "text-primary font-medium" : "text-primary-dark"
-              }`}
-            >
-              <span>{cat}</span>
-              {cat === value && <Check className="text-primary h-4 w-4" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className={errorClass}>{message}</p>;
 }
 
 export default function ServiceDetailPage({
@@ -123,6 +63,7 @@ export default function ServiceDetailPage({
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ServiceFieldErrors>({});
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const optionsScrollRef = useRef<HTMLDivElement>(null);
@@ -130,8 +71,9 @@ export default function ServiceDetailPage({
   useEffect(() => {
     fetchService(id)
       .then((data) => {
-        setService(data);
-        setInitialSnapshot(formSnapshot(data));
+        const normalized = { ...data, featured: data.featured ?? false };
+        setService(normalized);
+        setInitialSnapshot(formSnapshot(normalized));
         setPendingImageFile(null);
       })
       .catch((err) => setLoadError(err.message))
@@ -167,24 +109,43 @@ export default function ServiceDetailPage({
     );
   }
 
-  const update = <K extends keyof Service>(key: K, value: Service[K]) =>
+  const update = <K extends keyof Service>(key: K, value: Service[K]) => {
     setService((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setFieldErrors((prev) => {
+      if (!prev[key as keyof ServiceFieldErrors]) return prev;
+      const next = { ...prev };
+      delete next[key as keyof ServiceFieldErrors];
+      return next;
+    });
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const mediaError = validateServiceImageFile(file);
+    if (mediaError) {
+      setFieldErrors((prev) => ({ ...prev, image: mediaError }));
+      setSaveError(mediaError);
+      e.target.value = "";
+      return;
+    }
+
+    setFieldErrors((prev) => {
+      if (!prev.image) return prev;
+      const next = { ...prev };
+      delete next.image;
+      return next;
+    });
     setPendingImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => update("image", reader.result as string);
     reader.readAsDataURL(file);
   };
 
-  const isOptionValid = (o: ServiceOption) =>
-    o.name.trim().length >= 5 && o.price > 0;
-
   const addOption = () => {
     const current = service.options || [];
-    if (current.some((o) => !isOptionValid(o))) return;
+    if (current.some((o) => !isOptionComplete(o))) return;
     update("options", [
       ...current,
       { id: `a-${Date.now()}`, name: "", price: 0, duration: undefined },
@@ -207,28 +168,55 @@ export default function ServiceDetailPage({
     optionId: string,
     field: keyof ServiceOption,
     value: string | number | undefined
-  ) =>
+  ) => {
     update(
       "options",
       (service.options || []).map((a) =>
         a.id === optionId ? { ...a, [field]: value } : a
       )
     );
+    setFieldErrors((prev) => {
+      const fieldName = field as keyof OptionFieldErrors;
+      if (!prev.optionErrors?.[optionId]?.[fieldName]) {
+        return prev;
+      }
+      const nextOptionErrors = { ...prev.optionErrors };
+      const optionError = { ...nextOptionErrors[optionId] };
+      delete optionError[fieldName];
+      if (Object.keys(optionError).length === 0) {
+        delete nextOptionErrors[optionId];
+      } else {
+        nextOptionErrors[optionId] = optionError;
+      }
+      const next: ServiceFieldErrors = {
+        ...prev,
+        optionErrors: nextOptionErrors,
+      };
+      if (Object.keys(nextOptionErrors).length === 0) {
+        delete next.optionErrors;
+        delete next.options;
+      }
+      return next;
+    });
+  };
 
-  const canSave =
-    !!service.name.trim() &&
-    !!service.description.trim() &&
-    !!service.image &&
-    !!service.options &&
-    service.options.length > 0 &&
-    !service.options.some((o) => !isOptionValid(o)) &&
-    !saving &&
-    isDirty;
+  const canSave = !saving && isDirty;
 
   const handleSave = async () => {
     if (!isDirty) return;
+
+    const errors = validateService(service, {
+      hasPendingImage: Boolean(pendingImageFile),
+    });
+    if (hasServiceFieldErrors(errors)) {
+      setFieldErrors(errors);
+      setSaveError("Please fix the highlighted fields");
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
+    setFieldErrors({});
     try {
       let imageUrl = service.image;
       if (pendingImageFile) {
@@ -241,9 +229,9 @@ export default function ServiceDetailPage({
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : "Failed to save changes"
-      );
+      const error = err as Error & { fieldErrors?: ServiceFieldErrors };
+      if (error.fieldErrors) setFieldErrors(error.fieldErrors);
+      setSaveError(error.message || "Failed to save changes");
     } finally {
       setSaving(false);
     }
@@ -324,6 +312,24 @@ export default function ServiceDetailPage({
 
           <button
             type="button"
+            onClick={() => update("featured", !service.featured)}
+            className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-2.5 text-sm font-semibold transition-colors sm:px-4 ${
+              service.featured
+                ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+            }`}
+            title={service.featured ? "Featured" : "Normal"}
+          >
+            <Star
+              className={`h-4 w-4 ${service.featured ? "fill-current" : ""}`}
+            />
+            <span className="hidden sm:inline">
+              {service.featured ? "Featured" : "Normal"}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleSave}
             disabled={!canSave}
             className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-45 sm:px-5 ${
@@ -389,34 +395,30 @@ export default function ServiceDetailPage({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={handleImageChange}
                 />
+                <FieldError message={fieldErrors.image} />
               </div>
 
               {/* Fields */}
               <div className="flex min-w-0 flex-1 flex-col gap-5">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
-                  <div className="min-w-0">
-                    <label className={fieldLabel} htmlFor="service-name">
-                      Service Name
-                    </label>
-                    <input
-                      id="service-name"
-                      value={service.name}
-                      onChange={(e) => update("name", e.target.value)}
-                      placeholder="e.g. Signature Massage"
-                      className={`${fieldControl} font-medium`}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <label className={fieldLabel}>Category</label>
-                    <CategoryDropdown
-                      value={service.category}
-                      onChange={(v) => update("category", v)}
-                    />
-                  </div>
+                <div className="min-w-0">
+                  <label className={fieldLabel} htmlFor="service-name">
+                    Service Name
+                  </label>
+                  <input
+                    id="service-name"
+                    value={service.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    placeholder="e.g. Signature Massage"
+                    maxLength={100}
+                    className={`${fieldControl} font-medium ${
+                      fieldErrors.name ? "border-red-400" : ""
+                    }`}
+                  />
+                  <FieldError message={fieldErrors.name} />
                 </div>
 
                 <div>
@@ -428,9 +430,13 @@ export default function ServiceDetailPage({
                     value={service.description}
                     onChange={(e) => update("description", e.target.value)}
                     rows={4}
+                    maxLength={3000}
                     placeholder="Describe the service experience..."
-                    className="border-primary/30 focus:border-primary text-primary-dark placeholder:text-primary/30 focus:ring-primary/10 min-h-[112px] w-full resize-y rounded-xl border bg-white px-3.5 py-3 text-sm transition-colors outline-none focus:ring-4 sm:rounded-2xl"
+                    className={`border-primary/30 focus:border-primary text-primary-dark placeholder:text-primary/30 focus:ring-primary/10 min-h-[112px] w-full resize-y rounded-xl border bg-white px-3.5 py-3 text-sm transition-colors outline-none focus:ring-4 sm:rounded-2xl ${
+                      fieldErrors.description ? "border-red-400" : ""
+                    }`}
                   />
+                  <FieldError message={fieldErrors.description} />
                 </div>
 
                 <div>
@@ -444,6 +450,7 @@ export default function ServiceDetailPage({
                       </span>
                     )}
                   </div>
+                  <FieldError message={fieldErrors.options} />
 
                   {!service.options || service.options.length === 0 ? (
                     <div className="border-primary/25 text-text-secondary flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-4 py-8 text-center">
@@ -489,7 +496,17 @@ export default function ServiceDetailPage({
                                   )
                                 }
                                 placeholder="e.g. Hot Stone"
-                                className="border-primary/20 focus:border-primary text-primary-dark focus:ring-primary/10 h-10 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 lg:h-9 lg:border-transparent lg:bg-transparent lg:px-1 lg:focus:ring-0"
+                                maxLength={80}
+                                className={`border-primary/20 focus:border-primary text-primary-dark focus:ring-primary/10 h-10 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:ring-2 lg:h-9 lg:border-transparent lg:bg-transparent lg:px-1 lg:focus:ring-0 ${
+                                  fieldErrors.optionErrors?.[option.id]?.name
+                                    ? "border-red-400"
+                                    : ""
+                                }`}
+                              />
+                              <FieldError
+                                message={
+                                  fieldErrors.optionErrors?.[option.id]?.name
+                                }
                               />
                             </div>
 
@@ -500,18 +517,29 @@ export default function ServiceDetailPage({
                                 </label>
                                 <input
                                   type="number"
-                                  value={option.duration || ""}
+                                  min={0}
+                                  step={1}
+                                  value={option.duration ?? ""}
                                   onChange={(e) =>
                                     updateOption(
                                       option.id,
                                       "duration",
-                                      e.target.value === ""
-                                        ? undefined
-                                        : Number(e.target.value)
+                                      parseOptionalDuration(e.target.value)
                                     )
                                   }
                                   placeholder="—"
-                                  className="border-primary/20 focus:border-primary text-primary-dark focus:ring-primary/10 h-10 w-full rounded-xl border bg-white px-2 text-center text-sm outline-none focus:ring-2 lg:h-9 lg:border-transparent lg:bg-transparent lg:focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  className={`border-primary/20 focus:border-primary text-primary-dark focus:ring-primary/10 h-10 w-full rounded-xl border bg-white px-2 text-center text-sm outline-none focus:ring-2 lg:h-9 lg:border-transparent lg:bg-transparent lg:focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                                    fieldErrors.optionErrors?.[option.id]
+                                      ?.duration
+                                      ? "border-red-400"
+                                      : ""
+                                  }`}
+                                />
+                                <FieldError
+                                  message={
+                                    fieldErrors.optionErrors?.[option.id]
+                                      ?.duration
+                                  }
                                 />
                               </div>
                               <div>
@@ -520,16 +548,27 @@ export default function ServiceDetailPage({
                                 </label>
                                 <input
                                   type="number"
+                                  min={0}
+                                  step={0.01}
                                   value={option.price === 0 ? "" : option.price}
                                   onChange={(e) =>
                                     updateOption(
                                       option.id,
                                       "price",
-                                      Number(e.target.value)
+                                      parsePositivePrice(e.target.value)
                                     )
                                   }
                                   placeholder="0"
-                                  className="border-primary/20 focus:border-primary text-primary-dark focus:ring-primary/10 h-10 w-full rounded-xl border bg-white px-2 text-center text-sm font-medium outline-none focus:ring-2 lg:h-9 lg:border-transparent lg:bg-transparent lg:focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                  className={`border-primary/20 focus:border-primary text-primary-dark focus:ring-primary/10 h-10 w-full rounded-xl border bg-white px-2 text-center text-sm font-medium outline-none focus:ring-2 lg:h-9 lg:border-transparent lg:bg-transparent lg:focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                                    fieldErrors.optionErrors?.[option.id]?.price
+                                      ? "border-red-400"
+                                      : ""
+                                  }`}
+                                />
+                                <FieldError
+                                  message={
+                                    fieldErrors.optionErrors?.[option.id]?.price
+                                  }
                                 />
                               </div>
                               <button
@@ -550,7 +589,7 @@ export default function ServiceDetailPage({
                           type="button"
                           onClick={addOption}
                           disabled={(service.options || []).some(
-                            (o) => !isOptionValid(o)
+                            (o) => !isOptionComplete(o)
                           )}
                           className="text-primary hover:bg-primary/5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                         >

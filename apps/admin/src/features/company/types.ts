@@ -1,3 +1,19 @@
+export interface SocialLink {
+  id: string;
+  platform: SocialPlatform;
+  url: string;
+}
+
+export type SocialPlatform =
+  | "Facebook"
+  | "Instagram"
+  | "X"
+  | "TikTok"
+  | "YouTube"
+  | "LinkedIn"
+  | "Snapchat"
+  | "Other";
+
 export interface CompanyDetails {
   id: string;
   name: string;
@@ -6,6 +22,7 @@ export interface CompanyDetails {
   phone: string;
   whatsapp: string;
   website: string;
+  socialLinks: SocialLink[];
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -19,6 +36,17 @@ export interface CompanyDetails {
 
 export type CompanyInput = Omit<CompanyDetails, "id" | "updatedAt">;
 
+export const SOCIAL_PLATFORMS: SocialPlatform[] = [
+  "Facebook",
+  "Instagram",
+  "X",
+  "TikTok",
+  "YouTube",
+  "LinkedIn",
+  "Snapchat",
+  "Other",
+];
+
 export const EMPTY_COMPANY: CompanyInput = {
   name: "",
   tagline: "",
@@ -26,6 +54,7 @@ export const EMPTY_COMPANY: CompanyInput = {
   phone: "",
   whatsapp: "",
   website: "",
+  socialLinks: [],
   addressLine1: "",
   addressLine2: "",
   city: "",

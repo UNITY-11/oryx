@@ -11,4 +11,6 @@ export {
   COUPON_PROJECTION,
   REVIEW_PROJECTION,
   COMPANY_PROJECTION,
+  PROMOTIONAL_BANNER_PROJECTION,
 } from "./projections";
+export { generateNextBookingCode } from "./booking-code";

@@ -1,3 +1,5 @@
+import { validatePhoneValue } from "@/shared/lib/phone";
+
 import type { CustomerTier } from "./types";
 
 export type CustomerFormData = {
@@ -15,7 +17,6 @@ export type CustomerFieldErrors = Partial<
 >;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^\+?[\d\s()-]{8,20}$/;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -26,10 +27,6 @@ const ALLOWED_IMAGE_TYPES = [
 
 function isBlank(value: string | null | undefined): boolean {
   return !value || !String(value).trim();
-}
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, "");
 }
 
 export function validateCustomer(
@@ -45,14 +42,11 @@ export function validateCustomer(
     errors.name = "Name must be 100 characters or less";
   }
 
-  if (isBlank(data.phone)) {
-    errors.phone = "Phone number is required";
-  } else if (
-    !PHONE_RE.test(data.phone.trim()) ||
-    digitsOnly(data.phone).length < 8
-  ) {
-    errors.phone = "Enter a valid phone number (at least 8 digits)";
-  }
+  const phoneError = validatePhoneValue(data.phone, {
+    required: true,
+    label: "phone number",
+  });
+  if (phoneError) errors.phone = phoneError;
 
   if (!isBlank(data.email) && !EMAIL_RE.test(data.email.trim())) {
     errors.email = "Enter a valid email address";

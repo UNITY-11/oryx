@@ -1,11 +1,61 @@
 import { NextResponse } from "next/server";
-import { PRODUCTS_LIST_QUERY } from "@/features/products/sanity-queries";
+import {
+  buildProductsListQueries,
+  PRODUCTS_LIST_QUERY,
+  type ProductsSortField,
+} from "@/features/products/sanity-queries";
+import {
+  buildPaginatedResponse,
+  parsePaginationSearchParams,
+  toGroqSearchPattern,
+} from "@/shared/lib/pagination";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
   try {
-    const products = await sanityClient.fetch(PRODUCTS_LIST_QUERY);
-    return NextResponse.json(products);
+    const { searchParams } = new URL(request.url);
+    const { paginated, page, pageSize, q } =
+      parsePaginationSearchParams(searchParams);
+
+    if (!paginated) {
+      const products = await sanityClient.fetch(PRODUCTS_LIST_QUERY);
+      return NextResponse.json(products);
+    }
+
+    const category = searchParams.get("category") || "All";
+    const sort = (searchParams.get("sort") || "Default") as ProductsSortField;
+    const pattern = toGroqSearchPattern(q);
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+
+    const {
+      listQuery,
+      countQuery,
+      activeCountQuery,
+      lowStockCountQuery,
+      outOfStockCountQuery,
+    } = buildProductsListQueries({ q, category, sort, start, end });
+
+    const queryParams = { q, pattern: pattern || "*", category };
+
+    const [items, total, activeCount, lowStockCount, outOfStockCount] =
+      await Promise.all([
+        sanityClient.fetch(listQuery, queryParams),
+        sanityClient.fetch<number>(countQuery, queryParams),
+        sanityClient.fetch<number>(activeCountQuery),
+        sanityClient.fetch<number>(lowStockCountQuery),
+        sanityClient.fetch<number>(outOfStockCountQuery),
+      ]);
+
+    return NextResponse.json(
+      buildPaginatedResponse(items, total, page, pageSize, {
+        activeCount,
+        lowStockCount,
+        outOfStockCount,
+      })
+    );
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return NextResponse.json(

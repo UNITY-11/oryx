@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Lenis from "lenis";
+
 import "lenis/dist/lenis.css";
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
@@ -32,14 +33,12 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <main 
+    <main
       ref={wrapperRef}
-      id="main-scroll-container" 
-      className="flex-1 overflow-y-auto pb-24 md:pb-0 scrollbar-hide"
+      id="main-scroll-container"
+      className="scrollbar-hide flex-1 overflow-y-auto pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
     >
-      <div ref={contentRef}>
-        {children}
-      </div>
+      <div ref={contentRef}>{children}</div>
     </main>
   );
 }

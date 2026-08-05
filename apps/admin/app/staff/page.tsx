@@ -2,9 +2,10 @@
 
 import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { addAttendance, useStaff } from "@/features/staff/api/use-staff";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { fetchStaffPage } from "@/features/staff/api";
+import { addAttendance } from "@/features/staff/api/use-staff";
+import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
@@ -14,6 +15,7 @@ import {
   Clock,
   Loader2,
   Plus,
+  Search,
   UserCircle2,
   X,
 } from "lucide-react";
@@ -156,9 +158,32 @@ function nowTime(): string {
 }
 
 function StaffList() {
-  const { staffList, loading, error, refresh } = useStaff();
-  const searchParams = useSearchParams();
-  const searchTerm = searchParams.get("search") || "";
+  const fetchPage = useCallback(
+    (params: { q: string; page: number; pageSize: number }) =>
+      fetchStaffPage({
+        q: params.q,
+        page: params.page,
+        pageSize: params.pageSize,
+      }),
+    []
+  );
+
+  const {
+    items: staffList,
+    loading,
+    error,
+    searchQuery: searchTerm,
+    setSearchQuery: setSearchTerm,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
+    reload: refresh,
+  } = usePaginatedList(fetchPage);
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
@@ -181,23 +206,7 @@ function StaffList() {
     reason: "",
   });
 
-  const filteredStaff = staffList.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.phone ?? "").includes(searchTerm)
-  );
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(filteredStaff, 20, searchTerm);
+  const filteredStaff = staffList;
 
   const openModal = (
     staffId: string,
@@ -287,6 +296,19 @@ function StaffList() {
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pt-2 sm:pt-4">
+        <div className="mb-4 px-1 sm:px-0">
+          <div className="relative max-w-sm">
+            <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search staff by name, role or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-white py-2.5 pr-4 pl-10 text-sm shadow-sm focus:ring-1 focus:outline-none"
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="text-text-secondary flex h-56 flex-col items-center justify-center px-4 text-center">
             <Loader2 className="text-primary mb-3 h-8 w-8 animate-spin" />
@@ -330,7 +352,7 @@ function StaffList() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-            {paginatedItems.map((staff) => (
+            {filteredStaff.map((staff) => (
               <div
                 key={staff.id}
                 className="border-primary/10 group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all sm:rounded-[2rem]"

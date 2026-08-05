@@ -1,96 +1,130 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Search, Calendar, Scissors, Brush, User, Phone } from "lucide-react";
-import { useUserStore } from "@/shared/store";
+import { usePathname, useRouter } from "next/navigation";
+import { useSearch } from "@/shared/providers/search-provider";
+import { Home, Phone, Scissors, Search, X } from "lucide-react";
+
+const navItems = [
+  { name: "Home", href: "/", icon: Home },
+  { name: "Services", href: "/services", icon: Scissors },
+  { name: "Contact", href: "/contact", icon: Phone },
+];
+
+const PAGES_WITH_SEARCH = ["/", "/services"];
 
 export function TopNav() {
   const pathname = usePathname();
-  const user = useUserStore((state) => state.user);
+  const router = useRouter();
+  const { query, setQuery } = useSearch();
 
-  const leftNavItems = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Services", href: "/services", icon: Scissors },
-    { name: "Products", href: "/products", icon: Brush },
-    { name: "Booking", href: "/booking", icon: Calendar },
-  ];
+  const handleSearchChange = (value: string) => {
+    setQuery(value);
+    if (value.trim() && !PAGES_WITH_SEARCH.includes(pathname)) {
+      router.push("/");
+    }
+  };
 
-  const tabletNavItems = [
-    ...leftNavItems,
-    { name: "Contact", href: "/contact", icon: Phone },
-  ];
+  const handleClearSearch = () => {
+    setQuery("");
+  };
 
   if (pathname.startsWith("/service/")) {
     return null;
   }
 
   return (
-    <nav className="hidden md:flex bg-white border-b border-background/10 px-8 py-4 items-center justify-between z-50 shrink-0 shadow-sm relative w-full lg:w-full lg:mx-0 lg:mt-0 lg:rounded-none md:w-[calc(100%-4rem)] md:mx-auto md:mt-6 md:rounded-full">
-
-      {/* Left side: Links (Desktop) */}
-      <div className="hidden lg:flex items-center space-x-3 flex-1">
-        {leftNavItems.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition-colors text-background ${isActive
-                ? 'border-background bg-background/5'
-                : 'border-transparent hover:border-background/30 hover:bg-gray-50'
+    <nav className="border-primary/10 relative z-50 hidden w-full shrink-0 items-center justify-between gap-4 border-b bg-white/95 px-5 py-3 shadow-sm backdrop-blur-md md:mx-auto md:mt-5 md:flex md:w-[calc(100%-3rem)] md:rounded-full md:border md:px-6 md:py-3.5 lg:mx-0 lg:mt-0 lg:w-full lg:rounded-none lg:border-x-0 lg:border-t-0 lg:px-10 lg:py-4 xl:px-14">
+      {/* Desktop nav links */}
+      <div className="hidden flex-1 lg:flex">
+        <div className="border-primary/15 bg-surface/60 flex items-center gap-1 rounded-full border p-1.5 shadow-sm">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all duration-200 xl:px-5 xl:py-2.5 xl:text-[15px] ${
+                  isActive
+                    ? "text-primary-dark bg-white shadow-sm"
+                    : "text-text-secondary hover:text-primary-dark hover:bg-white/60"
                 }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{item.name}</span>
-            </Link>
-          );
-        })}
+              >
+                <Icon
+                  className="h-4 w-4 shrink-0 xl:h-[18px] xl:w-[18px]"
+                  strokeWidth={isActive ? 2.25 : 2}
+                />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Logo: Left on md, Center on lg */}
-      <div className="flex flex-col justify-center flex-1 lg:flex-none items-start lg:items-center shrink-0">
-        <Link href="/">
-          <img src="/images/oryx-logo.png" alt="ORYX Logo" className="h-12 w-auto object-contain brightness-75 contrast-125" />
+      {/* Logo */}
+      <div className="flex flex-1 shrink-0 justify-start lg:flex-none lg:justify-center">
+        <Link href="/" className="transition-opacity hover:opacity-85">
+          <img
+            src="/images/oryx-logo.png"
+            alt="ORYX Logo"
+            className="h-11 w-auto object-contain brightness-75 contrast-125 md:h-12 lg:h-[52px] xl:h-14"
+          />
         </Link>
       </div>
 
-      {/* Right side: Search, Favorites & Profile */}
-      <div className="flex items-center justify-end space-x-4 flex-1">
-        <div className="relative w-48 xl:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-background" />
+      {/* Search */}
+      <div className="flex flex-1 justify-end lg:flex-1">
+        <div className="group relative w-full max-w-[11rem] sm:max-w-xs md:max-w-[15rem] lg:max-w-sm xl:max-w-md">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 lg:pl-4">
+            <span className="bg-primary/10 flex h-7 w-7 items-center justify-center rounded-full lg:h-8 lg:w-8">
+              <Search
+                className="text-primary h-3.5 w-3.5 lg:h-4 lg:w-4"
+                strokeWidth={2.25}
+              />
+            </span>
+          </div>
           <input
             type="text"
-            placeholder="Search treatments or products..."
-            className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-9 pr-4 text-sm placeholder:text-background focus:ring-2 focus:ring-background outline-none transition-shadow"
+            placeholder="Search treatments..."
+            value={query}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="border-primary/15 text-primary-dark placeholder:text-text-secondary/70 focus:border-primary/35 focus:ring-primary/20 w-full rounded-full border bg-white py-2.5 pr-10 pl-12 text-sm shadow-sm transition-all outline-none focus:shadow-md focus:ring-2 md:py-2.5 lg:py-3 lg:pr-11 lg:pl-[3.25rem] lg:text-[15px] xl:py-3.5 xl:pl-14 xl:text-base"
           />
-        </div>
-
-        <div className="flex items-center space-x-2 shrink-0">
-          <Link href="/profile" className="w-10 h-10 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-background hover:text-[#c29a63] transition-colors">
-            {user ? (
-              <span className="font-semibold text-lg">{user.name.charAt(0).toUpperCase()}</span>
-            ) : (
-              <User className="w-5 h-5" />
-            )}
-          </Link>
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="text-text-secondary hover:text-primary-dark hover:bg-primary/10 absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded-full transition-colors lg:right-2.5 lg:h-8 lg:w-8"
+              aria-label="Clear search"
+            >
+              <X className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Tablet Floating Dock (md only) */}
-      <div className="hidden md:flex lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-full px-6 py-3 items-center space-x-6 z-[100]">
-        {tabletNavItems.map((item) => {
+      {/* Tablet floating dock (md only) */}
+      <div className="border-primary/15 fixed bottom-5 left-1/2 z-[100] hidden -translate-x-1/2 items-center gap-1 rounded-full border bg-white/95 p-1.5 shadow-lg backdrop-blur-md md:flex lg:hidden">
+        {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center px-4 py-2 rounded-full transition-all ${isActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-primary hover:bg-gray-50'}`}
+              className={`flex min-w-[4.5rem] flex-col items-center justify-center rounded-full px-3 py-2 transition-all ${
+                isActive
+                  ? "bg-primary/12 text-primary-dark shadow-sm"
+                  : "text-text-secondary hover:bg-surface/80 hover:text-primary-dark"
+              }`}
             >
-              <Icon className="w-6 h-6 mb-1.5" strokeWidth={isActive ? 2.5 : 2} />
-              <span className={`text-[10px] tracking-wide ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+              <Icon className="mb-1 h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+              <span
+                className={`text-[10px] tracking-wide ${isActive ? "font-semibold" : "font-medium"}`}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}

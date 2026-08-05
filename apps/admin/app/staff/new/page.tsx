@@ -10,6 +10,7 @@ import {
   type StaffFieldErrors,
   type StaffFormData,
 } from "@/features/staff/validation";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -20,7 +21,6 @@ import {
   DollarSign,
   Loader2,
   Mail,
-  Phone,
   Save,
   User,
 } from "lucide-react";
@@ -191,19 +191,13 @@ export default function NewStaffPage() {
 
             <div>
               <label className={labelClass}>Phone Number *</label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-                  <Phone className="text-primary/40 h-5 w-5" />
-                </div>
-                <input
-                  type="tel"
-                  disabled={saving}
-                  value={formData.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  className={`${inputClass} ${fieldErrors.phone ? inputErrorClass : ""}`}
-                  placeholder="+974 5555 1234"
-                />
-              </div>
+              <PhoneInput
+                value={formData.phone}
+                disabled={saving}
+                onChange={(phone) => update("phone", phone)}
+                hasError={Boolean(fieldErrors.phone)}
+                placeholder="5555 1234"
+              />
               <FieldError message={fieldErrors.phone} />
             </div>
           </div>

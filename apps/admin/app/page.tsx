@@ -5,14 +5,15 @@ import Link from "next/link";
 import { fetchBookings } from "@features/bookings/api";
 import { Booking } from "@features/bookings/types";
 import { fetchCustomers } from "@features/customers/api";
-import { fetchProducts } from "@features/products/api";
+// Products disabled for now
+// import { fetchProducts } from "@features/products/api";
 import {
   AlertCircle,
   Calendar,
   DollarSign,
   Loader2,
   RefreshCw,
-  ShoppingBag,
+  // ShoppingBag, // Products disabled for now
   Users,
 } from "lucide-react";
 
@@ -28,20 +29,22 @@ function statusBadgeClass(status: Booking["status"]) {
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [customerCount, setCustomerCount] = useState(0);
-  const [activeProductCount, setActiveProductCount] = useState(0);
+  // Products disabled for now
+  // const [activeProductCount, setActiveProductCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    Promise.all([fetchBookings(), fetchCustomers(), fetchProducts()])
-      .then(([b, c, p]) => {
+    Promise.all([fetchBookings(), fetchCustomers()])
+      .then(([b, c]) => {
         setBookings(b);
         setCustomerCount(c.filter((cust) => cust.status === "Active").length);
-        setActiveProductCount(
-          p.filter((prod) => prod.status === "Active").length
-        );
+        // Products disabled for now
+        // setActiveProductCount(
+        //   p.filter((prod) => prod.status === "Active").length
+        // );
       })
       .catch((err) =>
         setError(
@@ -67,21 +70,26 @@ export default function AdminDashboard() {
       icon: DollarSign,
     },
     { label: "Active Customers", value: String(customerCount), icon: Users },
-    {
-      label: "Active Products",
-      value: String(activeProductCount),
-      icon: ShoppingBag,
-    },
+    // Products disabled for now
+    // {
+    //   label: "Active Products",
+    //   value: String(activeProductCount),
+    //   icon: ShoppingBag,
+    // },
   ];
 
   const recentBookings = [...bookings]
-    .sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    })
     .slice(0, 6);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 md:gap-6">
       {/* Stats */}
-      <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (

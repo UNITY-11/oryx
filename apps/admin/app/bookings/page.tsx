@@ -14,9 +14,17 @@ function BookingsContent() {
     setStatusFilter,
     sortField,
     toggleSort,
-    filteredAndSortedBookings,
+    bookings,
+    page,
+    setPage,
+    totalPages,
+    totalItems,
+    from,
+    to,
+    hasPrev,
+    hasNext,
     handleAddBooking,
-    createBooking
+    createBooking,
   } = useBookings();
 
   return (
@@ -29,7 +37,15 @@ function BookingsContent() {
       setStatusFilter={setStatusFilter}
       sortField={sortField}
       toggleSort={toggleSort}
-      filteredAndSortedBookings={filteredAndSortedBookings}
+      bookings={bookings}
+      page={page}
+      setPage={setPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      from={from}
+      to={to}
+      hasPrev={hasPrev}
+      hasNext={hasNext}
       handleAddBooking={handleAddBooking}
       createBooking={createBooking}
     />

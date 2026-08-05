@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import { createCustomer } from "@features/customers/api";
@@ -261,13 +262,12 @@ export default function NewCustomerPage() {
               </div>
               <div>
                 <label className={labelClass}>Phone Number *</label>
-                <input
-                  type="tel"
+                <PhoneInput
                   value={customer.phone}
                   disabled={saving}
-                  onChange={(e) => update("phone", e.target.value)}
-                  placeholder="+974 0000 0000"
-                  className={`${inputClass} ${fieldErrors.phone ? inputErrorClass : ""}`}
+                  onChange={(phone) => update("phone", phone)}
+                  hasError={Boolean(fieldErrors.phone)}
+                  placeholder="5555 0000"
                 />
                 <FieldError message={fieldErrors.phone} />
               </div>

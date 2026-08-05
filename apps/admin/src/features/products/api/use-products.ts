@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 
-import { fetchProducts } from "../api";
-import { Product, ProductCategory } from "../types";
+import { fetchProductsPage } from "../api";
+import { ProductCategory } from "../types";
 
 export const CATEGORY_FILTERS: Array<ProductCategory | "All"> = [
   "All",
@@ -39,73 +40,52 @@ export function getStockBadgeClasses(quantity: number): string {
 }
 
 export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<ProductCategory | "All">(
     "All"
   );
   const [sortBy, setSortBy] = useState("Default");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const reload = () => {
-    setLoading(true);
-    setError(null);
-    fetchProducts()
-      .then(setProducts)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  };
+  const fetchPage = useCallback(
+    (params: { q: string; page: number; pageSize: number }) =>
+      fetchProductsPage({
+        q: params.q,
+        page: params.page,
+        pageSize: params.pageSize,
+        category: categoryFilter,
+        sort: sortBy,
+      }),
+    [categoryFilter, sortBy]
+  );
 
-  useEffect(() => {
-    reload();
-  }, []);
-
-  const filtered = products
-    .filter((p) => categoryFilter === "All" || p.category === categoryFilter)
-    .filter(
-      (p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.brand ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      const qtyA = Number(a.quantity) || 0;
-      const qtyB = Number(b.quantity) || 0;
-      if (sortBy === "StockHigh") {
-        if (qtyB !== qtyA) return qtyB - qtyA;
-        return a.name.localeCompare(b.name);
-      }
-      if (sortBy === "StockLow") {
-        if (qtyA !== qtyB) return qtyA - qtyB;
-        return a.name.localeCompare(b.name);
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-  const activeCount = products.filter((p) => p.status === "Active").length;
-  const lowStockCount = products.filter(
-    (p) => p.quantity > 0 && p.quantity <= 10
-  ).length;
-  const outOfStockCount = products.filter((p) => p.quantity === 0).length;
+  const list = usePaginatedList(fetchPage, {
+    extraParams: { category: categoryFilter, sort: sortBy },
+    extraDeps: [categoryFilter, sortBy],
+  });
 
   return {
-    products,
-    loading,
-    error,
-    searchQuery,
-    setSearchQuery,
+    loading: list.loading,
+    error: list.error,
+    searchQuery: list.searchQuery,
+    setSearchQuery: list.setSearchQuery,
     categoryFilter,
     setCategoryFilter,
     sortBy,
     setSortBy,
     isSortOpen,
     setIsSortOpen,
-    filtered,
-    activeCount,
-    lowStockCount,
-    outOfStockCount,
-    reload,
+    filtered: list.items,
+    activeCount: list.meta?.activeCount ?? 0,
+    lowStockCount: list.meta?.lowStockCount ?? 0,
+    outOfStockCount: list.meta?.outOfStockCount ?? 0,
+    page: list.page,
+    setPage: list.setPage,
+    totalPages: list.totalPages,
+    totalItems: list.totalItems,
+    from: list.from,
+    to: list.to,
+    hasPrev: list.hasPrev,
+    hasNext: list.hasNext,
+    reload: list.reload,
   };
 }

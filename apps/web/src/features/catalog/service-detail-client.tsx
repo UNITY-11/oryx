@@ -1,86 +1,80 @@
 "use client";
 
-import { Item, ItemVariant } from "@/shared/types";
-import { useCartStore } from "@/shared/store";
-import { ChevronLeft, ChevronDown, Clock, ClipboardList, Check } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { ServiceBookingWizard } from "@/features/booking/service-booking-wizard";
+import { Item, ItemVariant } from "@/shared/types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function ServiceDetailClient({ item }: { item: Item }) {
   const router = useRouter();
-  const addItem = useCartStore((state) => state.addItem);
-  const clearCart = useCartStore((state) => state.clearCart);
-  const cartItems = useCartStore((state) => state.items);
 
+  const [selectedOptions, setSelectedOptions] = useState<ItemVariant[]>([]);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
-  const existingCartItem = cartItems.find(i => i.item.id === item.id);
-
-  const [selectedOptions, setSelectedOptions] = useState<ItemVariant[]>(
-    existingCartItem?.selectedOptions || []
+  const total = useMemo(
+    () => selectedOptions.reduce((sum, opt) => sum + opt.price, 0),
+    [selectedOptions]
   );
 
   const toggleAddon = (option: ItemVariant) => {
-    setSelectedOptions(prev =>
-      prev.find(a => a.id === option.id)
-        ? prev.filter(a => a.id !== option.id)
+    setSelectedOptions((prev) =>
+      prev.find((a) => a.id === option.id)
+        ? prev.filter((a) => a.id !== option.id)
         : [...prev, option]
     );
   };
 
-  const currentPrice = item.isProduct ? item.price : 0;
-  const optionsTotal = selectedOptions.reduce((sum, a) => sum + a.price, 0);
-  const totalPrice = currentPrice + optionsTotal;
-
-  const handleAdd = () => {
-    addItem(item, undefined, selectedOptions);
-    router.push("/booking");
-  };
-
   if (item.isProduct) {
     return (
-      <div className="absolute inset-0 z-40 bg-surface overflow-y-auto pb-24 px-6 md:px-12 lg:px-24 pt-8 md:pt-12 flex flex-col">
+      <div className="bg-surface absolute inset-0 z-40 flex flex-col overflow-y-auto px-6 pt-8 pb-24 md:px-12 md:pt-12 lg:px-24">
         <button
           onClick={() => router.back()}
-          className="absolute top-6 left-6 md:top-8 md:left-8 bg-black/5 border border-primary/20 p-2.5 md:p-3 rounded-full text-primary-dark hover:bg-primary/10 transition-colors z-10"
+          className="border-primary/20 text-primary-dark hover:bg-primary/10 absolute top-6 left-6 z-10 rounded-full border bg-black/5 p-2.5 transition-colors md:top-8 md:left-8 md:p-3"
         >
-          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+          <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
         </button>
 
-        <div className="mx-auto flex flex-col lg:flex-row w-full max-w-screen-xl items-center lg:items-start lg:mt-16 gap-8 lg:gap-16">
-          
+        <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center gap-8 lg:mt-16 lg:flex-row lg:items-start lg:gap-16">
           {/* Mobile/Tablet Title */}
-          <div className="lg:hidden w-full text-center mt-12 md:mt-0">
-            <h1 className="font-serif text-3xl md:text-5xl font-medium text-primary-dark mb-2">
+          <div className="mt-12 w-full text-center md:mt-0 lg:hidden">
+            <h1 className="text-primary-dark mb-2 font-serif text-3xl font-medium md:text-5xl">
               {item.name}
             </h1>
-            <div className="text-xl font-medium text-primary mb-6">
+            <div className="text-primary mb-6 text-xl font-medium">
               QAR {item.price}
             </div>
           </div>
 
           {/* Left Column: Product Image */}
-          <div className="w-full max-w-2xl lg:w-1/2 shrink-0 aspect-square rounded-[40px] overflow-hidden shadow-lg border border-primary/10 bg-white">
-            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover lg:object-contain p-4" />
+          <div className="border-primary/10 aspect-square w-full max-w-2xl shrink-0 overflow-hidden rounded-[40px] border bg-white shadow-lg lg:w-1/2">
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="h-full w-full object-cover p-4 lg:object-contain"
+            />
           </div>
 
           {/* Right Column: Product Details */}
-          <div className="max-w-2xl w-full lg:w-1/2 flex flex-col text-left">
+          <div className="flex w-full max-w-2xl flex-col text-left lg:w-1/2">
             {/* Desktop Title & Price */}
-            <div className="hidden lg:block mb-8">
-              <h1 className="font-serif text-5xl font-medium text-primary-dark mb-4">
+            <div className="mb-8 hidden lg:block">
+              <h1 className="text-primary-dark mb-4 font-serif text-5xl font-medium">
                 {item.name}
               </h1>
-              <div className="text-3xl font-medium text-primary">
+              <div className="text-primary text-3xl font-medium">
                 QAR {item.price}
               </div>
             </div>
 
-            <div className="w-full bg-white p-8 md:p-10 rounded-[32px] shadow-sm border border-primary/10 mb-8">
-              <h2 className="font-serif text-xl md:text-2xl text-primary-dark mb-4 flex items-center">
-                <span className="w-8 h-px bg-primary/30 mr-4"></span>
+            <div className="border-primary/10 mb-8 w-full rounded-[32px] border bg-white p-8 shadow-sm md:p-10">
+              <h2 className="text-primary-dark mb-4 flex items-center font-serif text-xl md:text-2xl">
+                <span className="bg-primary/30 mr-4 h-px w-8"></span>
                 About the Product
               </h2>
-              <p className="text-text-secondary leading-relaxed text-base md:text-lg">{item.description}</p>
+              <p className="text-text-secondary text-base leading-relaxed md:text-lg">
+                {item.description}
+              </p>
             </div>
           </div>
         </div>
@@ -89,34 +83,34 @@ export function ServiceDetailClient({ item }: { item: Item }) {
   }
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col lg:flex-row bg-surface overflow-hidden">
+    <div className="bg-surface absolute inset-0 z-40 flex flex-col overflow-hidden lg:flex-row">
       {/* Left Column (Desktop) / Header Image (Mobile) */}
-      <div className="relative h-[30vh] md:h-[45vh] lg:h-full lg:w-1/2 flex-none lg:p-8">
-        <div className="w-full h-full relative lg:rounded-[40px] overflow-hidden lg:shadow-lg">
-          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+      <div className="relative h-[30vh] flex-none md:h-[45vh] lg:h-full lg:w-1/2 lg:p-10 xl:p-12">
+        <div className="relative h-full w-full overflow-hidden lg:rounded-[48px] lg:shadow-xl">
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            className="h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10" />
 
           <button
             onClick={() => router.back()}
-            className="absolute top-6 left-6 md:top-8 md:left-8 bg-white/20 p-2.5 md:p-3 rounded-full backdrop-blur-md text-white hover:bg-white/30 transition-colors z-10"
+            className="absolute top-6 left-6 z-10 rounded-full bg-white/20 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/30 md:top-8 md:left-8 md:p-3"
           >
-            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
           </button>
 
-
-
-          <div className="absolute bottom-10 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 left-6 right-6 md:left-12 md:right-12">
-            <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl font-medium text-white mb-2 md:mb-6 leading-tight">{item.name}</h1>
-            
-            {/* Dynamic Total Price at Top */}
-            <div className="inline-flex items-center bg-white/20 backdrop-blur-md rounded-full px-5 py-2.5 text-white border border-white/20 mt-2">
-              <span className="text-xs md:text-sm font-medium uppercase tracking-wider mr-3 opacity-90">Total Price</span>
-              <span className="font-serif text-xl md:text-2xl font-bold">QAR {totalPrice}</span>
-            </div>
+          <div className="absolute right-6 bottom-10 left-6 md:right-12 md:left-12 lg:top-1/2 lg:bottom-auto lg:-translate-y-1/2">
+            <h1 className="mb-2 font-serif text-3xl leading-tight font-medium text-white md:mb-6 md:text-5xl lg:text-6xl xl:text-7xl">
+              {item.name}
+            </h1>
 
             {/* Desktop Description */}
-            <div className="hidden lg:block mt-8">
-              <p className="text-white/80 text-lg leading-relaxed">{item.description}</p>
+            <div className="mt-8 hidden lg:block xl:mt-10">
+              <p className="max-w-xl text-lg leading-relaxed text-white/80 xl:text-xl xl:leading-relaxed">
+                {item.description}
+              </p>
             </div>
           </div>
         </div>
@@ -124,75 +118,105 @@ export function ServiceDetailClient({ item }: { item: Item }) {
 
       {/* Right Column (Desktop) / Content Container (Mobile) */}
       <div
-        className="flex-1 lg:w-1/2 bg-gray-50 lg:bg-white rounded-t-4xl lg:rounded-none -mt-6 lg:mt-0 relative z-10 px-6 md:px-16 pt-8 md:pt-12 lg:pt-16 pb-42 md:pb-40 overflow-y-auto overscroll-contain scrollbar-hide"
-        data-lenis-prevent
+        className={`relative z-10 -mt-6 flex flex-1 flex-col overflow-hidden rounded-t-4xl bg-gray-50 lg:mt-0 lg:w-1/2 lg:rounded-none lg:bg-white ${selectedOptions.length > 0 ? "pb-0" : ""}`}
       >
-        {/* Mobile Description */}
-        <div className="lg:hidden prose prose-sm text-text-secondary leading-relaxed mb-8">
-          <p className="text-[15px] md:text-base">{item.description}</p>
+        <div
+          className={`scrollbar-hide flex-1 overflow-y-auto overscroll-contain px-6 pt-8 md:px-16 md:pt-12 lg:px-16 lg:pt-14 xl:px-20 xl:pt-16 ${selectedOptions.length > 0 ? "pb-28 md:pb-16 lg:pb-32" : "pb-12 md:pb-16 lg:pb-16"}`}
+          data-lenis-prevent
+        >
+          {/* Mobile Description */}
+          <div className="prose prose-sm text-text-secondary mb-8 leading-relaxed lg:hidden">
+            <p className="text-[15px] md:text-base">{item.description}</p>
+          </div>
+
+          {/* ServiceOptions */}
+          {item.options && item.options.length > 0 && (
+            <div className="mb-8 md:mb-12 lg:mx-auto lg:mb-0 lg:max-w-xl xl:max-w-2xl">
+              <h2 className="text-primary-dark mb-6 hidden font-serif text-2xl font-medium lg:mb-8 lg:block xl:text-3xl">
+                Select Your Options
+              </h2>
+              <div className="space-y-3 md:space-y-4 lg:space-y-5">
+                {item.options.map((option) => {
+                  const isSelected = selectedOptions.some(
+                    (a) => a.id === option.id
+                  );
+                  return (
+                    <div
+                      key={option.id}
+                      onClick={() => toggleAddon(option)}
+                      className={`flex cursor-pointer items-center justify-between rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:rounded-2xl md:p-6 lg:rounded-3xl lg:p-7 xl:p-8 ${
+                        isSelected
+                          ? "border-primary/50 ring-primary/20 ring-1 md:ring-2 lg:ring-2"
+                          : "border-gray-100 md:border-gray-200"
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-text-primary mb-1 text-[15px] font-medium md:text-lg lg:text-xl">
+                          {option.name}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-text-primary text-sm font-semibold md:text-base lg:text-lg">
+                            QAR {option.price}
+                          </span>
+                          {option.duration && (
+                            <span className="text-text-secondary border-l border-gray-200 pl-2 text-xs md:text-sm lg:text-base">
+                              {option.duration} mins
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        className={`rounded-lg border px-5 py-1.5 text-sm font-medium transition-colors md:rounded-xl md:px-8 md:py-2.5 md:text-base lg:px-10 lg:py-3 lg:text-base ${
+                          isSelected
+                            ? "border-primary text-primary bg-primary/5"
+                            : "text-text-secondary border-gray-200"
+                        }`}
+                      >
+                        {isSelected ? "Selected" : "Select"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ServiceOptions */}
-        {item.options && item.options.length > 0 && (
-          <div className="mb-8 md:mb-12">
-            <div className="space-y-3 md:space-y-4">
-              {item.options.map(option => {
-                const isSelected = selectedOptions.some(a => a.id === option.id);
-                return (
-                  <div
-                    key={option.id}
-                    onClick={() => toggleAddon(option)}
-                    className={`bg-white rounded-xl md:rounded-2xl p-4 md:p-6 flex items-center justify-between shadow-sm border transition-all cursor-pointer hover:shadow-md ${isSelected ? 'border-primary/50 ring-1 md:ring-2 ring-primary/20' : 'border-gray-100 md:border-gray-200'
-                      }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium text-text-primary text-[15px] md:text-lg mb-1">{option.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-text-primary text-sm md:text-base">+ QAR {option.price}</span>
-                        {option.duration && (
-                          <span className="text-text-secondary text-xs md:text-sm border-l border-gray-200 pl-2">
-                            {option.duration} mins
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      className={`px-5 md:px-8 py-1.5 md:py-2.5 rounded-lg md:rounded-xl border text-sm md:text-base font-medium transition-colors ${isSelected
-                        ? 'border-primary text-primary bg-primary/5'
-                        : 'border-gray-200 text-text-secondary'
-                        }`}
-                    >
-                      {isSelected ? 'Selected' : 'Select'}
-                    </button>
-                  </div>
-                );
-              })}
+        {selectedOptions.length > 0 && !bookingOpen && (
+          <div
+            className="border-primary/10 fixed inset-x-0 bottom-0 z-40 border-t bg-white px-6 py-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] lg:absolute lg:inset-x-0 lg:bottom-0 lg:border-t lg:px-12 lg:py-5 xl:px-16"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+          >
+            <div className="mx-auto flex max-w-lg items-center justify-between gap-4 lg:max-w-xl xl:max-w-2xl">
+              <div>
+                <p className="text-text-secondary text-xs font-medium tracking-wider uppercase lg:text-sm">
+                  {selectedOptions.length} option
+                  {selectedOptions.length > 1 ? "s" : ""} selected
+                </p>
+                <p className="text-primary-dark font-serif text-2xl font-bold lg:text-3xl">
+                  QAR {total}
+                </p>
+              </div>
+              <button
+                onClick={() => setBookingOpen(true)}
+                className="bg-primary flex shrink-0 items-center rounded-full px-6 py-3 font-medium text-white shadow-md transition-all hover:opacity-90 lg:px-8 lg:py-3.5 lg:text-base"
+              >
+                Continue Booking
+                <ChevronRight className="ml-1 h-4 w-4 lg:h-5 lg:w-5" />
+              </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Floating Booking Bar */}
-      <div className="fixed lg:absolute bottom-0 left-0 lg:left-1/2 right-0 p-4 md:p-6 lg:p-8 lg:px-16 bg-white/90 lg:bg-white backdrop-blur-xl border-t border-primary/10 z-50">
-        <div className="flex items-center justify-between gap-4 md:gap-8">
-          <div className="flex flex-col shrink-0">
-            <span className="text-text-secondary text-sm md:text-base font-medium">Total Price</span>
-            <span className="font-serif text-2xl md:text-3xl font-bold text-primary-dark mt-1">QAR {totalPrice}</span>
-          </div>
-          <button
-            onClick={handleAdd}
-            disabled={!item.isProduct && selectedOptions.length === 0}
-            className={`flex-1 py-3.5 md:py-4 lg:py-5 rounded-full font-medium text-lg md:text-xl flex items-center justify-center transition-all active:scale-[0.98] ${
-              !item.isProduct && selectedOptions.length === 0
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-dark"
-            }`}
-          >
-            <ClipboardList className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3" />
-            Add to Booking
-          </button>
-        </div>
-      </div>
+      <ServiceBookingWizard
+        item={item}
+        selectedOptions={selectedOptions}
+        total={total}
+        open={bookingOpen}
+        onClose={() => setBookingOpen(false)}
+        onSuccess={() => setSelectedOptions([])}
+      />
     </div>
   );
 }

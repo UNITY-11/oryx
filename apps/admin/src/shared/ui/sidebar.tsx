@@ -12,10 +12,11 @@ import {
   ClipboardCheck,
   Home,
   ImageIcon,
+  Megaphone,
   MessageSquare,
-  Receipt,
+  // Receipt, // Billing disabled for now — print from booking details
   // Settings, // Settings disabled for now
-  ShoppingBag,
+  // ShoppingBag, // Products disabled for now
   // Ticket, // Coupons disabled for now
   UserCircle2,
   // UserCog, // Staff disabled for now
@@ -34,11 +35,13 @@ const navClusters = [
   [
     { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Bookings", href: "/bookings", icon: ClipboardCheck },
-    { name: "Billing", href: "/billing", icon: Receipt },
+    // Billing disabled for now — print invoices from booking details
+    // { name: "Billing", href: "/billing", icon: Receipt },
   ],
   [
     { name: "Services", href: "/services", icon: Briefcase },
-    { name: "Products", href: "/products", icon: ShoppingBag },
+    // Products disabled for now — not in use
+    // { name: "Products", href: "/products", icon: ShoppingBag },
   ],
   [
     // Staff disabled for now — not in use
@@ -49,6 +52,11 @@ const navClusters = [
   ],
   [
     { name: "Hero Section", href: "/hero", icon: ImageIcon },
+    {
+      name: "Promotional Banner",
+      href: "/promotional-banner",
+      icon: Megaphone,
+    },
     // Coupons disabled for now — not in use
     // { name: "Coupons", href: "/coupons", icon: Ticket },
   ],

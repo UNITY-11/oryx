@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { getBookingDisplayId } from "@features/bookings/types";
 import { Check, Printer, X } from "lucide-react";
 
 import {
@@ -82,7 +83,7 @@ export function PrintModal({
                 Print Invoice
               </p>
               <p className="text-text-secondary mt-0.5 truncate font-mono text-xs">
-                {booking.id}
+                {getBookingDisplayId(booking)}
               </p>
             </div>
           </div>
@@ -144,7 +145,7 @@ export function PrintModal({
               </p>
               {[
                 { label: "Client", value: booking.customerName },
-                { label: "Invoice", value: booking.id },
+                { label: "Invoice", value: getBookingDisplayId(booking) },
                 { label: "Date", value: currentDate },
                 { label: "Total", value: `QAR ${total}` },
               ].map(({ label, value }) => (
@@ -196,7 +197,7 @@ export function PrintModal({
                   INVOICE
                 </p>
                 <p className="text-text-secondary font-mono text-[9px]">
-                  {booking.id}
+                  {getBookingDisplayId(booking)}
                 </p>
                 <p className="text-text-secondary mt-0.5 text-[9px]">
                   {currentDate}
@@ -228,28 +229,25 @@ export function PrintModal({
                 </div>
                 <div className="mt-2 space-y-1.5">
                   {lines.map((svc, i) => (
-                    <div key={i}>
-                      <div className="flex justify-between gap-2">
-                        <span className="text-text-primary min-w-0 text-[9px] leading-tight font-semibold break-words">
-                          {svc.name}
-                        </span>
-                        <span className="text-text-primary ml-1 shrink-0 text-[9px] font-semibold">
-                          {svc.base}
-                        </span>
+                    <div key={i} className="space-y-1">
+                      <div className="text-text-primary text-[9px] leading-tight font-bold">
+                        {svc.name}
                       </div>
-                      {svc.options.map((a, j) => (
-                        <div
-                          key={j}
-                          className="flex justify-between gap-2 pl-2"
-                        >
-                          <span className="text-text-secondary min-w-0 text-[8px] break-words">
-                            ↳ {a.name}
-                          </span>
-                          <span className="text-text-secondary shrink-0 text-[8px]">
-                            +{a.price}
-                          </span>
-                        </div>
-                      ))}
+                      {svc.options.length === 0
+                        ? null
+                        : svc.options.map((a, j) => (
+                            <div
+                              key={j}
+                              className="flex justify-between gap-2 pl-1.5"
+                            >
+                              <span className="text-text-primary min-w-0 text-[8px] break-words">
+                                {a.name}
+                              </span>
+                              <span className="text-text-primary shrink-0 text-[8px] font-semibold">
+                                {a.price}
+                              </span>
+                            </div>
+                          ))}
                     </div>
                   ))}
                 </div>

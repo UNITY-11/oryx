@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Service, ServiceOption } from "@/features/services/types";
 import { formSnapshot, isFormDirty } from "@/shared/lib/form-dirty";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import { createBooking, fetchBookings } from "@features/bookings/api";
@@ -28,7 +29,6 @@ import {
   Check,
   ChevronDown,
   Loader2,
-  Mail,
   MessageCircle,
   MessageSquare,
   Phone,
@@ -528,19 +528,6 @@ export default function CustomerDetailPage({
                   >
                     <MessageCircle className="h-4 w-4" />
                   </a>
-                  {customer.email ? (
-                    <a
-                      href={`mailto:${customer.email}`}
-                      className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
-                      title="Email"
-                    >
-                      <Mail className="h-4 w-4" />
-                    </a>
-                  ) : (
-                    <span className="bg-primary/5 text-primary/30 flex flex-1 items-center justify-center rounded-full p-3">
-                      <Mail className="h-4 w-4" />
-                    </span>
-                  )}
                 </div>
 
                 <div className="mt-1 w-full space-y-1 text-center">
@@ -591,13 +578,11 @@ export default function CustomerDetailPage({
                   </div>
                   <div>
                     <label className={labelClass}>Phone Number *</label>
-                    <input
-                      type="tel"
+                    <PhoneInput
                       value={customer.phone}
+                      onChange={() => {}}
                       readOnly
                       disabled
-                      aria-readonly="true"
-                      className={`${inputClass} cursor-not-allowed bg-gray-50 text-gray-600`}
                     />
                     <p className="text-text-secondary mt-1.5 text-xs">
                       Phone number cannot be changed. It links this customer to

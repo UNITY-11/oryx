@@ -1,38 +1,26 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { HeroCarousel } from "@/features/catalog/hero-carousel";
 import { useCatalog } from "@/features/catalog/use-catalog";
 import { useHero } from "@/features/catalog/use-hero";
+import { SocialLinks } from "@/features/company/social-links";
 import { TestimonialCarousel } from "@/features/home/testimonial-carousel";
-import { useUserStore } from "@/shared/store";
+import { PromotionalBannerSection } from "@/features/promotional-banner/promotional-banner";
+import { useSearch } from "@/shared/providers/search-provider";
 import { LotusSeparator } from "@/shared/ui/lotus-separator";
-import {
-  Bath,
-  Brush,
-  Droplets,
-  Flower2,
-  Heart,
-  Loader2,
-  Scissors,
-  Search,
-  Sparkles,
-  Star,
-  User,
-  Gift,
-  Ticket,
-  Wind,
-} from "lucide-react";
-import { useCoupons } from "@/features/home/use-coupons";
+import { Loader2, Search } from "lucide-react";
+
+// Special offers disabled for now
+// import { useCoupons } from "@/features/home/use-coupons";
 
 export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
   const logoRef = useRef<HTMLImageElement>(null);
-  const user = useUserStore((state) => state.user);
   const { items, loading, error } = useCatalog();
   const { slides, loading: heroLoading } = useHero();
-  const { coupons, loading: couponsLoading } = useCoupons();
+  // const { coupons, loading: couponsLoading } = useCoupons();
 
   useEffect(() => {
     const mainArea = document.getElementById("main-scroll-container");
@@ -58,11 +46,15 @@ export default function HomePage() {
     return () => mainArea.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const filteredItems = items.filter(
+  const serviceItems = items.filter((item) => !item.isProduct);
+
+  const filteredItems = serviceItems.filter(
     (item) =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const featuredItems = serviceItems.filter((item) => item.featured);
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
@@ -74,7 +66,7 @@ export default function HomePage() {
           <div className="min-h-4xl relative z-10 mb-4 flex w-full items-center justify-center px-4">
             <div
               ref={logoRef}
-              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] will-change-[height] drop-shadow-md"
+              className="w-full max-w-[250px] bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#b38728] drop-shadow-md will-change-[height]"
               title="ORYX Logo"
               style={{
                 height: "100px",
@@ -89,29 +81,17 @@ export default function HomePage() {
               }}
             />
           </div>
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="relative flex-1">
+          <div className="relative z-10">
+            <div className="relative">
               <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[#c8a24a]" />
               <input
                 type="text"
-                placeholder="Search treatments or products..."
+                placeholder="Search treatments..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-full border border-[#c8a24a] bg-gray-50 py-3.5 pr-4 pl-12 text-sm transition-shadow outline-none placeholder:text-[#c8a24a]/70 focus:ring-2 focus:ring-[#c8a24a]"
               />
             </div>
-            <Link
-              href="/profile"
-              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-[#c8a24a] bg-gray-50 text-[#c8a24a] transition-colors hover:text-[#b38728]"
-            >
-              {user ? (
-                <span className="text-xl font-semibold">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-              ) : (
-                <User className="h-5 w-5" />
-              )}
-            </Link>
           </div>
         </div>
       </div>
@@ -121,10 +101,14 @@ export default function HomePage() {
 
       {/* Hero Carousel */}
       {!searchQuery && (
-        <section className="pb-4 pt-4 px-4 md:px-8 md:pt-[130px] md:pb-6 lg:p-0">
+        <section className="px-4 pt-4 pb-4 md:px-8 md:pt-[130px] md:pb-6 lg:p-0">
           {heroLoading ? (
-            <div className="relative w-full h-64 md:h-auto md:aspect-video lg:h-[100vh] lg:aspect-auto rounded-3xl md:rounded-[3rem] lg:rounded-none overflow-hidden bg-black">
-              <img src="/images/hero/image.png" alt="Loading..." className="w-full h-full object-cover opacity-70" />
+            <div className="relative h-64 w-full overflow-hidden rounded-3xl bg-black md:aspect-video md:h-auto md:rounded-[3rem] lg:aspect-auto lg:h-[100vh] lg:rounded-none">
+              <img
+                src="/images/hero/image.png"
+                alt="Loading..."
+                className="h-full w-full object-cover opacity-70"
+              />
             </div>
           ) : (
             <HeroCarousel slides={slides} />
@@ -132,150 +116,20 @@ export default function HomePage() {
         </section>
       )}
 
-      <div className="mx-auto w-full max-w-screen-2xl flex-1 px-3 pt-0 pb-0 md:px-8 md:pt-8 md:pb-24 lg:px-12 xl:px-16">
-        {/* Categories Section */}
-        {!searchQuery && (
-          <section className="pt-4 pb-2 md:pt-4 md:pb-12">
-            <div className="mb-4 flex flex-col items-center justify-center text-center md:mb-10">
-              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
-                Categories
-              </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
-            </div>
-            <div className="scrollbar-hide cat-container flex w-full flex-row gap-6 overflow-x-auto px-4 pb-4 md:gap-12">
-              <style
-                dangerouslySetInnerHTML={{
-                  __html: `
-                @media (max-width: 767px) {
-                  .cat-container { gap: 24px !important; padding-right: 24px; padding-left: 16px; }
-                }
-                @media (min-width: 768px) {
-                  .cat-circle { width: clamp(80px, 8vw, 110px) !important; height: clamp(80px, 8vw, 110px) !important; }
-                  .cat-icon { width: clamp(40px, 4vw, 55px) !important; height: clamp(40px, 4vw, 55px) !important; }
-                  .cat-text { font-size: clamp(12px, 1.2vw, 15px) !important; }
-                }
-                @media (min-width: 1024px) {
-                  .cat-circle { width: clamp(100px, 10vw, 130px) !important; height: clamp(100px, 10vw, 130px) !important; }
-                  .cat-icon { width: clamp(50px, 5vw, 65px) !important; height: clamp(50px, 5vw, 65px) !important; }
-                  .cat-text { font-size: clamp(14px, 1.2vw, 17px) !important; }
-                }
-                @media (min-width: 1024px) {
-                  .cat-circle { width: clamp(120px, 11vw, 150px) !important; height: clamp(120px, 11vw, 150px) !important; }
-                  .cat-icon { width: clamp(60px, 5.5vw, 80px) !important; height: clamp(60px, 5.5vw, 80px) !important; }
-                  .cat-text { font-size: clamp(16px, 1.4vw, 19px) !important; }
-                }
-              `,
-                }}
-              />
-              {(() => {
-                const uniqueCategories = Array.from(
-                  new Set(
-                    items.filter((i) => !i.isProduct).map((i) => i.category)
-                  )
-                ).filter(Boolean);
-                const defaultIcon = <Flower2 className="cat-icon h-8 w-8 md:h-12 md:w-12" />;
-                const iconMap: Record<string, React.ReactNode> = {
-                  Massage: <Flower2 className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Facial: <Sparkles className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  "Body Treatment": <Droplets className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Hair: <Wind className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Nails: <Scissors className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Package: <Heart className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Makeup: <Brush className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Bath: <Bath className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                  Bridal: <User className="cat-icon h-8 w-8 md:h-12 md:w-12" />,
-                };
-
-                const defaults = ["Massage", "Facial", "Body Treatment", "Hair", "Nails", "Package", "Makeup", "Bath", "Bridal"];
-
-                let displayCategories = [...uniqueCategories];
-
-                if (displayCategories.length < 8) {
-                  const toAdd = defaults.filter(c => !displayCategories.includes(c));
-                  displayCategories = [...displayCategories, ...toAdd];
-                }
-
-                return displayCategories.map((catName, idx) => (
-                  <div
-                    key={idx}
-                    className="group flex w-[72px] flex-none cursor-pointer flex-col items-center md:w-auto"
-                  >
-                    <div className="cat-circle flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#c8a24a] bg-white text-[#c8a24a] shadow-sm transition-colors hover:bg-gray-50 hover:shadow-md">
-                      {iconMap[catName as string] || defaultIcon}
-                    </div>
-                    <span className="cat-text mt-2 text-center text-[11px] font-medium text-white md:mt-4 whitespace-nowrap">
-                      {catName as string}
-                    </span>
-                  </div>
-                ));
-              })()}
-            </div>
-          </section>
-        )}
-
-        {/* Promotional Banner */}
+      <div
+        className={`mx-auto w-full max-w-screen-2xl flex-1 px-3 pb-0 md:px-8 md:pb-24 lg:max-w-7xl lg:px-12 lg:pb-28 xl:max-w-[90rem] xl:px-16 ${
+          searchQuery
+            ? "pt-0 md:pt-8 lg:pt-28 xl:pt-32"
+            : "pt-0 md:pt-8 lg:pt-10"
+        }`}
+      >
+        {/* Special Offers — disabled for now
         {!searchQuery && coupons.length > 0 && (
           <section className="pb-8 pt-2 md:py-16">
-            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
-              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
-                Special Offers
-              </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
-            </div>
-            <div className="scrollbar-hide -mx-3 flex space-x-4 overflow-x-auto px-3 pb-4 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:space-x-0 md:px-0">
-              {couponsLoading ? (
-                // Loading Skeletons
-                [1, 2, 3].map((i) => (
-                  <div key={i} className="h-32 bg-primary/5 rounded-2xl animate-pulse w-[92%] md:w-full flex-none" />
-                ))
-              ) : (
-                coupons.map((coupon, idx) => {
-                  // Alternate some subtle border/background styles for variety just like the original hardcoded ones
-                  const isGold = idx % 2 === 1;
-                  const getIcon = (iconName: string) => {
-                    switch (iconName) {
-                      case "Scissors": return <Scissors className="h-3.5 w-3.5" />;
-                      case "Flower2": return <Flower2 className="h-3.5 w-3.5" />;
-                      case "Heart": return <Heart className="h-3.5 w-3.5" />;
-                      case "Star": return <Star className="h-3.5 w-3.5" />;
-                      case "Gift": return <Gift className="h-3.5 w-3.5" />;
-                      case "Ticket": return <Ticket className="h-3.5 w-3.5" />;
-                      default: return <Sparkles className="h-3.5 w-3.5" />;
-                    }
-                  };
-
-                  return (
-                    <div key={coupon.id} className={`relative w-[92%] flex-none overflow-hidden rounded-2xl border bg-white shadow-md md:w-full ${isGold ? 'border-[#c29a63]/20' : 'border-primary/15'}`}>
-                      <div className={`relative m-2 flex items-center justify-between overflow-hidden rounded-xl border-2 border-dashed p-4 ${isGold ? 'border-[#c29a63]/30' : 'border-[#c8a24a]'}`}>
-                        <div className={`absolute h-32 w-32 rounded-full blur-2xl ${isGold ? 'bottom-0 left-0 -mb-10 -ml-10 bg-[#c29a63]/20' : 'top-0 right-0 -mt-10 -mr-10 bg-primary/20'}`} />
-
-                        <div className="relative z-10 flex-1 pr-3">
-                          <span className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
-                            {getIcon(coupon.icon)} {coupon.type}
-                          </span>
-                          <h3 className="text-primary mb-1 font-serif text-lg leading-tight line-clamp-2">
-                            {coupon.title}
-                          </h3>
-                        </div>
-
-                        <div className={`relative z-10 mx-2 h-16 w-px border-l-2 border-dashed ${isGold ? 'border-[#c29a63]/30' : 'border-[#c8a24a]'}`} />
-
-                        <div className="relative z-10 flex flex-col items-center justify-center pl-2 text-center min-w-[80px]">
-                          <p className="text-text-secondary mb-1 text-[9px] font-bold tracking-wider uppercase">
-                            Use Code
-                          </p>
-                          <strong className={`text-primary inline-block rounded-md border bg-[#fcf4f0] px-2.5 py-1 font-mono text-sm tracking-wider shadow-sm truncate max-w-[90px] ${isGold ? 'border-[#c29a63]/20' : 'border-primary/20'}`}>
-                            {coupon.code}
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            ...
           </section>
         )}
+        */}
 
         {/* Catalog loading / error */}
         {(loading || error) && !searchQuery && (
@@ -335,248 +189,152 @@ export default function HomePage() {
               </div>
             </section>
 
+            {/* Products loading skeleton — disabled for now
             <section className="section-padding">
-              <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
-                <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
-                  Our Products
-                </h2>
-                <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
-              </div>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-6 px-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div
-                    key={`product-skeleton-${i}`}
-                    className="bg-surface flex flex-col overflow-hidden rounded-2xl p-2 shadow-sm md:p-3"
-                  >
-                    <div className="bg-primary/5 relative flex aspect-square items-center justify-center overflow-hidden rounded-xl">
-                      <div className="relative h-full w-full">
-                        {loading ? (
-                          <>
-                            <div className="bg-primary/20 absolute inset-0" />
-                            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                          </>
-                        ) : (
-                          <div className="z-10 flex h-full flex-col items-center justify-center p-4 text-center">
-                            <span className="mb-2 text-[#c8a24a]">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-6 w-6"
-                              >
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" x2="12" y1="8" y2="12" />
-                                <line x1="12" x2="12.01" y1="16" y2="16" />
-                              </svg>
-                            </span>
-                            <span className="text-xs text-[#c8a24a] md:text-sm">
-                              Failed to load
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="relative flex flex-col overflow-hidden px-1 pt-3 md:px-2 md:pt-4">
-                      <div className="bg-primary/20 h-4 w-2/3 rounded" />
-                      {loading && (
-                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8 flex justify-center">
-                <span className="text-sm font-semibold text-white">
-                  Show All
-                </span>
-              </div>
+              ...
             </section>
+            */}
           </>
         )}
 
         {/* Search Results */}
         {searchQuery && (
-          <section className="section-padding">
-            <h2 className="text-surface mb-4 font-serif text-xl md:text-3xl">
+          <section className="section-padding !pt-0 lg:!pt-2">
+            <h2 className="text-surface mb-4 font-serif text-xl md:mb-6 md:text-3xl lg:mb-8">
               Search Results
             </h2>
-            <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
-              {loading && (
-                <div className="text-text-secondary flex w-full items-center justify-center gap-2 py-8 text-sm">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Searching...
-                </div>
-              )}
-              {!loading &&
-                filteredItems.map((item) => (
+            {loading && (
+              <div className="text-text-secondary flex w-full items-center justify-center gap-2 py-12 text-sm">
+                <Loader2 className="h-5 w-5 animate-spin" /> Searching...
+              </div>
+            )}
+            {!loading && filteredItems.length === 0 && (
+              <p className="text-text-secondary w-full py-12 text-center">
+                No items found.
+              </p>
+            )}
+            {!loading && filteredItems.length > 0 && (
+              <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4 lg:gap-5 xl:max-w-7xl xl:grid-cols-5 xl:gap-6">
+                {filteredItems.map((item) => (
                   <Link
                     href={`/service/${item.id}`}
                     key={item.id}
-                    className="group block w-44 flex-none"
+                    className="group block"
                   >
-                    <div className="relative h-56 w-full overflow-hidden rounded-2xl shadow-sm">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl shadow-sm transition-all group-hover:scale-[1.02] lg:aspect-[4/5] lg:rounded-2xl lg:shadow-md lg:group-hover:shadow-lg">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
                         className="h-full w-full object-cover"
                       />
-                      <h3 className="absolute right-4 bottom-4 left-4 font-serif text-lg leading-tight font-medium text-white drop-shadow-md">
-                        {item.name}
-                      </h3>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute right-2 bottom-4 left-2 text-center md:right-4 md:bottom-6 md:left-4 md:text-left lg:right-3 lg:bottom-4 lg:left-3">
+                        <h3 className="font-serif text-sm leading-tight font-medium text-white drop-shadow-md md:text-xl lg:text-base xl:text-lg">
+                          {item.name}
+                        </h3>
+                      </div>
                     </div>
                   </Link>
                 ))}
-              {!loading && filteredItems.length === 0 && (
-                <p className="text-text-secondary w-full py-8 text-center">
-                  No items found.
-                </p>
-              )}
-            </div>
+              </div>
+            )}
           </section>
         )}
 
         {/* Featured Services */}
-        {!searchQuery && !loading && !error && (
+        {!searchQuery && !loading && !error && featuredItems.length > 0 && (
           <section className="section-padding">
-            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
-              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12 lg:mb-16">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl lg:text-5xl">
                 Featured Services
               </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px] lg:max-w-[280px]" />
             </div>
-            <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4">
-              {(() => {
-                const services = filteredItems.filter((item) => !item.isProduct);
-                if (services.length === 0) {
-                  return (
-                    <p className="text-text-secondary w-full py-8 text-center text-sm">
-                      No services available yet.
-                    </p>
-                  );
-                }
-
-                const hasMoreServices = services.length > 6;
-                const displayServices = services.slice(0, 6);
-
-                return (
-                  <>
-                    {displayServices.map((item, index) => {
-                      const isLast = hasMoreServices && index === displayServices.length - 1;
-                      return (
-                        <Link
-                          href={isLast ? "/services" : `/service/${item.id}`}
-                          key={item.id}
-                          className="group flex flex-col w-[50%] flex-none md:w-80"
-                        >
-                          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-full rounded-b-2xl border-[3px] border-[#c8a24a] shadow-sm">
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                            />
-                            {!isLast && (
-                              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[95%] drop-shadow-md md:bottom-5 md:w-[90%]">
-                                <h3
-                                  className="animate-shine bg-[#c8a24a] text-white px-6 py-1.5 text-center line-clamp-1 font-serif text-[11px] font-medium md:text-sm"
-                                  style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%)' }}
-                                >
-                                  {item.name}
-                                </h3>
-                              </div>
-                            )}
-                            {isLast && (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
-                                <span className="text-primary-dark font-serif text-xl font-bold group-hover:underline">
-                                  See All
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </>
-                );
-              })()}
+            <div className="scrollbar-hide -mx-4 flex space-x-4 overflow-x-auto px-4 pb-4 lg:mx-0 lg:flex lg:justify-center lg:gap-8 lg:overflow-visible lg:px-0 lg:pb-0">
+              {featuredItems.map((item) => (
+                <Link
+                  href={`/service/${item.id}`}
+                  key={item.id}
+                  className="group flex w-[50%] flex-none flex-col md:w-80 lg:w-52 xl:w-60"
+                >
+                  <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-full rounded-b-2xl border-[3px] border-[#c8a24a] shadow-sm transition-transform lg:shadow-md lg:group-hover:-translate-y-1">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute bottom-4 left-1/2 w-[95%] -translate-x-1/2 drop-shadow-md md:bottom-5 md:w-[90%]">
+                      <h3
+                        className="animate-shine line-clamp-1 bg-[#c8a24a] px-6 py-1.5 text-center font-serif text-[11px] font-medium text-white md:text-sm"
+                        style={{
+                          clipPath:
+                            "polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%)",
+                        }}
+                      >
+                        {item.name}
+                      </h3>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         )}
 
-        {/* Products Section */}
+        {/* Services */}
+        {!searchQuery && !loading && !error && serviceItems.length > 0 && (
+          <section className="section-padding">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12 lg:mb-16">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl lg:text-5xl">
+                Services
+              </h2>
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px] lg:max-w-[280px]" />
+            </div>
+            <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4 lg:gap-5 xl:max-w-7xl xl:grid-cols-5 xl:gap-6">
+              {serviceItems.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/service/${item.id}`}
+                  className="group block"
+                >
+                  <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl shadow-sm transition-all group-hover:scale-[1.02] lg:aspect-[4/5] lg:rounded-2xl lg:shadow-md lg:group-hover:shadow-lg">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute right-2 bottom-4 left-2 text-center md:right-4 md:bottom-6 md:left-4 md:text-left lg:right-3 lg:bottom-4 lg:left-3">
+                      <h3 className="font-serif text-sm leading-tight font-medium text-white drop-shadow-md md:text-xl lg:text-base xl:text-lg">
+                        {item.name}
+                      </h3>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Products Section — disabled for now
         {!searchQuery && !loading && !error && (
           <section className="section-padding">
-            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
-              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
-                Our Products
-              </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
-            </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-6 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
-              {(() => {
-                const products = filteredItems.filter((item) => item.isProduct);
-                if (products.length === 0) {
-                  return (
-                    <p className="text-text-secondary col-span-2 py-8 text-center text-sm md:col-span-3 lg:col-span-4">
-                      No products available yet.
-                    </p>
-                  );
-                }
-
-                const hasMoreProducts = products.length > 8;
-                const displayProducts = products.slice(0, 8);
-
-                return (
-                  <>
-                    {displayProducts.map((item, index) => {
-                      const isLast = hasMoreProducts && index === displayProducts.length - 1;
-                      return (
-                        <Link
-                          href={isLast ? "/products" : `/service/${item.id}`}
-                          key={item.id}
-                          className="bg-surface group relative flex flex-col overflow-hidden rounded-2xl p-2 shadow-sm md:p-3"
-                        >
-                          <div className="relative aspect-square overflow-hidden rounded-xl">
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-col px-1 pt-3 md:px-2 md:pt-4">
-                            <h3 className="text-text-primary line-clamp-1 font-serif text-sm leading-tight font-medium md:text-xl">
-                              {item.name}
-                            </h3>
-                          </div>
-                          {isLast && (
-                            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-white/70 backdrop-blur-[2px] transition-colors group-hover:bg-white/80">
-                              <span className="text-primary-dark font-serif text-xl font-bold group-hover:underline">
-                                See All
-                              </span>
-                            </div>
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </>
-                );
-              })()}
-            </div>
+            ...
           </section>
         )}
+        */}
+
+        {/* Promotional Banner */}
+        {!searchQuery && <PromotionalBannerSection />}
 
         {/* Testimonials Section */}
         {!searchQuery && (
           <section className="section-padding">
-            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12">
-              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl">
+            <div className="mb-8 flex flex-col items-center justify-center text-center md:mb-12 lg:mb-16">
+              <h2 className="text-surface font-serif text-2xl font-semibold md:text-4xl lg:text-5xl">
                 Customer Reviews
               </h2>
-              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px]" />
+              <LotusSeparator className="mx-auto -mt-4 w-3/4 max-w-[120px] md:max-w-[200px] lg:max-w-[280px]" />
             </div>
 
             <div className="flex w-full justify-center">
@@ -589,77 +347,9 @@ export default function HomePage() {
         {!searchQuery && (
           <section className="section-padding flex w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center justify-center space-y-6">
-              <div className="flex gap-4">
-                <a
-                  href="#"
-                  className="border-primary/20 hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border bg-white text-[#e8baa0] shadow-sm transition-all hover:text-white"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                  </svg>
-                </a>
-                <a
-                  href="#"
-                  className="border-primary/20 hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border bg-white text-[#e8baa0] shadow-sm transition-all hover:text-white"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                  </svg>
-                </a>
-                <a
-                  href="#"
-                  className="border-primary/20 hover:bg-primary hover:border-primary flex h-10 w-10 items-center justify-center rounded-full border bg-white text-[#e8baa0] shadow-sm transition-all hover:text-white"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-5 w-5"
-                  >
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-                  </svg>
-                </a>
-              </div>
+              <SocialLinks variant="footer" className="justify-center" />
 
               <div className="flex gap-4 text-xs font-medium text-white">
-                <Link href="/privacy" className="hover:text-white/80">
-                  Privacy Policy
-                </Link>
-                <span className="text-primary/40">•</span>
-                <Link href="/terms" className="hover:text-white/80">
-                  Terms of Service
-                </Link>
-                <span className="text-primary/40">•</span>
                 <Link href="/contact" className="hover:text-white/80">
                   Contact
                 </Link>

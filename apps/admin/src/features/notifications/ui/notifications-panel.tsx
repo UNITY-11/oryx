@@ -9,7 +9,6 @@ import {
   Check,
   Clock,
   Loader2,
-  Mail,
   MessageCircle,
   MessageSquare,
   Package,
@@ -133,7 +132,7 @@ function NotificationDetail({
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <a
                   href={`tel:${selectedNotif.bookingData.customerPhone}`}
                   className="border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary flex h-11 items-center justify-center rounded-xl border bg-white transition-all sm:h-auto sm:rounded-2xl sm:p-3"
@@ -156,13 +155,6 @@ function NotificationDetail({
                   title="WhatsApp"
                 >
                   <MessageCircle className="h-4 w-4" />
-                </a>
-                <a
-                  href={`mailto:${selectedNotif.bookingData.customerName.replace(/\s+/g, ".").toLowerCase()}@example.com`}
-                  className="border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary flex h-11 items-center justify-center rounded-xl border bg-white transition-all sm:h-auto sm:rounded-2xl sm:p-3"
-                  title="Email"
-                >
-                  <Mail className="h-4 w-4" />
                 </a>
               </div>
             </div>

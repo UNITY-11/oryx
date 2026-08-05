@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 
-import { fetchCustomers } from "../api";
-import { Customer, CustomerTier } from "../types";
+import { fetchCustomersPage } from "../api";
+import { CustomerTier } from "../types";
 
 export const TIER_FILTERS: Array<CustomerTier | "All"> = [
   "All",
@@ -12,52 +13,42 @@ export const TIER_FILTERS: Array<CustomerTier | "All"> = [
 ];
 
 export function useCustomers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<CustomerTier | "All">("All");
 
-  const reload = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    fetchCustomers()
-      .then(setCustomers)
-      .catch((err) =>
-        setError(
-          err instanceof Error ? err.message : "Failed to load customers"
-        )
-      )
-      .finally(() => setLoading(false));
-  }, []);
+  const fetchPage = useCallback(
+    (params: { q: string; page: number; pageSize: number }) =>
+      fetchCustomersPage({
+        q: params.q,
+        page: params.page,
+        pageSize: params.pageSize,
+        tier: tierFilter,
+      }),
+    [tierFilter]
+  );
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
-
-  const filtered = customers
-    .filter((c) => tierFilter === "All" || c.tier === tierFilter)
-    .filter(
-      (c) =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.email ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.phone ?? "").includes(searchQuery)
-    );
-
-  const activeCount = customers.filter((c) => c.status === "Active").length;
-  const inactiveCount = customers.filter((c) => c.status === "Inactive").length;
+  const list = usePaginatedList(fetchPage, {
+    extraParams: { tier: tierFilter },
+    extraDeps: [tierFilter],
+  });
 
   return {
-    customers,
-    loading,
-    error,
-    searchQuery,
-    setSearchQuery,
+    loading: list.loading,
+    error: list.error,
+    searchQuery: list.searchQuery,
+    setSearchQuery: list.setSearchQuery,
     tierFilter,
     setTierFilter,
-    filtered,
-    activeCount,
-    inactiveCount,
-    reload,
+    filtered: list.items,
+    activeCount: list.meta?.activeCount ?? 0,
+    inactiveCount: list.meta?.inactiveCount ?? 0,
+    page: list.page,
+    setPage: list.setPage,
+    totalPages: list.totalPages,
+    totalItems: list.totalItems,
+    from: list.from,
+    to: list.to,
+    hasPrev: list.hasPrev,
+    hasNext: list.hasNext,
+    reload: list.reload,
   };
 }

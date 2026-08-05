@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ListPagination, usePagination } from "@/shared/ui/list-pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import {
   AlertCircle,
   ChevronDown,
@@ -33,6 +33,14 @@ interface ProductsGridProps {
   activeCount: number;
   lowStockCount: number;
   outOfStockCount: number;
+  page: number;
+  setPage: (page: number) => void;
+  totalPages: number;
+  totalItems: number;
+  from: number;
+  to: number;
+  hasPrev: boolean;
+  hasNext: boolean;
   onRetry?: () => void;
 }
 
@@ -51,20 +59,16 @@ export function ProductsGrid({
   activeCount,
   lowStockCount,
   outOfStockCount,
+  page,
+  setPage,
+  totalPages,
+  totalItems,
+  from,
+  to,
+  hasPrev,
+  hasNext,
   onRetry,
 }: ProductsGridProps) {
-  const {
-    page,
-    setPage,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    from,
-    to,
-    hasPrev,
-    hasNext,
-  } = usePagination(filtered, 20, `${searchQuery}|${categoryFilter}|${sortBy}`);
-
   const hasFilters =
     Boolean(searchQuery.trim()) ||
     categoryFilter !== "All" ||
@@ -215,7 +219,7 @@ export function ProductsGrid({
                 </span>
               </Link>
 
-              {paginatedItems.map((product) => (
+              {filtered.map((product) => (
                 <Link
                   key={product.id}
                   href={`/products/${product.id}`}

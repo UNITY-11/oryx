@@ -4,12 +4,22 @@ import { use, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import {
+  getServiceLineItems,
+  getTotal,
+  openWhatsAppInvoice,
+} from "@features/billing/api/use-billing-data";
+import { PrintModal } from "@features/billing/ui/print-modal";
+import {
   deleteBooking,
   fetchBooking,
   updateBooking,
 } from "@features/bookings/api";
 import { BookingWizard } from "@features/bookings/booking-wizard";
-import { Booking, BookingStatus } from "@features/bookings/types";
+import {
+  Booking,
+  BookingStatus,
+  getBookingDisplayId,
+} from "@features/bookings/types";
 import { fetchServices } from "@features/services/api";
 import { Service } from "@features/services/types";
 import {
@@ -23,6 +33,8 @@ import {
   Clock,
   Edit3,
   Loader2,
+  MessageCircle,
+  Printer,
   Save,
   Trash2,
   User,
@@ -52,6 +64,7 @@ export default function BookingDetailPage({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
   const [realServices, setRealServices] = useState<Service[]>([]);
@@ -125,6 +138,9 @@ export default function BookingDetailPage({
 
   const isCompleted =
     booking.status === "Completed" || booking.status === "Cancelled";
+  const canPrint = booking.status !== "Cancelled";
+  const invoiceLines = getServiceLineItems(booking, realServices);
+  const invoiceTotal = getTotal(booking, realServices);
 
   // Deep compare to detect changes
   const hasChanges = JSON.stringify(booking) !== JSON.stringify(savedBooking);
@@ -181,7 +197,6 @@ export default function BookingDetailPage({
 
       if (existingIndex >= 0) {
         const removedService = prev.services[existingIndex]!;
-        const basePrice = serviceObj.price || 0;
         const addonsPrice = (removedService.options ?? []).reduce(
           (sum, aName) => {
             const a = (serviceObj.options ?? []).find(
@@ -208,14 +223,12 @@ export default function BookingDetailPage({
         return {
           ...prev,
           services: newServices,
-          amount: prev.amount - basePrice - addonsPrice,
+          amount: prev.amount - addonsPrice,
         };
       } else {
-        const basePrice = serviceObj.price || 0;
         return {
           ...prev,
           services: [...prev.services, { name: serviceObj.name, options: [] }],
-          amount: prev.amount + basePrice,
         };
       }
     });
@@ -276,7 +289,7 @@ export default function BookingDetailPage({
               {booking.customerName}
             </h1>
             <p className="text-text-secondary truncate font-mono text-[10px] tracking-wider uppercase sm:text-xs">
-              {booking.id}
+              {getBookingDisplayId(booking)}
             </p>
           </div>
         </div>
@@ -348,6 +361,29 @@ export default function BookingDetailPage({
                 </>
               )}
             </div>
+          )}
+
+          {!isEditing && !isEditingWizard && canPrint && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="bg-primary inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 sm:px-4 sm:text-sm"
+              >
+                <Printer className="h-4 w-4" />
+                <span>Print</span>
+              </button>
+              {booking.phone?.replace(/\D/g, "") && (
+                <button
+                  type="button"
+                  onClick={() => openWhatsAppInvoice(booking, realServices)}
+                  className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Send</span>
+                </button>
+              )}
+            </>
           )}
 
           {!isEditing && !isEditingWizard && (
@@ -479,7 +515,15 @@ export default function BookingDetailPage({
                       const matchedObj = realServices.find(
                         (r) => r.name === svc.name
                       );
-                      const baseP = matchedObj?.price || 0;
+                      const optionsTotal = (svc.options ?? []).reduce(
+                        (sum, option) => {
+                          const matchedAddon = (matchedObj?.options ?? []).find(
+                            (a) => a.name === option
+                          );
+                          return sum + (matchedAddon?.price || 0);
+                        },
+                        0
+                      );
                       return (
                         <div
                           key={idx}
@@ -489,9 +533,11 @@ export default function BookingDetailPage({
                             <span className="text-primary-dark text-base font-semibold sm:text-lg">
                               {svc.name}
                             </span>
-                            <span className="text-primary-dark shrink-0 text-base font-semibold sm:text-lg">
-                              QAR {baseP}
-                            </span>
+                            {(svc.options ?? []).length === 0 && (
+                              <span className="text-text-secondary shrink-0 text-sm">
+                                No options selected
+                              </span>
+                            )}
                           </div>
                           {(svc.options ?? []).length > 0 && (
                             <div className="border-primary/10 mt-3 space-y-2 border-t pt-3">
@@ -506,18 +552,21 @@ export default function BookingDetailPage({
                                   >
                                     <span className="text-text-secondary flex min-w-0 items-start gap-2">
                                       <ChevronRight className="text-primary/40 mt-0.5 h-4 w-4 shrink-0" />
-                                      <span className="break-words">
+                                      <span className="text-primary-dark font-medium break-words">
                                         {option}
                                       </span>
                                     </span>
-                                    <span className="text-text-secondary shrink-0">
+                                    <span className="text-primary-dark shrink-0 font-medium">
                                       {matchedAddon
-                                        ? `+ QAR ${matchedAddon.price}`
-                                        : "+"}
+                                        ? `QAR ${matchedAddon.price}`
+                                        : "—"}
                                     </span>
                                   </div>
                                 );
                               })}
+                              <div className="text-text-secondary flex justify-end pt-1 text-xs font-semibold">
+                                Subtotal QAR {optionsTotal}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -531,9 +580,34 @@ export default function BookingDetailPage({
                     Total Amount
                   </span>
                   <span className="text-primary-dark text-xl font-bold sm:text-2xl">
-                    QAR {booking.amount}
+                    QAR {invoiceTotal || booking.amount}
                   </span>
                 </div>
+
+                {canPrint && (
+                  <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setShowPrintModal(true)}
+                      className="bg-primary inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Print Invoice
+                    </button>
+                    {booking.phone?.replace(/\D/g, "") && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openWhatsAppInvoice(booking, realServices)
+                        }
+                        className="border-primary text-primary hover:bg-primary/5 inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-colors"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Send via WhatsApp
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -793,7 +867,6 @@ export default function BookingDetailPage({
                       const matchedObj = realServices.find(
                         (r) => r.name === svc.name
                       );
-                      const baseP = matchedObj?.price || 0;
                       const isActive = activeServiceIndex === idx;
 
                       return (
@@ -801,12 +874,9 @@ export default function BookingDetailPage({
                           key={idx}
                           className={`rounded-2xl border bg-[#fcf4f0] p-3.5 transition-all sm:p-4 ${isActive ? "border-primary ring-primary shadow-sm ring-1" : "border-primary/10 hover:border-primary/30"}`}
                         >
-                          <div className="mb-2 flex items-start justify-between gap-2">
+                          <div className="mb-2">
                             <span className="text-primary-dark min-w-0 text-sm font-semibold">
                               {svc.name}
-                            </span>
-                            <span className="text-primary-dark shrink-0 text-sm font-semibold">
-                              QAR {baseP}
                             </span>
                           </div>
                           {(svc.options ?? []).length > 0 ? (
@@ -824,10 +894,10 @@ export default function BookingDetailPage({
                                       <ChevronRight className="text-primary/40 h-3 w-3 shrink-0" />
                                       <span className="truncate">{option}</span>
                                     </span>
-                                    <span className="text-text-secondary shrink-0">
+                                    <span className="text-primary-dark shrink-0 font-medium">
                                       {matchedAddon
-                                        ? `+ QAR ${matchedAddon.price}`
-                                        : "+"}
+                                        ? `QAR ${matchedAddon.price}`
+                                        : "—"}
                                     </span>
                                   </div>
                                 );
@@ -835,7 +905,7 @@ export default function BookingDetailPage({
                             </div>
                           ) : (
                             <div className="text-text-secondary mt-1 text-[10px] italic">
-                              No add-ons
+                              No options selected
                             </div>
                           )}
                           <div className="border-primary/10 mt-3 flex justify-end border-t pt-3 sm:mt-4">
@@ -872,6 +942,15 @@ export default function BookingDetailPage({
           </div>
         )}
       </div>
+
+      {showPrintModal && (
+        <PrintModal
+          booking={booking}
+          lines={invoiceLines}
+          total={invoiceTotal}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">

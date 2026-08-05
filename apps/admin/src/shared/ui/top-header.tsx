@@ -18,12 +18,14 @@ export function TopHeader() {
     pathname === "/calendar" ||
     pathname === "/analytics" ||
     pathname.startsWith("/bookings/") ||
-    pathname === "/billing" ||
+    // Billing disabled for now
+    // pathname === "/billing" ||
     pathname === "/company" ||
     (pathname.startsWith("/services/") && pathname !== "/services") ||
     // Staff disabled for now
     // (pathname.startsWith("/staff/") && pathname !== "/staff") ||
-    (pathname.startsWith("/products/") && pathname !== "/products") ||
+    // Products disabled for now
+    // (pathname.startsWith("/products/") && pathname !== "/products") ||
     (pathname.startsWith("/customers/") && pathname !== "/customers") ||
     (pathname.startsWith("/hero/") && pathname !== "/hero") ||
     (pathname.startsWith("/reviews/") && pathname !== "/reviews")
@@ -41,8 +43,9 @@ export function TopHeader() {
         return "Bookings Management";
       case "/services":
         return "Services Management";
-      case "/products":
-        return "Products Inventory";
+      // Products disabled for now
+      // case "/products":
+      //   return "Products Inventory";
       case "/customers":
         return "Customers Directory";
       case "/reviews":
@@ -59,7 +62,8 @@ export function TopHeader() {
         return "Notifications";
       default:
         if (pathname.startsWith("/services/")) return "Service Details";
-        if (pathname.startsWith("/products/")) return "Product Details";
+        // Products disabled for now
+        // if (pathname.startsWith("/products/")) return "Product Details";
         if (pathname.startsWith("/customers/")) return "Customer Details";
         if (pathname.startsWith("/reviews/")) return "Review Details";
         if (pathname === "/hero") return "Hero Section";
@@ -163,6 +167,7 @@ export function TopHeader() {
               </Link>
             )}
 
+            {/* Products disabled for now
             {pathname === "/products" && (
               <Link
                 href="/products/new"
@@ -172,6 +177,7 @@ export function TopHeader() {
                 <span>Add Product</span>
               </Link>
             )}
+            */}
 
             {pathname === "/customers" && (
               <Link

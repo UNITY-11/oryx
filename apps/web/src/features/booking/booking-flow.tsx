@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  validateName,
+  validatePhoneValue,
+  type CountryCode,
+} from "@/shared/lib/phone";
 import { useBookingStore, useCartStore, useUserStore } from "@/shared/store";
 import { CartItem, Item, ItemVariant } from "@/shared/types";
+import { PhoneInput } from "@/shared/ui/phone-input";
+import { isBookingCustomerDetailsValid } from "@repo/validation";
 import {
   Calendar as CalendarIcon,
   CheckCircle2,
@@ -153,6 +161,14 @@ function CartItemCard({
   );
 }
 
+function cartHasMissingOptions(cartItems: CartItem[]): boolean {
+  return cartItems.some(
+    (ci) =>
+      (ci.item.options?.length ?? 0) > 0 &&
+      (ci.selectedOptions?.length ?? 0) === 0
+  );
+}
+
 export function BookingFlow({
   isIntegrated = false,
 }: {
@@ -182,7 +198,23 @@ export function BookingFlow({
   // OTP Auth state
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(
+    DEFAULT_PHONE_COUNTRY
+  );
   const [channel, setChannel] = useState<"SMS" | "WhatsApp">("WhatsApp");
+  const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [authTouched, setAuthTouched] = useState({ name: false, phone: false });
+
+  const isAuthDetailsValid = useMemo(
+    () =>
+      validateName(name) === "" &&
+      validatePhoneValue(phone, {
+        label: "WhatsApp number",
+        country: phoneCountry,
+      }) === "",
+    [name, phone, phoneCountry]
+  );
 
   const [isMounted, setIsMounted] = useState(false);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
@@ -323,7 +355,14 @@ export function BookingFlow({
   };
 
   const handleCheckout = async () => {
-    if (!user) {
+    if (cartHasMissingOptions(cartItems)) {
+      setBookingError(
+        "Select options for all services before completing your booking."
+      );
+      return;
+    }
+
+    if (!user || !isBookingCustomerDetailsValid(user.name, user.phone)) {
       setStep("auth");
       return;
     }
@@ -344,13 +383,29 @@ export function BookingFlow({
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone) return;
+
+    const nextNameError = validateName(name);
+    const nextPhoneError = validatePhoneValue(phone, {
+      label: "WhatsApp number",
+      country: phoneCountry,
+    });
+    setNameError(nextNameError);
+    setPhoneError(nextPhoneError);
+    setAuthTouched({ name: true, phone: true });
+    if (nextNameError || nextPhoneError) return;
+
+    if (cartHasMissingOptions(cartItems)) {
+      setBookingError(
+        "Select options for all services before completing your booking."
+      );
+      return;
+    }
 
     setBookingSubmitting(true);
     setBookingError(null);
     try {
-      setUser({ id: "u1", name, phone, channel });
-      const created = await persistBookingToSanity(name, phone);
+      setUser({ id: "u1", name: name.trim(), phone: phone.trim(), channel });
+      const created = await persistBookingToSanity(name.trim(), phone.trim());
       completeLocalBooking(created.id, created.bookingCode);
     } catch (err) {
       setBookingError(
@@ -667,31 +722,55 @@ export function BookingFlow({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onBlur={() => {
+                      setAuthTouched((t) => ({ ...t, name: true }));
+                      setNameError(validateName(name));
+                    }}
                     placeholder="Enter full name"
-                    className="focus:ring-primary/50 text-text-primary border-primary w-full rounded-xl border bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
+                    className={`focus:ring-primary/50 text-text-primary w-full rounded-xl border bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none ${nameError ? "border-red-400" : "border-primary"}`}
                   />
+                  {authTouched.name && nameError && (
+                    <p className="mt-1.5 text-xs text-red-500">{nameError}</p>
+                  )}
                 </div>
 
-                {/* Mobile Number */}
                 <div>
                   <label className="mb-1.5 block text-xs font-bold tracking-wider text-[#9a8276] uppercase">
-                    Mobile Number
+                    WhatsApp Number
                   </label>
-                  <input
-                    type="tel"
-                    required
+                  <PhoneInput
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+974 1234 5678"
-                    className="focus:ring-primary/50 text-text-primary border-primary w-full rounded-xl border bg-transparent px-4 py-3 text-sm placeholder:text-gray-300 focus:ring-1 focus:outline-none"
+                    onChange={setPhone}
+                    onCountryChange={setPhoneCountry}
+                    onBlur={() => {
+                      setAuthTouched((t) => ({ ...t, phone: true }));
+                      setPhoneError(
+                        validatePhoneValue(phone, {
+                          label: "WhatsApp number",
+                          country: phoneCountry,
+                        })
+                      );
+                    }}
+                    hasError={Boolean(authTouched.phone && phoneError)}
+                    placeholder="WhatsApp number"
                   />
+                  {authTouched.phone && phoneError && (
+                    <p className="mt-1.5 text-xs text-red-500">{phoneError}</p>
+                  )}
                 </div>
+
+                {bookingError && (
+                  <p className="text-center text-sm text-red-500">
+                    {bookingError}
+                  </p>
+                )}
 
                 {/* Verify & Confirm (Mobile Only) */}
                 <div className="pt-6 md:hidden">
                   <button
                     type="submit"
-                    className="bg-primary w-full rounded-xl py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
+                    disabled={bookingSubmitting || !isAuthDetailsValid}
+                    className="bg-primary w-full rounded-xl py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
                   >
                     Verify & Confirm
                   </button>
@@ -836,7 +915,7 @@ export function BookingFlow({
                 <button
                   type="submit"
                   form="auth-form"
-                  disabled={bookingSubmitting}
+                  disabled={bookingSubmitting || !isAuthDetailsValid}
                   className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
                 >
                   {bookingSubmitting ? (

@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { isValidPhone } from "@/shared/lib/phone";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { validatePhoneValue } from "@/shared/lib/phone";
+import {
+  isBookingCustomerDetailsValid,
+  validateCustomerName,
+} from "@repo/validation";
 import {
   AlertCircle,
   ChevronLeft,
@@ -21,7 +25,10 @@ import {
 } from "./service-validation";
 import { getTimeSlotsForDate } from "./time-slots";
 import { Booking } from "./types";
-import { BookingCustomerStep } from "./ui/booking-customer-step";
+import {
+  BookingCustomerStep,
+  type BookingCustomerStepState,
+} from "./ui/booking-customer-step";
 
 export function AddBookingView({
   onAddBooking,
@@ -50,6 +57,31 @@ export function AddBookingView({
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [customerStepState, setCustomerStepState] =
+    useState<BookingCustomerStepState>({
+      mode: "existing",
+      selectedCustomerId: null,
+    });
+
+  const handleCustomerStepStateChange = useCallback(
+    (state: BookingCustomerStepState) => {
+      setCustomerStepState(state);
+    },
+    []
+  );
+
+  const customerNameError = useMemo(
+    () => validateCustomerName(customerName),
+    [customerName]
+  );
+  const customerPhoneError = useMemo(
+    () => validatePhoneValue(phone, { required: true, label: "phone number" }),
+    [phone]
+  );
+  const canConfirmCustomer =
+    isBookingCustomerDetailsValid(customerName, phone) &&
+    (customerStepState.mode === "new" ||
+      customerStepState.selectedCustomerId !== null);
 
   useEffect(() => {
     setServicesLoading(true);
@@ -146,6 +178,17 @@ export function AddBookingView({
     }
     if (!selectedTime) {
       setSubmitError("Please select a time slot.");
+      return;
+    }
+    if (!canConfirmCustomer) {
+      setSubmitError(
+        customerStepState.mode === "existing" &&
+          !customerStepState.selectedCustomerId
+          ? "Select an existing customer or add a new one."
+          : customerNameError ||
+              customerPhoneError ||
+              "Enter valid customer details."
+      );
       return;
     }
 
@@ -498,6 +541,9 @@ export function AddBookingView({
                   setCustomerName={setCustomerName}
                   phone={phone}
                   setPhone={setPhone}
+                  nameError={customerNameError || undefined}
+                  phoneError={customerPhoneError || undefined}
+                  onStepStateChange={handleCustomerStepStateChange}
                 />
               </div>
             )}
@@ -612,11 +658,7 @@ export function AddBookingView({
               <button
                 form="add-booking-form"
                 type="submit"
-                disabled={
-                  submitting ||
-                  customerName.trim().length < 4 ||
-                  !isValidPhone(phone)
-                }
+                disabled={submitting || !canConfirmCustomer}
                 className="bg-primary flex w-full items-center justify-center space-x-2 rounded-full px-8 py-3.5 font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? (

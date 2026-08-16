@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@repo/design-tokens": "workspace:*",
     "@repo/sanity": "workspace:*",
+    "@repo/validation": "workspace:*",
     "@repo/whatsapp": "workspace:*",
     "@repo/ui": "workspace:*",
     "@sanity/client": "^7.23.2",

@@ -83,11 +83,21 @@ export function hasCustomerFieldErrors(errors: CustomerFieldErrors): boolean {
 export function validateBookingFields(data: {
   date: string;
   time: string;
-  staff: string;
-}): Partial<Record<"date" | "time" | "staff", string>> {
-  const errors: Partial<Record<"date" | "time" | "staff", string>> = {};
+}): Partial<Record<"date" | "time", string>> {
+  const errors: Partial<Record<"date" | "time", string>> = {};
   if (isBlank(data.date)) errors.date = "Date is required";
   if (isBlank(data.time)) errors.time = "Time is required";
-  if (isBlank(data.staff)) errors.staff = "Staff member is required";
+
+  if (!isBlank(data.date)) {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    const todayIso = `${y}-${m}-${d}`;
+    if (data.date < todayIso) {
+      errors.date = "Date cannot be in the past";
+    }
+  }
+
   return errors;
 }

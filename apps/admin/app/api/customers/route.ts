@@ -10,6 +10,7 @@ import {
   toGroqSearchPattern,
 } from "@/shared/lib/pagination";
 import { sanityClient } from "@/shared/lib/sanity/client";
+import { normalizePhone, validateCustomerInput } from "@repo/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -68,18 +69,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
-      return NextResponse.json(
-        { error: "Customer name is required" },
-        { status: 400 }
-      );
+    const customerError = validateCustomerInput({
+      name: body.name ?? "",
+      phone: body.phone ?? "",
+      email: body.email,
+    });
+    if (customerError) {
+      return NextResponse.json({ error: customerError }, { status: 400 });
     }
 
     const doc = {
       _type: "customer",
-      name: body.name,
+      name: body.name.trim(),
       email: body.email ?? "",
-      phone: body.phone ?? "",
+      phone: normalizePhone(body.phone),
       avatar: body.avatar ?? null,
       tier: body.tier ?? "Bronze",
       totalSpent: body.totalSpent ?? 0,

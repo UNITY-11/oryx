@@ -199,6 +199,15 @@ export function ServiceBookingWizard({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (
+      item.options &&
+      item.options.length > 0 &&
+      selectedOptions.length === 0
+    ) {
+      setBookingError("Select at least one service option.");
+      return;
+    }
+
     const nextNameError = validateName(name);
     const nextPhoneError = validatePhoneValue(phone, {
       label: "WhatsApp number",

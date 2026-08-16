@@ -4,6 +4,10 @@ import {
   REVIEWS_LIST_QUERY,
 } from "@/features/reviews/sanity-queries";
 import {
+  hasReviewFieldErrors,
+  validateReview,
+} from "@/features/reviews/validation";
+import {
   buildPaginatedResponse,
   parsePaginationSearchParams,
   toGroqSearchPattern,
@@ -57,24 +61,24 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
-    if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
+    const review = {
+      name: body.name ?? "",
+      text: body.text ?? "",
+      rating: Number(body.rating ?? 5),
+      status: (body.status ?? "Active") as "Active" | "Inactive",
+    };
+    const errors = validateReview(review);
+    if (hasReviewFieldErrors(errors)) {
+      const first = Object.values(errors).find(Boolean);
       return NextResponse.json(
-        { error: "Reviewer name is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.text || typeof body.text !== "string" || !body.text.trim()) {
-      return NextResponse.json(
-        { error: "Review text is required" },
+        { error: first ?? "Invalid review data" },
         { status: 400 }
       );
     }
 
     let initials = body.initials;
-    if (!initials && body.name) {
-      initials = body.name
+    if (!initials && review.name) {
+      initials = review.name
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -84,10 +88,10 @@ export async function POST(request: Request) {
 
     const doc = {
       _type: "review",
-      name: body.name,
-      text: body.text,
-      rating: body.rating ?? 5,
-      status: body.status ?? "Active",
+      name: review.name.trim(),
+      text: review.text.trim(),
+      rating: review.rating,
+      status: review.status,
       initials: initials,
       avatar: body.avatar ?? null,
       createdAt: new Date().toISOString(),

@@ -7,13 +7,21 @@ import { Check, Loader2, Search, UserPlus, Users } from "lucide-react";
 import { fetchCustomersPage } from "../../customers/api";
 import type { Customer } from "../../customers/types";
 
-type CustomerMode = "existing" | "new";
+export type CustomerMode = "existing" | "new";
+
+export type BookingCustomerStepState = {
+  mode: CustomerMode;
+  selectedCustomerId: string | null;
+};
 
 interface BookingCustomerStepProps {
   customerName: string;
   setCustomerName: (value: string) => void;
   phone: string;
   setPhone: (value: string) => void;
+  nameError?: string;
+  phoneError?: string;
+  onStepStateChange?: (state: BookingCustomerStepState) => void;
 }
 
 function canSearchCustomers(query: string): boolean {
@@ -29,6 +37,9 @@ export function BookingCustomerStep({
   setCustomerName,
   phone,
   setPhone,
+  nameError,
+  phoneError,
+  onStepStateChange,
 }: BookingCustomerStepProps) {
   const [mode, setMode] = useState<CustomerMode>("existing");
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,6 +55,10 @@ export function BookingCustomerStep({
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    onStepStateChange?.({ mode, selectedCustomerId });
+  }, [mode, selectedCustomerId, onStepStateChange]);
 
   const activeQuery = canSearchCustomers(debouncedSearch)
     ? debouncedSearch.trim()
@@ -105,8 +120,15 @@ export function BookingCustomerStep({
     if (next === "new") {
       setSelectedCustomerId(null);
       setSearchQuery("");
+      setCustomerName("");
+      setPhone("");
+    } else {
+      setCustomerName("");
+      setPhone("");
     }
   };
+
+  const inputErrorClass = "border-red-400 focus:border-red-500";
 
   return (
     <div className="mx-auto w-full max-w-md space-y-5">
@@ -146,6 +168,11 @@ export function BookingCustomerStep({
                   {customerName}
                 </p>
                 <p className="text-text-secondary mt-0.5 text-sm">{phone}</p>
+                {(nameError || phoneError) && (
+                  <p className="mt-2 text-xs text-red-500">
+                    {nameError || phoneError}
+                  </p>
+                )}
                 <p className="text-primary mt-2 flex items-center gap-1 text-xs font-medium">
                   <Check className="h-3.5 w-3.5" />
                   Customer selected
@@ -241,9 +268,12 @@ export function BookingCustomerStep({
                 const val = e.target.value.replace(/[0-9]/g, "");
                 setCustomerName(val);
               }}
-              className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 px-4 py-3 shadow-sm transition-colors focus:bg-white focus:outline-none"
+              className={`border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 px-4 py-3 shadow-sm transition-colors focus:bg-white focus:outline-none ${nameError ? inputErrorClass : ""}`}
               placeholder="e.g. Sarah Smith"
             />
+            {nameError && (
+              <p className="mt-1.5 text-xs text-red-500">{nameError}</p>
+            )}
           </div>
           <div>
             <label className="text-primary-dark mb-1.5 block text-sm font-medium">
@@ -252,8 +282,12 @@ export function BookingCustomerStep({
             <PhoneInput
               value={phone}
               onChange={setPhone}
+              hasError={Boolean(phoneError)}
               placeholder="5555 0000"
             />
+            {phoneError && (
+              <p className="mt-1.5 text-xs text-red-500">{phoneError}</p>
+            )}
           </div>
         </div>
       )}

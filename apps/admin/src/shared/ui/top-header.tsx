@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { ChevronLeft, Plus } from "lucide-react";
 
@@ -9,7 +9,6 @@ export function TopHeader() {
   const pathname = usePathname();
 
   const searchParams = useSearchParams();
-  const router = useRouter();
   const isAddingBooking =
     pathname === "/bookings" && searchParams.get("action") === "add";
   const bookingStep = Number(searchParams.get("step")) || 1;
@@ -133,58 +132,30 @@ export function TopHeader() {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center space-x-3">
-          {/* Staff disabled for now
-          {pathname === "/staff" && (
-            <div className="relative mr-2 hidden w-64 md:block">
-              <Search className="text-text-secondary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search staff..."
-                defaultValue={searchParams.get("search") || ""}
-                onChange={(e) => {
-                  const params = new URLSearchParams(searchParams);
-                  if (e.target.value) {
-                    params.set("search", e.target.value);
-                  } else {
-                    params.delete("search");
-                  }
-                  router.replace(`${pathname}?${params.toString()}`);
-                }}
-                className="focus:border-primary focus:ring-primary w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm outline-none focus:bg-white focus:ring-1"
-              />
-            </div>
-          )}
-          */}
+        {pathname !== "/" && (
+          <div className="flex shrink-0 items-center space-x-3">
+            <div className="border-primary/10 flex items-center pl-3 md:border-l md:pl-5">
+              {pathname === "/bookings" && !isAddingBooking && (
+                <Link
+                  href="/bookings?action=add&step=1"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add New Booking</span>
+                </Link>
+              )}
 
-          <div className="border-primary/10 flex items-center pl-3 md:border-l md:pl-5">
-            {pathname === "/" && (
-              <button className="bg-primary rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90">
-                Download Report
-              </button>
-            )}
+              {pathname === "/services" && (
+                <Link
+                  href="/services/new"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90 sm:px-6"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Service</span>
+                </Link>
+              )}
 
-            {pathname === "/bookings" && !isAddingBooking && (
-              <Link
-                href="/bookings?action=add&step=1"
-                className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add New Booking</span>
-              </Link>
-            )}
-
-            {pathname === "/services" && (
-              <Link
-                href="/services/new"
-                className="bg-primary flex items-center space-x-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90 sm:px-6"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Service</span>
-              </Link>
-            )}
-
-            {/* Products disabled for now
+              {/* Products disabled for now
             {pathname === "/products" && (
               <Link
                 href="/products/new"
@@ -196,27 +167,27 @@ export function TopHeader() {
             )}
             */}
 
-            {pathname === "/customers" && (
-              <Link
-                href="/customers/new"
-                className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Customer</span>
-              </Link>
-            )}
+              {pathname === "/customers" && (
+                <Link
+                  href="/customers/new"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Customer</span>
+                </Link>
+              )}
 
-            {pathname === "/reviews" && (
-              <Link
-                href="/reviews/new"
-                className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Review</span>
-              </Link>
-            )}
+              {pathname === "/reviews" && (
+                <Link
+                  href="/reviews/new"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Review</span>
+                </Link>
+              )}
 
-            {/* Staff disabled for now
+              {/* Staff disabled for now
             {pathname === "/staff" && (
               <Link
                 href="/staff/new"
@@ -228,17 +199,18 @@ export function TopHeader() {
             )}
             */}
 
-            {pathname === "/hero" && (
-              <Link
-                href="/hero/new"
-                className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Slide</span>
-              </Link>
-            )}
+              {pathname === "/hero" && (
+                <Link
+                  href="/hero/new"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Slide</span>
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </header>
     </div>
   );

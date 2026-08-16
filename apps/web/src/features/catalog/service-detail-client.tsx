@@ -17,6 +17,11 @@ export function ServiceDetailClient({ item }: { item: Item }) {
     [selectedOptions]
   );
 
+  const hasCatalogOptions = item.options && item.options.length > 0;
+  const bookingTotal = hasCatalogOptions ? total : item.price;
+  const showBookingBar =
+    !bookingOpen && (hasCatalogOptions ? selectedOptions.length > 0 : true);
+
   const toggleAddon = (option: ItemVariant) => {
     setSelectedOptions((prev) =>
       prev.find((a) => a.id === option.id)
@@ -182,19 +187,25 @@ export function ServiceDetailClient({ item }: { item: Item }) {
           )}
         </div>
 
-        {selectedOptions.length > 0 && !bookingOpen && (
+        {showBookingBar && (
           <div
             className="border-primary/10 fixed inset-x-0 bottom-0 z-40 border-t bg-white px-6 py-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] lg:absolute lg:inset-x-0 lg:bottom-0 lg:border-t lg:px-12 lg:py-5 xl:px-16"
             style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
           >
             <div className="mx-auto flex max-w-lg items-center justify-between gap-4 lg:max-w-xl xl:max-w-2xl">
               <div>
-                <p className="text-text-secondary text-xs font-medium tracking-wider uppercase lg:text-sm">
-                  {selectedOptions.length} option
-                  {selectedOptions.length > 1 ? "s" : ""} selected
-                </p>
+                {hasCatalogOptions ? (
+                  <p className="text-text-secondary text-xs font-medium tracking-wider uppercase lg:text-sm">
+                    {selectedOptions.length} option
+                    {selectedOptions.length > 1 ? "s" : ""} selected
+                  </p>
+                ) : (
+                  <p className="text-text-secondary text-xs font-medium tracking-wider uppercase lg:text-sm">
+                    Book this service
+                  </p>
+                )}
                 <p className="text-primary-dark font-serif text-2xl font-bold lg:text-3xl">
-                  QAR {total}
+                  QAR {bookingTotal}
                 </p>
               </div>
               <button
@@ -212,7 +223,7 @@ export function ServiceDetailClient({ item }: { item: Item }) {
       <ServiceBookingWizard
         item={item}
         selectedOptions={selectedOptions}
-        total={total}
+        total={bookingTotal}
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
         onSuccess={() => setSelectedOptions([])}

@@ -4,6 +4,11 @@ import {
   PRODUCTS_LIST_QUERY,
   type ProductsSortField,
 } from "@/features/products/sanity-queries";
+import type { ProductCategory } from "@/features/products/types";
+import {
+  hasProductFieldErrors,
+  validateProduct,
+} from "@/features/products/validation";
 import {
   buildPaginatedResponse,
   parsePaginationSearchParams,
@@ -68,22 +73,31 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
-    if (!body.name || typeof body.name !== "string" || !body.name.trim()) {
+    const product = {
+      name: body.name ?? "",
+      brand: body.brand ?? "",
+      volumeOrWeight: body.volumeOrWeight ?? "",
+      quantity: Number(body.quantity ?? 0),
+      price: Number(body.price ?? 0),
+      category: (body.category ?? "Skincare") as ProductCategory,
+    };
+    const errors = validateProduct(product);
+    if (hasProductFieldErrors(errors)) {
+      const first = Object.values(errors).find(Boolean);
       return NextResponse.json(
-        { error: "Product name is required" },
+        { error: first ?? "Invalid product data" },
         { status: 400 }
       );
     }
 
     const doc = {
       _type: "product",
-      name: body.name,
-      brand: body.brand ?? "",
-      volumeOrWeight: body.volumeOrWeight ?? "",
-      quantity: body.quantity ?? 0,
-      price: body.price ?? 0,
-      category: body.category ?? "Skincare",
+      name: product.name.trim(),
+      brand: product.brand.trim(),
+      volumeOrWeight: product.volumeOrWeight.trim(),
+      quantity: product.quantity,
+      price: product.price,
+      category: product.category,
       image: body.image ?? null,
       status: body.status ?? "Active",
     };

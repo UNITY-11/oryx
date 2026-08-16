@@ -5,12 +5,17 @@ import {
   toGroqSearchPattern,
 } from "@/features/bookings/sanity-queries";
 import type { BookingService } from "@/features/bookings/types";
+import { SERVICES_LIST_QUERY } from "@/features/services/sanity-queries";
 import {
   buildPaginatedResponse,
   parsePaginationSearchParams,
 } from "@/shared/lib/pagination";
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { generateNextBookingCode } from "@repo/sanity";
+import {
+  validateBookingCreateInput,
+  type CatalogService,
+} from "@repo/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -106,43 +111,42 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (
-      !body.customerName ||
-      typeof body.customerName !== "string" ||
-      !body.customerName.trim()
-    ) {
-      return NextResponse.json(
-        { error: "Customer name is required" },
-        { status: 400 }
-      );
+    const catalog = (await sanityClient.fetch(
+      SERVICES_LIST_QUERY
+    )) as CatalogService[];
+
+    const validated = validateBookingCreateInput(body, { catalog });
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    // 1. Check if customer exists by phone
+    const data = validated.data;
+    const services = data.services ?? [];
+
     const existingCustomer = await sanityClient.fetch(
       `*[_type == "customer" && phone == $phone][0]`,
-      { phone: body.phone || "" }
+      { phone: data.phone }
     );
 
     let customerId = existingCustomer?._id;
 
-    // 2. If not, create a new customer (spend only counts when booking is Completed)
-    if (!customerId && body.phone) {
+    if (!customerId && data.phone) {
       const isCompleted = body.status === "Completed";
       const newCustomer = await sanityClient.create({
         _type: "customer",
-        name: body.customerName,
-        phone: body.phone,
+        name: data.customerName,
+        phone: data.phone,
         email: "",
         tier: "Bronze",
-        totalSpent: isCompleted ? (body.amount ?? 0) : 0,
-        lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
+        totalSpent: isCompleted ? (data.amount ?? 0) : 0,
+        lastVisit: data.date ?? new Date().toISOString().slice(0, 10),
         status: "Active",
       });
       customerId = newCustomer._id;
     } else if (customerId && body.status === "Completed") {
       const completed = await sanityClient.fetch(
         `*[_type == "booking" && phone == $phone && status == "Completed"]{ amount }`,
-        { phone: body.phone || "" }
+        { phone: data.phone }
       );
       const priorSpent = (completed as { amount?: number }[]).reduce(
         (sum, b) => sum + (typeof b.amount === "number" ? b.amount : 0),
@@ -151,26 +155,25 @@ export async function POST(request: Request) {
       await sanityClient
         .patch(customerId)
         .set({
-          totalSpent: priorSpent + (body.amount ?? 0),
-          lastVisit: body.date ?? new Date().toISOString().slice(0, 10),
+          totalSpent: priorSpent + (data.amount ?? 0),
+          lastVisit: data.date ?? new Date().toISOString().slice(0, 10),
         })
         .commit();
     }
 
     const bookingCode = await generateNextBookingCode(sanityClient);
 
-    // 3. Create the booking
     const doc = {
       _type: "booking",
       bookingCode,
-      customerName: body.customerName,
-      phone: body.phone ?? "",
-      customerId: customerId ?? null, // link the booking to the customer
-      services: withKeys(body.services),
-      date: body.date ?? new Date().toISOString().slice(0, 10),
-      time: body.time ?? "10:00",
+      customerName: data.customerName,
+      phone: data.phone,
+      customerId: customerId ?? null,
+      services: withKeys(services as BookingService[]),
+      date: data.date ?? new Date().toISOString().slice(0, 10),
+      time: data.time ?? "10:00",
       status: body.status ?? "Pending",
-      amount: body.amount ?? 0,
+      amount: data.amount ?? 0,
     };
 
     const created = await sanityClient.create(doc);

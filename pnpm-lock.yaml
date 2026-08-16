@@ -55,6 +55,9 @@ importers:
       "@repo/ui":
         specifier: workspace:*
         version: link:../../packages/ui
+      "@repo/validation":
+        specifier: workspace:*
+        version: link:../../packages/validation
       "@repo/whatsapp":
         specifier: workspace:*
         version: link:../../packages/whatsapp
@@ -146,6 +149,9 @@ importers:
       "@repo/ui":
         specifier: workspace:*
         version: link:../../packages/ui
+      "@repo/validation":
+        specifier: workspace:*
+        version: link:../../packages/validation
       "@repo/whatsapp":
         specifier: workspace:*
         version: link:../../packages/whatsapp
@@ -300,6 +306,22 @@ importers:
       eslint:
         specifier: ^9.39.1
         version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+
+  packages/validation:
+    dependencies:
+      libphonenumber-js:
+        specifier: ^1.13.10
+        version: 1.13.10
+    devDependencies:
+      "@repo/typescript-config":
+        specifier: workspace:*
+        version: link:../typescript-config
+      "@types/node":
+        specifier: ^22.15.3
+        version: 22.20.1
       typescript:
         specifier: 5.9.2
         version: 5.9.2

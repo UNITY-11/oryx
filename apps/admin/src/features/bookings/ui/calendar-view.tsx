@@ -4,8 +4,6 @@ import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import {
   AlertCircle,
   Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Loader2,
   User,
@@ -18,6 +16,13 @@ const END_HOUR = 20; // 8:00 PM
 const HOUR_WIDTH = 240; // px per hour to give horizontal space
 const ROW_HEIGHT = 90; // px per booking row
 
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 interface CalendarViewProps {
   currentDate: Date;
   setCurrentDate: (date: Date) => void;
@@ -25,9 +30,6 @@ interface CalendarViewProps {
   bookings: Booking[];
   loading: boolean;
   error: string | null;
-  goToPreviousDay: () => void;
-  goToNextDay: () => void;
-  goToToday: () => void;
 }
 
 export function CalendarView({
@@ -37,16 +39,20 @@ export function CalendarView({
   bookings,
   loading,
   error,
-  goToPreviousDay,
-  goToNextDay,
-  goToToday,
 }: CalendarViewProps) {
   const router = useRouter();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const formattedDate = currentDate.toISOString().split("T")[0];
-  const todayStr = realTime.toISOString().split("T")[0];
+  const formattedDate = toLocalDateString(currentDate);
+  const todayStr = toLocalDateString(realTime);
   const isToday = formattedDate === todayStr;
+
+  const handleDateChange = (value: string) => {
+    if (!value) return;
+    const [y, m, d] = value.split("-").map(Number);
+    if (!y || !m || !d) return;
+    setCurrentDate(new Date(y, m - 1, d));
+  };
 
   useEffect(() => {
     if (!scrollContainerRef.current) return;
@@ -58,55 +64,46 @@ export function CalendarView({
         (currentH - START_HOUR + currentM / 60) * HOUR_WIDTH;
       const containerWidth = scrollContainerRef.current.clientWidth;
 
-      // Scroll to perfectly center the current time
       scrollContainerRef.current.scrollTo({
         left: Math.max(0, scrollPosition - containerWidth / 2),
         behavior: "smooth",
       });
     } else {
-      // For other days, scroll back to the start (8 AM)
       scrollContainerRef.current.scrollTo({ left: 0, behavior: "smooth" });
     }
   }, [formattedDate, isToday, realTime]);
 
-  // Filter bookings for the selected date, excluding cancelled ones
-  // Sort them by time so they can be processed left-to-right
   const rawBookings = bookings
     .filter((b) => b.date === formattedDate && b.status !== "Cancelled")
     .sort((a, b) => a.time.localeCompare(b.time));
 
-  // Calculate lanes to pack bookings efficiently towards the top
   const laneEndTimes: number[] = [];
-  const todaysBookings = rawBookings.map((booking) => {
+  const dayBookings = rawBookings.map((booking) => {
     const parts = booking.time.split(":").map(Number);
     const h = parts[0] || 0;
     const m = parts[1] || 0;
     const startMinutes = h * 60 + m;
-    const endMinutes = startMinutes + 60; // Assume 60 mins duration
+    const endMinutes = startMinutes + 60;
 
-    // Find first available lane (where previous booking ended before this starts)
     let laneIndex = laneEndTimes.findIndex(
       (endTime) => endTime <= startMinutes
     );
     if (laneIndex === -1) {
-      laneIndex = laneEndTimes.length; // create new lane
+      laneIndex = laneEndTimes.length;
       laneEndTimes.push(endMinutes);
     } else {
-      laneEndTimes[laneIndex] = endMinutes; // update existing lane
+      laneEndTimes[laneIndex] = endMinutes;
     }
 
     return { ...booking, laneIndex };
   });
 
-  // Generate hour slots
   const hours = [];
   for (let i = START_HOUR; i <= END_HOUR; i++) {
     const label = i === 12 ? "12 PM" : i > 12 ? `${i - 12} PM` : `${i} AM`;
     hours.push({ value: i, label });
   }
 
-  // Calculate position and width of a booking
-  // We assume 60 minutes duration by default
   const getBookingStyle = (time: string, index: number) => {
     const parts = time.split(":").map(Number);
     const h = parts[0] || 0;
@@ -115,14 +112,14 @@ export function CalendarView({
     const normalizedH = Math.max(START_HOUR, Math.min(h, END_HOUR));
 
     const leftPx = (normalizedH - START_HOUR + m / 60) * HOUR_WIDTH;
-    const widthPx = HOUR_WIDTH; // 60 minutes
-    const topPx = index * ROW_HEIGHT + 24; // offset from top header
+    const widthPx = HOUR_WIDTH;
+    const topPx = index * ROW_HEIGHT + 24;
 
     return {
       left: `${leftPx}px`,
       width: `${widthPx}px`,
       top: `${topPx}px`,
-      height: `${ROW_HEIGHT - 12}px`, // gap between rows
+      height: `${ROW_HEIGHT - 12}px`,
     };
   };
 
@@ -143,64 +140,64 @@ export function CalendarView({
     }
   };
 
+  const dateLabel = currentDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  const sessionsLabel = isToday
+    ? `${dayBookings.length} Sessions Today`
+    : `${dayBookings.length} Sessions`;
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Header Bar */}
       <div className="shrink-0 pt-4 pb-4">
-        <header className="border-primary/10 z-30 flex h-20 w-full shrink-0 items-center justify-between rounded-3xl border bg-white/90 px-6 shadow-sm backdrop-blur-xl lg:px-10">
-          <div className="flex flex-1 items-center space-x-4">
+        <header className="border-primary/10 z-30 flex w-full shrink-0 flex-col gap-4 rounded-3xl border bg-white/90 px-4 py-4 shadow-sm backdrop-blur-xl sm:h-20 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-10">
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
             <MobileMenuButton />
-            <div className="hidden flex-col md:flex">
-              <h1 className="text-primary-dark font-serif text-2xl font-medium">
-                {currentDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-primary-dark truncate font-serif text-lg font-medium sm:text-2xl">
+                {dateLabel}
               </h1>
-              <div className="text-text-secondary mt-0.5 flex items-center gap-3 text-sm font-medium">
+              <div className="text-text-secondary mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium sm:text-sm">
+                {isToday && (
+                  <>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {realTime.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <span className="bg-primary/30 hidden h-1 w-1 rounded-full sm:block" />
+                  </>
+                )}
                 <span className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />{" "}
-                  {realTime.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-                <span className="bg-primary/30 h-1 w-1 rounded-full"></span>
-                <span className="flex items-center gap-1.5">
-                  <User className="h-4 w-4" /> {todaysBookings.length} Sessions
-                  Today
+                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {sessionsLabel}
                 </span>
               </div>
             </div>
-            <div className="min-w-0 md:hidden">
-              <h1 className="text-primary-dark truncate font-serif text-lg font-medium">
-                Calendar
-              </h1>
-            </div>
           </div>
 
-          <div className="flex shrink-0 items-center space-x-3">
-            <div className="border-primary/10 flex items-center rounded-xl border bg-[#fcf4f0] p-1">
-              <button
-                onClick={goToPreviousDay}
-                className="text-primary-dark rounded-lg p-2 transition-colors hover:bg-white hover:shadow-sm"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={goToToday}
-                className="text-primary-dark rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white"
-              >
-                Today
-              </button>
-              <button
-                onClick={goToNextDay}
-                className="text-primary-dark rounded-lg p-2 transition-colors hover:bg-white hover:shadow-sm"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
+          <div className="flex shrink-0 items-center sm:pl-2">
+            <label
+              className="border-primary/10 flex w-full min-w-0 items-center gap-2 rounded-xl border bg-[#fcf4f0] px-3 py-2.5 sm:w-auto sm:min-w-[220px]"
+              htmlFor="calendar-date-picker"
+            >
+              <CalendarIcon className="text-primary h-5 w-5 shrink-0" />
+              <span className="text-text-secondary shrink-0 text-xs font-semibold tracking-wide uppercase">
+                Date
+              </span>
+              <input
+                id="calendar-date-picker"
+                type="date"
+                value={formattedDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="text-primary-dark min-w-0 flex-1 cursor-pointer border-0 bg-transparent text-sm font-semibold [color-scheme:light] outline-none"
+              />
+            </label>
           </div>
         </header>
       </div>
@@ -216,7 +213,6 @@ export function CalendarView({
             minHeight: `${Math.max(1, laneEndTimes.length) * ROW_HEIGHT + 64}px`,
           }}
         >
-          {/* Top Time Header (Sticky) */}
           <div className="border-primary/10 sticky top-0 z-20 flex h-12 border-b bg-white/95 backdrop-blur-sm">
             {hours.map((hour) => (
               <div
@@ -231,7 +227,6 @@ export function CalendarView({
             ))}
           </div>
 
-          {/* Vertical Grid Lines */}
           <div className="pointer-events-none absolute inset-0 top-12 z-0 flex">
             {hours.map((hour) => (
               <div
@@ -242,7 +237,6 @@ export function CalendarView({
             ))}
           </div>
 
-          {/* Horizontal Grid Lines */}
           <div className="pointer-events-none absolute inset-0 top-12 z-0">
             {Array.from({ length: Math.max(8, laneEndTimes.length + 2) }).map(
               (_, i) => (
@@ -255,7 +249,6 @@ export function CalendarView({
             )}
           </div>
 
-          {/* Current Time Indicator */}
           {isToday && (
             <div
               className="pointer-events-none absolute top-12 bottom-0 z-10 border-l-2 border-red-400"
@@ -267,9 +260,8 @@ export function CalendarView({
             </div>
           )}
 
-          {/* Bookings Area */}
           <div className="absolute inset-0 top-12">
-            {todaysBookings.map((booking) => (
+            {dayBookings.map((booking) => (
               <div
                 key={booking.id}
                 onClick={() => router.push(`/bookings/${booking.id}`)}
@@ -301,7 +293,7 @@ export function CalendarView({
             ))}
 
             {loading && (
-              <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pl-64">
+              <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
                 <div className="text-text-secondary border-primary/10 flex items-center gap-2 rounded-full border bg-white/90 px-6 py-3 shadow-sm backdrop-blur-sm">
                   <Loader2 className="h-5 w-5 animate-spin" /> Loading
                   bookings...
@@ -310,15 +302,15 @@ export function CalendarView({
             )}
 
             {!loading && error && (
-              <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pl-64">
+              <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
                 <div className="flex items-center gap-2 rounded-full border border-red-500/20 bg-white/90 px-6 py-3 text-red-500 shadow-sm backdrop-blur-sm">
                   <AlertCircle className="h-5 w-5" /> {error}
                 </div>
               </div>
             )}
 
-            {!loading && !error && todaysBookings.length === 0 && (
-              <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center pl-64">
+            {!loading && !error && dayBookings.length === 0 && (
+              <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
                 <div className="text-text-secondary border-primary/10 rounded-full border bg-white/90 px-6 py-3 shadow-sm backdrop-blur-sm">
                   No bookings scheduled for this date.
                 </div>

@@ -4,6 +4,10 @@ import {
   STAFF_QUERY,
 } from "@/features/staff/sanity-queries";
 import {
+  hasStaffFieldErrors,
+  validateStaff,
+} from "@/features/staff/validation";
+import {
   buildPaginatedResponse,
   digitsOnly,
   parsePaginationSearchParams,
@@ -66,12 +70,36 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const formData = {
+      name: body.name ?? "",
+      role: body.role ?? "",
+      phone: body.phone ?? "",
+      email: body.email ?? "",
+      baseSalary: Number(body.baseSalary ?? 0),
+      status: (body.status ?? "Active") as "Active" | "Inactive",
+      joinedDate: body.joinedDate ?? "",
+    };
+    const errors = validateStaff(formData);
+    if (hasStaffFieldErrors(errors)) {
+      const first = Object.values(errors).find(Boolean);
+      return NextResponse.json(
+        { error: first ?? "Invalid staff data" },
+        { status: 400 }
+      );
+    }
+
     const doc = {
       _type: "staff",
-      ...body,
+      name: formData.name.trim(),
+      role: formData.role.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim(),
+      baseSalary: formData.baseSalary,
+      status: formData.status,
+      joinedDate: formData.joinedDate,
     };
     const res = await sanityClient.create(doc);
-    return NextResponse.json({ ...body, id: res._id });
+    return NextResponse.json({ ...doc, id: res._id });
   } catch (error) {
     console.error("Error creating staff:", error);
     return NextResponse.json(

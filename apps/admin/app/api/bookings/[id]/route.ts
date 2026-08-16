@@ -6,6 +6,12 @@ import { SERVICES_LIST_QUERY } from "@/features/services/sanity-queries";
 import type { Service } from "@/features/services/types";
 import { sanityClient } from "@/shared/lib/sanity/client";
 import {
+  normalizePhone,
+  parseTimeTo24Hour,
+  validateBookingPatchFields,
+  type CatalogService,
+} from "@repo/validation";
+import {
   sendCustomerBookingConfirmed,
   type BookingWhatsAppPayload,
   type CompanyWhatsAppContext,
@@ -99,6 +105,20 @@ async function syncCustomerTotalSpent(phone: string | undefined | null) {
   await sanityClient.patch(customer._id).set({ totalSpent }).commit();
 }
 
+const PATCH_ALLOWED_FIELDS = [
+  "customerName",
+  "phone",
+  "services",
+  "date",
+  "time",
+  "status",
+  "amount",
+  "membershipId",
+  "discountPercent",
+  "discountAmount",
+  "subtotal",
+] as const;
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -106,12 +126,50 @@ export async function PATCH(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { id: _ignore, ...fields } = body;
+    const { id: _ignore, ...rawFields } = body;
+
+    const fields: Record<string, unknown> = {};
+    for (const key of PATCH_ALLOWED_FIELDS) {
+      if (rawFields[key] !== undefined) {
+        fields[key] = rawFields[key];
+      }
+    }
+
+    if (Object.keys(fields).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
+
+    const catalog = (await sanityClient.fetch(
+      SERVICES_LIST_QUERY
+    )) as CatalogService[];
+
+    const patchError = validateBookingPatchFields(fields, { catalog });
+    if (patchError) {
+      return NextResponse.json({ error: patchError }, { status: 400 });
+    }
 
     const previous = await sanityClient.fetch(BOOKING_BY_ID_QUERY, { id });
+    if (!previous) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
 
     const patch: Record<string, unknown> = { ...fields };
-    if (fields.services) patch.services = withKeys(fields.services);
+
+    if (typeof fields.customerName === "string") {
+      patch.customerName = fields.customerName.trim();
+    }
+    if (typeof fields.phone === "string") {
+      patch.phone = normalizePhone(fields.phone);
+    }
+    if (typeof fields.time === "string") {
+      patch.time = parseTimeTo24Hour(fields.time) ?? fields.time;
+    }
+    if (fields.services) {
+      patch.services = withKeys(fields.services as BookingService[]);
+    }
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(BOOKING_BY_ID_QUERY, { id });

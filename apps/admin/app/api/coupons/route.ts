@@ -4,6 +4,10 @@ import {
   GET_ALL_COUPONS_QUERY,
 } from "@/features/coupons/sanity-queries";
 import {
+  hasCouponFieldErrors,
+  validateCoupon,
+} from "@/features/coupons/validation";
+import {
   buildPaginatedResponse,
   parsePaginationSearchParams,
   toGroqSearchPattern,
@@ -55,9 +59,27 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const payload = {
+      type: body.type ?? "",
+      title: body.title ?? "",
+      code: body.code ?? "",
+      icon: body.icon ?? "",
+    };
+    const errors = validateCoupon(payload);
+    if (hasCouponFieldErrors(errors)) {
+      const first = Object.values(errors).find(Boolean);
+      return NextResponse.json(
+        { error: first ?? "Invalid coupon data" },
+        { status: 400 }
+      );
+    }
+
     const doc = {
       _type: "coupon",
-      ...body,
+      type: payload.type.trim(),
+      title: payload.title.trim(),
+      code: payload.code.trim().toUpperCase(),
+      icon: payload.icon.trim(),
       createdAt: new Date().toISOString(),
     };
     const created = await sanityClient.create(doc);

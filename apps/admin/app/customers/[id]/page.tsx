@@ -149,10 +149,9 @@ export default function CustomerDetailPage({
   const [selectedOptions, setSelectedOptions] = useState<ServiceOption[]>([]);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
-  const [bookingStaff, setBookingStaff] = useState("");
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingFieldErrors, setBookingFieldErrors] = useState<
-    Partial<Record<"date" | "time" | "staff", string>>
+    Partial<Record<"date" | "time" | "options", string>>
   >({});
 
   const loadCustomer = useCallback(() => {
@@ -340,6 +339,11 @@ export default function CustomerDetailPage({
   };
 
   const toggleAddon = (option: ServiceOption) => {
+    setBookingFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.options;
+      return next;
+    });
     setSelectedOptions((prev) =>
       prev.find((a) => a.id === option.id)
         ? prev.filter((a) => a.id !== option.id)
@@ -349,10 +353,22 @@ export default function CustomerDetailPage({
 
   const finalizeBooking = async () => {
     if (!selectedService) return;
+
+    if (selectedService.options.length > 0 && selectedOptions.length === 0) {
+      setBookingFieldErrors((prev) => ({
+        ...prev,
+        options: "Select at least one service option",
+      }));
+      setToast({
+        type: "error",
+        message: "Select service options before confirming",
+      });
+      return;
+    }
+
     const errors = validateBookingFields({
       date: bookingDate,
       time: bookingTime,
-      staff: bookingStaff,
     });
     if (Object.values(errors).some(Boolean)) {
       setBookingFieldErrors(errors);
@@ -388,7 +404,6 @@ export default function CustomerDetailPage({
       setSelectedOptions([]);
       setBookingDate("");
       setBookingTime("");
-      setBookingStaff("");
       setBookingFieldErrors({});
       setToast({ type: "success", message: "Session booked successfully" });
     } catch (err) {
@@ -804,11 +819,38 @@ export default function CustomerDetailPage({
                       );
                     })}
                   </div>
-                  <div className="flex justify-end pt-4">
+                  <div className="flex flex-col items-end gap-2 pt-4">
+                    {selectedService.options.length > 0 &&
+                      selectedOptions.length === 0 && (
+                        <p className="w-full text-center text-sm text-amber-700 sm:text-right">
+                          Select at least one option to continue.
+                        </p>
+                      )}
                     <button
                       type="button"
-                      onClick={() => setBookingStep(3)}
-                      className="bg-primary rounded-full px-8 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                      onClick={() => {
+                        if (
+                          selectedService.options.length > 0 &&
+                          selectedOptions.length === 0
+                        ) {
+                          setBookingFieldErrors((prev) => ({
+                            ...prev,
+                            options: "Select at least one service option",
+                          }));
+                          return;
+                        }
+                        setBookingFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.options;
+                          return next;
+                        });
+                        setBookingStep(3);
+                      }}
+                      disabled={
+                        selectedService.options.length > 0 &&
+                        selectedOptions.length === 0
+                      }
+                      className="bg-primary rounded-full px-8 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Continue
                     </button>
@@ -844,6 +886,16 @@ export default function CustomerDetailPage({
                       <input
                         type="date"
                         value={bookingDate}
+                        min={(() => {
+                          const today = new Date();
+                          const y = today.getFullYear();
+                          const m = String(today.getMonth() + 1).padStart(
+                            2,
+                            "0"
+                          );
+                          const d = String(today.getDate()).padStart(2, "0");
+                          return `${y}-${m}-${d}`;
+                        })()}
                         onChange={(e) => {
                           setBookingDate(e.target.value);
                           setBookingFieldErrors((prev) => {
@@ -874,27 +926,7 @@ export default function CustomerDetailPage({
                       <FieldError message={bookingFieldErrors.time} />
                     </div>
                   </div>
-                  <div>
-                    <label className={labelClass}>Staff Member *</label>
-                    <select
-                      value={bookingStaff}
-                      onChange={(e) => {
-                        setBookingStaff(e.target.value);
-                        setBookingFieldErrors((prev) => {
-                          const next = { ...prev };
-                          delete next.staff;
-                          return next;
-                        });
-                      }}
-                      className={`${inputClass} appearance-none ${bookingFieldErrors.staff ? inputErrorClass : ""}`}
-                    >
-                      <option value="">Select Staff...</option>
-                      <option value="Maria">Maria</option>
-                      <option value="Sarah">Sarah</option>
-                      <option value="Elena">Elena</option>
-                    </select>
-                    <FieldError message={bookingFieldErrors.staff} />
-                  </div>
+                  <FieldError message={bookingFieldErrors.options} />
 
                   <div className="flex items-center justify-between gap-3 pt-2">
                     <button

@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  validateName,
+  validatePhoneValue,
+  type CountryCode,
+} from "@/shared/lib/phone";
 import { useUserStore } from "@/shared/store";
+import { PhoneInput } from "@/shared/ui/phone-input";
 import {
   CheckCircle2,
   ChevronRight,
@@ -28,19 +35,68 @@ export function ProfileDashboard() {
   const [email, setEmail] = useState("");
   const [age, setAge] = useState("");
   const [channel, setChannel] = useState<"SMS" | "WhatsApp">("WhatsApp");
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(
+    DEFAULT_PHONE_COUNTRY
+  );
+  const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  const isProfileDetailsValid = useMemo(
+    () =>
+      validateName(name) === "" &&
+      validatePhoneValue(phone, {
+        label: "WhatsApp number",
+        country: phoneCountry,
+      }) === "" &&
+      (!email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())),
+    [name, phone, phoneCountry, email]
+  );
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name && phone) {
-      setUser({ id: "u2", name, phone, channel });
-      setIsLoginMode(false);
-    }
+    const nextNameError = validateName(name);
+    const nextPhoneError = validatePhoneValue(phone, {
+      label: "WhatsApp number",
+      country: phoneCountry,
+    });
+    setNameError(nextNameError);
+    setPhoneError(nextPhoneError);
+    if (nextNameError || nextPhoneError) return;
+
+    setUser({
+      id: "u2",
+      name: name.trim(),
+      phone: phone.trim(),
+      channel,
+    });
+    setIsLoginMode(false);
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (user && name && phone) {
-      setUser({ ...user, name, phone, email, age });
+    const nextNameError = validateName(name);
+    const nextPhoneError = validatePhoneValue(phone, {
+      label: "WhatsApp number",
+      country: phoneCountry,
+    });
+    const nextEmailError =
+      email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+        ? "Enter a valid email address"
+        : "";
+    setNameError(nextNameError);
+    setPhoneError(nextPhoneError);
+    setEmailError(nextEmailError);
+    if (nextNameError || nextPhoneError || nextEmailError) return;
+
+    if (user) {
+      setUser({
+        ...user,
+        name: name.trim(),
+        phone: phone.trim(),
+        email,
+        age,
+      });
       setIsEditMode(false);
     }
   };
@@ -81,20 +137,35 @@ export function ProfileDashboard() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="focus:ring-primary w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none"
+                  onBlur={() => setNameError(validateName(name))}
+                  className={`focus:ring-primary w-full rounded-2xl border bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none ${nameError ? "border-red-400" : "border-gray-100"}`}
                 />
+                {nameError && (
+                  <p className="mt-1.5 text-xs text-red-500">{nameError}</p>
+                )}
               </div>
               <div>
                 <label className="mb-2 block text-xs font-bold tracking-wider text-[#9a8276] uppercase">
-                  Mobile Number
+                  WhatsApp Number
                 </label>
-                <input
-                  type="tel"
-                  required
+                <PhoneInput
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="focus:ring-primary w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none"
+                  onChange={setPhone}
+                  onCountryChange={setPhoneCountry}
+                  onBlur={() =>
+                    setPhoneError(
+                      validatePhoneValue(phone, {
+                        label: "WhatsApp number",
+                        country: phoneCountry,
+                      })
+                    )
+                  }
+                  hasError={Boolean(phoneError)}
+                  placeholder="WhatsApp number"
                 />
+                {phoneError && (
+                  <p className="mt-1.5 text-xs text-red-500">{phoneError}</p>
+                )}
               </div>
               <div>
                 <label className="mb-3 block text-xs font-bold tracking-wider text-[#9a8276] uppercase">
@@ -119,7 +190,8 @@ export function ProfileDashboard() {
               </div>
               <button
                 type="submit"
-                className="bg-primary mt-6 w-full rounded-2xl py-4 font-medium text-white shadow-md transition-opacity hover:opacity-90"
+                disabled={!isProfileDetailsValid}
+                className="bg-primary mt-6 w-full rounded-2xl py-4 font-medium text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 Send OTP & Login
               </button>
@@ -177,20 +249,35 @@ export function ProfileDashboard() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="focus:ring-primary w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none"
+                onBlur={() => setNameError(validateName(name))}
+                className={`focus:ring-primary w-full rounded-2xl border bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none ${nameError ? "border-red-400" : "border-gray-100"}`}
               />
+              {nameError && (
+                <p className="mt-1.5 text-xs text-red-500">{nameError}</p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-xs font-bold tracking-wider text-[#9a8276] uppercase">
-                Mobile Number
+                WhatsApp Number
               </label>
-              <input
-                type="tel"
-                required
+              <PhoneInput
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="focus:ring-primary w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none"
+                onChange={setPhone}
+                onCountryChange={setPhoneCountry}
+                onBlur={() =>
+                  setPhoneError(
+                    validatePhoneValue(phone, {
+                      label: "WhatsApp number",
+                      country: phoneCountry,
+                    })
+                  )
+                }
+                hasError={Boolean(phoneError)}
+                placeholder="WhatsApp number"
               />
+              {phoneError && (
+                <p className="mt-1.5 text-xs text-red-500">{phoneError}</p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-xs font-bold tracking-wider text-[#9a8276] uppercase">
@@ -200,8 +287,19 @@ export function ProfileDashboard() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="focus:ring-primary w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none"
+                onBlur={() =>
+                  setEmailError(
+                    email.trim() &&
+                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+                      ? "Enter a valid email address"
+                      : ""
+                  )
+                }
+                className={`focus:ring-primary w-full rounded-2xl border bg-gray-50 px-4 py-3.5 text-sm focus:ring-2 focus:outline-none ${emailError ? "border-red-400" : "border-gray-100"}`}
               />
+              {emailError && (
+                <p className="mt-1.5 text-xs text-red-500">{emailError}</p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-xs font-bold tracking-wider text-[#9a8276] uppercase">
@@ -216,7 +314,8 @@ export function ProfileDashboard() {
             </div>
             <button
               type="submit"
-              className="bg-primary mt-6 w-full rounded-2xl py-4 font-medium text-white shadow-md transition-opacity hover:opacity-90"
+              disabled={!isProfileDetailsValid}
+              className="bg-primary mt-6 w-full rounded-2xl py-4 font-medium text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               Save Changes
             </button>

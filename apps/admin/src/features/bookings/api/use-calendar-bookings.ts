@@ -25,25 +25,9 @@ export function useCalendarBookings() {
   useSanityListener('*[_type == "booking"]', reloadBookings);
 
   useEffect(() => {
-    const timer = setInterval(() => setRealTime(new Date()), 60000); // update every minute
+    const timer = setInterval(() => setRealTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
-
-  const goToPreviousDay = () => {
-    const prev = new Date(currentDate);
-    prev.setDate(prev.getDate() - 1);
-    setCurrentDate(prev);
-  };
-
-  const goToNextDay = () => {
-    const next = new Date(currentDate);
-    next.setDate(next.getDate() + 1);
-    setCurrentDate(next);
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
 
   return {
     currentDate,
@@ -52,8 +36,5 @@ export function useCalendarBookings() {
     bookings,
     loading,
     error,
-    goToPreviousDay,
-    goToNextDay,
-    goToToday,
   };
 }

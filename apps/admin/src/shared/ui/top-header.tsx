@@ -59,6 +59,8 @@ export function TopHeader() {
         return "Company Details";
       case "/notifications":
         return "Notifications";
+      case "/account":
+        return "Account Security";
       default:
         if (pathname.startsWith("/services/")) return "Service Details";
         // Products disabled for now

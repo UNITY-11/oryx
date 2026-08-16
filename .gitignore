@@ -22,10 +22,16 @@ coverage
 .vercel
 
 # Build outputs
+.next
 .next/
 out/
+out
 build
 dist
+
+# Turbo cache
+.turbo
+**/.turbo
 
 # TypeScript (auto-generated)
 *.tsbuildinfo
@@ -36,6 +42,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
 # IDE / editor
 .idea/
@@ -48,3 +55,11 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 *.pem
+
+# Package manager stores
+.pnpm-store
+
+# Local / temp
+*.tmp
+*.temp
+.cache/

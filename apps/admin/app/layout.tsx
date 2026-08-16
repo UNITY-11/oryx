@@ -3,10 +3,7 @@ import { Cinzel, Inter } from "next/font/google";
 
 import "./globals.css";
 
-import { Suspense } from "react";
-import { Sidebar } from "@/shared/ui/sidebar";
-import { SidebarProvider } from "@/shared/ui/sidebar-context";
-import { TopHeader } from "@/shared/ui/top-header";
+import { AdminShell } from "@/shared/ui/admin-shell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -47,24 +44,8 @@ export default function RootLayout({
         suppressHydrationWarning
         className="bg-background text-text-primary min-h-screen overflow-x-hidden antialiased"
       >
-        {/* Admin App Layout Wrapper */}
         <div className="bg-background relative mx-auto flex h-[100dvh] w-full max-w-[1920px] overflow-hidden shadow-2xl">
-          <SidebarProvider>
-            <Sidebar />
-
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              <Suspense fallback={<div className="h-16" />}>
-                <TopHeader />
-              </Suspense>
-              {/* Main Scrollable Content */}
-              <main
-                id="admin-main-container"
-                className="relative flex h-full w-full flex-1 flex-col overflow-hidden px-4 pt-0 pb-4 md:pr-8 md:pl-4"
-              >
-                {children}
-              </main>
-            </div>
-          </SidebarProvider>
+          <AdminShell>{children}</AdminShell>
         </div>
       </body>
     </html>

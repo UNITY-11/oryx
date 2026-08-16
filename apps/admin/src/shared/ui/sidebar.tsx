@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart2,
   Bell,
@@ -12,8 +12,10 @@ import {
   ClipboardCheck,
   Home,
   ImageIcon,
+  LogOut,
   Megaphone,
   MessageSquare,
+  Shield,
   // Receipt, // Billing disabled for now — print from booking details
   // Settings, // Settings disabled for now
   // ShoppingBag, // Products disabled for now
@@ -62,10 +64,47 @@ const navClusters = [
   ],
   [
     { name: "Company", href: "/company", icon: Building2 },
+    { name: "Account", href: "/account", icon: Shield },
     // Settings disabled for now — not in use
     // { name: "Settings", href: "/settings", icon: Settings },
   ],
 ];
+
+function SidebarFooter() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/login");
+    router.refresh();
+  };
+
+  return (
+    <div className="border-primary/10 shrink-0 space-y-2 border-t p-4">
+      <div className="bg-primary/5 flex items-center space-x-3 rounded-2xl p-3">
+        <div className="border-primary/20 bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border">
+          <UserCircle2 className="text-primary h-6 w-6" />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-primary-dark truncate text-sm font-semibold">
+            ORYX Admin
+          </span>
+          <span className="text-text-secondary truncate text-xs">
+            Authorized access
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="text-primary-dark hover:bg-primary/5 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors"
+      >
+        <LogOut className="h-5 w-5 shrink-0" />
+        Sign out
+      </button>
+    </div>
+  );
+}
 
 function SidebarNav({
   onNavigate,
@@ -167,21 +206,7 @@ function SidebarNav({
         ))}
       </div>
 
-      <div className="border-primary/10 shrink-0 border-t p-4">
-        <div className="bg-primary/5 flex items-center space-x-3 rounded-2xl p-3">
-          <div className="border-primary/20 bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border">
-            <UserCircle2 className="text-primary h-6 w-6" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="text-primary-dark truncate text-sm font-semibold">
-              Admin User
-            </span>
-            <span className="text-text-secondary truncate text-xs">
-              Manager
-            </span>
-          </div>
-        </div>
-      </div>
+      <SidebarFooter />
     </aside>
   );
 }

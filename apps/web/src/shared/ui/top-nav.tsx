@@ -11,10 +11,15 @@ const navItems = [
   { name: "Contact", href: "/contact", icon: Phone },
 ];
 
+type NavItem = (typeof navItems)[number];
+
 const PAGES_WITH_SEARCH = ["/", "/services"];
 
 // Bottom nav order: Services · Home · Contact
-const tabletNavItems = [navItems[1], navItems[0], navItems[2]];
+const tabletNavHrefs = ["/services", "/", "/contact"];
+const tabletNavItems = tabletNavHrefs
+  .map((href) => navItems.find((item) => item.href === href))
+  .filter((item): item is NavItem => item !== undefined);
 
 /** Minimal text link — large screens only */
 function DesktopNavLink({

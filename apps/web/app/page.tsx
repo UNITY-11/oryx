@@ -117,7 +117,7 @@ export default function HomePage() {
       )}
 
       <div
-        className={`mx-auto w-full max-w-screen-2xl flex-1 px-3 pb-0 md:px-8 md:pb-24 lg:max-w-7xl lg:px-12 lg:pb-28 xl:max-w-[90rem] xl:px-16 ${
+        className={`mx-auto w-full max-w-screen-2xl flex-1 px-3 pb-0 md:px-8 md:pb-10 lg:max-w-7xl lg:px-12 lg:pb-8 xl:max-w-[90rem] xl:px-16 xl:pb-10 ${
           searchQuery
             ? "pt-0 md:pt-8 lg:pt-28 xl:pt-32"
             : "pt-0 md:pt-8 lg:pt-10"
@@ -350,7 +350,7 @@ export default function HomePage() {
 
         {/* Footer */}
         {!searchQuery && (
-          <section className="section-padding flex w-full flex-col items-center justify-center">
+          <section className="flex w-full flex-col items-center justify-center py-8 md:py-10 lg:pt-14 lg:pb-8">
             <div className="flex flex-col items-center justify-center space-y-6">
               <SocialLinks variant="footer" className="justify-center" />
 

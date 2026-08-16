@@ -30,7 +30,7 @@ interface BookingWizardProps {
   onSubmit: (payload: Partial<Booking>) => Promise<void>;
   /** Cancel button pressed */
   onCancel: () => void;
-  /** Current step (1‑3). Controlled via URL query */
+  /** Current step (1‑4). Controlled via URL query */
   step: number;
   /** Update step (updates URL query) */
   setStep: (step: number) => void;

@@ -72,6 +72,27 @@ export function TopHeader() {
     }
   };
 
+  const BOOKING_TOTAL_STEPS = 4;
+  const displayBookingStep = Math.min(
+    Math.max(bookingStep, 1),
+    BOOKING_TOTAL_STEPS
+  );
+
+  const getBookingStepTitle = (step: number) => {
+    switch (step) {
+      case 1:
+        return "Select Service";
+      case 2:
+        return "Choose Date";
+      case 3:
+        return "Choose Time";
+      case 4:
+        return "Client Details";
+      default:
+        return "New Booking";
+    }
+  };
+
   if (isAddingBooking) {
     return (
       <div className="px-4 pt-4 pb-4 md:pr-8 md:pl-4">
@@ -80,8 +101,8 @@ export function TopHeader() {
             <MobileMenuButton />
             <Link
               href={
-                bookingStep > 1
-                  ? `/bookings?action=add&step=${bookingStep - 1}`
+                displayBookingStep > 1
+                  ? `/bookings?action=add&step=${displayBookingStep - 1}`
                   : "/bookings"
               }
               className="hover:border-primary/30 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
@@ -89,15 +110,11 @@ export function TopHeader() {
               <ChevronLeft className="text-text-secondary h-5 w-5" />
             </Link>
             <h1 className="text-primary-dark truncate font-serif text-lg font-medium sm:text-2xl">
-              {bookingStep === 1
-                ? "Select Service"
-                : bookingStep === 2
-                  ? "Choose Date & Time"
-                  : "Client Details"}
+              {getBookingStepTitle(displayBookingStep)}
             </h1>
           </div>
           <div className="text-text-secondary shrink-0 text-sm font-medium">
-            Step {bookingStep} of 3
+            Step {displayBookingStep} of {BOOKING_TOTAL_STEPS}
           </div>
         </header>
       </div>

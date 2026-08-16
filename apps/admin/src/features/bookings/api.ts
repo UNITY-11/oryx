@@ -62,3 +62,19 @@ export async function deleteBooking(id: string): Promise<void> {
   const res = await fetch(`/api/bookings/${id}`, { method: "DELETE" });
   await parseOrThrow<{ success: boolean }>(res, "Failed to delete booking");
 }
+
+export async function sendBookingInvoiceWhatsApp(
+  id: string
+): Promise<{ ok: boolean; textSent?: boolean; documentSent?: boolean }> {
+  const res = await fetch(`/api/bookings/${id}/whatsapp-invoice`, {
+    method: "POST",
+  });
+
+  const body = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(body?.error ?? "Failed to send invoice via WhatsApp");
+  }
+
+  return body as { ok: boolean; textSent?: boolean; documentSent?: boolean };
+}

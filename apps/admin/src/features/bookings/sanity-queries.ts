@@ -18,6 +18,10 @@ export const BOOKING_PROJECTION = `{
   time,
   status,
   amount,
+  membershipId,
+  discountPercent,
+  discountAmount,
+  subtotal,
   "createdAt": _createdAt
 }`;
 

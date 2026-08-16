@@ -159,9 +159,9 @@ export function BookingFlow({
   isIntegrated?: boolean;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<"services" | "time" | "auth" | "success">(
-    "services"
-  );
+  const [step, setStep] = useState<
+    "services" | "date" | "time" | "auth" | "success"
+  >("services");
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   // Stores
@@ -220,14 +220,9 @@ export function BookingFlow({
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const blanks = Array.from({ length: firstDay }, (_, i) => i);
 
-  // Time slots generator based on date
-  const generateTimeSlots = (date: Date | null) => {
-    if (!date) return [];
-
-    const day = date.getDate();
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
-    const allSlots = [
+  const dynamicTimeSlots = (() => {
+    if (!selectedDate) return [];
+    return [
       "10:00 AM",
       "10:30 AM",
       "11:00 AM",
@@ -251,29 +246,7 @@ export function BookingFlow({
       "08:00 PM",
       "08:30 PM",
     ];
-
-    if (isWeekend) {
-      return allSlots.filter((_, i) => i % 2 === 0);
-    } else if (day % 3 === 0) {
-      return allSlots.slice(0, 10);
-    } else if (day % 3 === 1) {
-      return allSlots.slice(10, 20);
-    } else {
-      return allSlots;
-    }
-  };
-
-  const generateBookedSlots = (date: Date | null, slots: string[]) => {
-    if (!date) return [];
-    const day = date.getDate();
-    return slots.filter((_, i) => (i + day) % 4 === 0);
-  };
-
-  const dynamicTimeSlots = generateTimeSlots(selectedDate);
-  const dynamicBookedSlots = generateBookedSlots(
-    selectedDate,
-    dynamicTimeSlots
-  );
+  })();
 
   const toIsoDate = (date: Date | null) => {
     const d = date || new Date();
@@ -394,6 +367,8 @@ export function BookingFlow({
     } else if (step === "auth") {
       setStep("time");
     } else if (step === "time") {
+      setStep("date");
+    } else if (step === "date") {
       setStep("services");
     } else {
       router.back();
@@ -515,13 +490,12 @@ export function BookingFlow({
           </div>
         )}
 
-        {/* 2. TIME SELECTION */}
-        {step === "time" && (
+        {/* 2. DATE SELECTION */}
+        {step === "date" && (
           <div
-            className="scrollbar-hide min-h-0 flex-1 space-y-8 overflow-y-auto px-6 pt-4 pb-32 md:bg-white md:pb-8"
+            className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-32 md:bg-white md:pb-8"
             data-lenis-prevent
           >
-            {/* Calendar Header */}
             <div className="bg-surface border-primary/10 overflow-hidden rounded-3xl border shadow-sm">
               <div className="bg-primary/5 border-primary/10 flex items-center justify-between border-b p-5">
                 <h3 className="text-primary-dark font-serif text-lg font-semibold capitalize">
@@ -613,57 +587,58 @@ export function BookingFlow({
                 </div>
               </div>
             </div>
-
-            {/* Time Slots */}
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-serif text-lg text-white">
-                  Available Times
-                </h3>
-                {selectedDate && (
-                  <span className="text-sm font-medium text-white">
-                    {selectedDate.toLocaleString("default", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                )}
-              </div>
-
-              {dynamicTimeSlots.length > 0 ? (
-                <div className="grid grid-cols-3 gap-3 pb-24 md:grid-cols-4 lg:grid-cols-5">
-                  {dynamicTimeSlots.map((time) => {
-                    const isBooked = dynamicBookedSlots.includes(time);
-                    const isSelected = selectedTime === time;
-                    return (
-                      <button
-                        key={time}
-                        disabled={isBooked}
-                        onClick={() => setSelectedTime(time)}
-                        className={`rounded-soft border py-2.5 text-sm font-medium transition-colors ${
-                          isBooked
-                            ? "border-transparent bg-gray-100 text-gray-400 opacity-40"
-                            : isSelected
-                              ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
-                              : "bg-surface border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark hover:shadow-sm"
-                        } `}
-                      >
-                        {time}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-text-secondary py-8 text-center text-sm">
-                  Please select a date to see available times.
-                </div>
-              )}
-            </div>
           </div>
         )}
 
-        {/* 3. AUTH / OTP */}
+        {/* 3. TIME SELECTION */}
+        {step === "time" && (
+          <div
+            className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-32 md:bg-white md:pb-8"
+            data-lenis-prevent
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="md:text-primary-dark font-serif text-lg text-white">
+                Available Times
+              </h3>
+              {selectedDate && (
+                <span className="md:text-text-secondary text-sm font-medium text-white">
+                  {selectedDate.toLocaleString("default", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              )}
+            </div>
+
+            {dynamicTimeSlots.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3 pb-24 md:grid-cols-4 lg:grid-cols-5">
+                {dynamicTimeSlots.map((time) => {
+                  const isSelected = selectedTime === time;
+                  return (
+                    <button
+                      key={time}
+                      onClick={() => setSelectedTime(time)}
+                      className={`rounded-soft border py-2.5 text-sm font-medium transition-colors ${
+                        isSelected
+                          ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
+                          : "bg-surface border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark hover:shadow-sm"
+                      }`}
+                    >
+                      {time}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-text-secondary py-8 text-center text-sm">
+                Please select a date first.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. AUTH / OTP */}
         {step === "auth" && (
           <div
             className="scrollbar-hide bg-background flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto pt-4 pb-32 md:bg-white md:py-0"
@@ -813,11 +788,19 @@ export function BookingFlow({
           <div className="border-primary/5 z-10 shrink-0 border-t bg-gray-50/50 p-8 pt-4">
             {step === "services" ? (
               <button
-                onClick={() => setStep("time")}
+                onClick={() => setStep("date")}
                 disabled={cartItems.length === 0}
                 className="bg-background flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
               >
-                Proceed to Time <ChevronRight className="ml-2 h-5 w-5" />
+                Choose Date <ChevronRight className="ml-2 h-5 w-5" />
+              </button>
+            ) : step === "date" ? (
+              <button
+                onClick={() => setStep("time")}
+                disabled={!selectedDate}
+                className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+              >
+                Choose Time <ChevronRight className="ml-2 h-5 w-5" />
               </button>
             ) : step === "time" ? (
               <>
@@ -874,43 +857,55 @@ export function BookingFlow({
       )}
 
       {/* CART FLOATING ACTION (Mobile Only) */}
-      {cartItems.length > 0 && (step === "services" || step === "time") && (
-        <div className="animate-in slide-in-from-bottom-5 absolute right-0 bottom-[100px] left-0 z-40 mx-auto w-full max-w-md px-6 md:hidden">
-          <div className="flex items-center justify-between rounded-3xl border-t border-gray-100 bg-white p-4 text-gray-900 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-            <div className="flex flex-col">
-              <span className="flex items-center text-sm font-medium">
-                <ClipboardList className="mr-2 h-4 w-4" /> {cartItems.length}{" "}
-                items
-              </span>
-              <span className="font-serif text-xl font-bold">QAR {total}</span>
+      {cartItems.length > 0 &&
+        (step === "services" || step === "date" || step === "time") && (
+          <div className="animate-in slide-in-from-bottom-5 absolute right-0 bottom-[100px] left-0 z-40 mx-auto w-full max-w-md px-6 md:hidden">
+            <div className="flex items-center justify-between rounded-3xl border-t border-gray-100 bg-white p-4 text-gray-900 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+              <div className="flex flex-col">
+                <span className="flex items-center text-sm font-medium">
+                  <ClipboardList className="mr-2 h-4 w-4" /> {cartItems.length}{" "}
+                  items
+                </span>
+                <span className="font-serif text-xl font-bold">
+                  QAR {total}
+                </span>
+              </div>
+              {step === "services" ? (
+                <button
+                  onClick={() => setStep("date")}
+                  className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
+                >
+                  Book the services <ChevronRight className="ml-1 h-4 w-4" />
+                </button>
+              ) : step === "date" ? (
+                <button
+                  disabled={!selectedDate}
+                  onClick={() => setStep("time")}
+                  className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
+                >
+                  Choose time <ChevronRight className="ml-1 h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  disabled={!selectedTime || bookingSubmitting}
+                  onClick={handleCheckout}
+                  className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
+                >
+                  {bookingSubmitting ? (
+                    <>
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />{" "}
+                      Booking...
+                    </>
+                  ) : (
+                    <>
+                      Checkout <ChevronRight className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              )}
             </div>
-            {step === "services" ? (
-              <button
-                onClick={() => setStep("time")}
-                className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
-              >
-                Book the services <ChevronRight className="ml-1 h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                disabled={!selectedTime || bookingSubmitting}
-                onClick={handleCheckout}
-                className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
-              >
-                {bookingSubmitting ? (
-                  <>
-                    <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Booking...
-                  </>
-                ) : (
-                  <>
-                    Checkout <ChevronRight className="ml-1 h-4 w-4" />
-                  </>
-                )}
-              </button>
-            )}
           </div>
-        </div>
-      )}
+        )}
 
       {/* DELETE CONFIRMATION MODAL */}
       {itemToDelete && (

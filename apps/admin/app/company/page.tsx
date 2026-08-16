@@ -69,6 +69,7 @@ function mapCompanyInput(company: {
   postalCode?: string;
   mapUrl?: string;
   mapEmbedUrl?: string;
+  gymMembershipDiscountPercent?: number;
 }): CompanyInput {
   return {
     name: company.name || "",
@@ -93,6 +94,7 @@ function mapCompanyInput(company: {
     postalCode: company.postalCode || "",
     mapUrl: company.mapUrl || "",
     mapEmbedUrl: company.mapEmbedUrl || "",
+    gymMembershipDiscountPercent: company.gymMembershipDiscountPercent ?? 0,
   };
 }
 
@@ -475,6 +477,42 @@ export default function CompanyPage() {
                 />
                 <FieldError message={fieldErrors.website} />
               </div>
+            </div>
+          </section>
+
+          {/* Gym membership discount */}
+          <section className="space-y-5">
+            <h3 className="text-primary-dark text-sm font-bold tracking-wider uppercase">
+              Gym membership discount
+            </h3>
+            <p className="text-text-secondary text-sm">
+              Percentage off spa services when a gym membership ID is entered on
+              a booking (same franchise). Max 100%.
+            </p>
+            <div className="max-w-xs">
+              <label className={labelClass} htmlFor="gym-discount">
+                Discount percentage (%)
+              </label>
+              <input
+                id="gym-discount"
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={form.gymMembershipDiscountPercent}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const parsed = raw === "" ? 0 : Number(raw);
+                  update(
+                    "gymMembershipDiscountPercent",
+                    Number.isFinite(parsed)
+                      ? Math.min(100, Math.max(0, parsed))
+                      : 0
+                  );
+                }}
+                className={`${inputClass} ${fieldErrors.gymMembershipDiscountPercent ? "border-red-400" : ""}`}
+              />
+              <FieldError message={fieldErrors.gymMembershipDiscountPercent} />
             </div>
           </section>
 

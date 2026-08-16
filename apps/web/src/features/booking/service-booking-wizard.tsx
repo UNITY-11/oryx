@@ -18,7 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-type Step = "time" | "details" | "success";
+type Step = "date" | "time" | "details" | "success";
 
 interface ServiceBookingWizardProps {
   item: Item;
@@ -95,7 +95,7 @@ export function ServiceBookingWizard({
   onClose,
   onSuccess,
 }: ServiceBookingWizardProps) {
-  const [step, setStep] = useState<Step>("time");
+  const [step, setStep] = useState<Step>("date");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -121,7 +121,7 @@ export function ServiceBookingWizard({
 
   useEffect(() => {
     if (!open) {
-      setStep("time");
+      setStep("date");
       setSelectedDate(new Date());
       setCurrentMonth(new Date());
       setSelectedTime(null);
@@ -179,9 +179,16 @@ export function ServiceBookingWizard({
       onClose();
     } else if (step === "details") {
       setStep("time");
+    } else if (step === "time") {
+      setStep("date");
     } else {
       onClose();
     }
+  };
+
+  const handleDateContinue = () => {
+    if (!selectedDate) return;
+    setStep("time");
   };
 
   const handleTimeContinue = () => {
@@ -245,11 +252,13 @@ export function ServiceBookingWizard({
   };
 
   const stepLabel =
-    step === "time"
-      ? "Step 1 of 2 · Choose date & time"
-      : step === "details"
-        ? "Step 2 of 2 · Your details"
-        : "";
+    step === "date"
+      ? "Step 1 of 3 · Choose date"
+      : step === "time"
+        ? "Step 2 of 3 · Choose time"
+        : step === "details"
+          ? "Step 3 of 3 · Your details"
+          : "";
 
   return (
     <div className="bg-surface fixed inset-0 z-50 flex flex-col lg:items-center lg:justify-center lg:bg-black/45 lg:p-8">
@@ -275,7 +284,7 @@ export function ServiceBookingWizard({
           </div>
         )}
 
-        {step === "time" && (
+        {step === "date" && (
           <div
             className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-32 lg:px-10 lg:pt-8 lg:pb-28"
             data-lenis-prevent
@@ -305,8 +314,8 @@ export function ServiceBookingWizard({
                 </div>
               </div>
 
-              <div className="lg:col-span-3 lg:space-y-8">
-                <div className="border-primary/10 mb-8 overflow-hidden rounded-3xl border bg-white shadow-sm lg:mb-0">
+              <div className="lg:col-span-3">
+                <div className="border-primary/10 overflow-hidden rounded-3xl border bg-white shadow-sm">
                   <div className="border-primary/10 bg-primary/5 flex items-center justify-between border-b p-5">
                     <h3 className="text-primary-dark font-serif text-lg font-semibold capitalize">
                       {currentMonth.toLocaleString("default", {
@@ -411,45 +420,87 @@ export function ServiceBookingWizard({
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-primary-dark font-serif text-lg">
-                      Available Times
-                    </h3>
-                    {selectedDate && (
-                      <span className="text-text-secondary flex items-center gap-1 text-sm font-medium">
-                        <Clock className="h-4 w-4" />
-                        {selectedDate.toLocaleString("default", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    )}
+        {step === "time" && (
+          <div
+            className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-32 lg:px-10 lg:pt-8 lg:pb-28"
+            data-lenis-prevent
+          >
+            <div className="lg:grid lg:grid-cols-5 lg:items-start lg:gap-10">
+              <div className="border-primary/10 mb-6 rounded-2xl border bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:col-span-2 lg:mb-0 lg:rounded-3xl lg:p-6">
+                <p className="text-text-secondary mb-1 text-xs font-medium tracking-wider uppercase">
+                  Service
+                </p>
+                <p className="text-primary-dark font-medium">{item.name}</p>
+                {selectedOptions.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {selectedOptions.map((opt) => (
+                      <div
+                        key={opt.id}
+                        className="text-text-secondary flex justify-between text-sm"
+                      >
+                        <span>{opt.name}</span>
+                        <span className="font-medium">QAR {opt.price}</span>
+                      </div>
+                    ))}
                   </div>
+                )}
+                <div className="border-primary/10 mt-3 flex justify-between border-t pt-3 font-semibold">
+                  <span>Total</span>
+                  <span className="text-primary">QAR {total}</span>
+                </div>
+                {selectedDate && (
+                  <p className="text-text-secondary mt-3 text-sm">
+                    {selectedDate.toLocaleString("default", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                )}
+              </div>
 
-                  {dynamicTimeSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-4 lg:gap-3 xl:grid-cols-5">
-                      {dynamicTimeSlots.map((time) => {
-                        const isSelected = selectedTime === time;
-                        return (
-                          <button
-                            key={time}
-                            onClick={() => setSelectedTime(time)}
-                            className={`rounded-xl border py-2.5 text-sm font-medium transition-colors lg:py-3 lg:text-base ${isSelected ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white" : "border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark bg-white"}`}
-                          >
-                            {time}
-                          </button>
-                        );
+              <div className="lg:col-span-3">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-primary-dark font-serif text-lg">
+                    Available Times
+                  </h3>
+                  {selectedDate && (
+                    <span className="text-text-secondary flex items-center gap-1 text-sm font-medium">
+                      <Clock className="h-4 w-4" />
+                      {selectedDate.toLocaleString("default", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
                       })}
-                    </div>
-                  ) : (
-                    <p className="text-text-secondary py-8 text-center text-sm lg:text-base">
-                      Please select a date to see available times.
-                    </p>
+                    </span>
                   )}
                 </div>
+
+                {dynamicTimeSlots.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-4 lg:gap-3 xl:grid-cols-5">
+                    {dynamicTimeSlots.map((time) => {
+                      const isSelected = selectedTime === time;
+                      return (
+                        <button
+                          key={time}
+                          onClick={() => setSelectedTime(time)}
+                          className={`rounded-xl border py-2.5 text-sm font-medium transition-colors lg:py-3 lg:text-base ${isSelected ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white" : "border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark bg-white"}`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-text-secondary py-8 text-center text-sm lg:text-base">
+                    Please select a date first.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -568,6 +619,22 @@ export function ServiceBookingWizard({
             >
               Return to Home
             </Link>
+          </div>
+        )}
+
+        {step === "date" && (
+          <div
+            className="border-primary/10 shrink-0 border-t bg-white px-6 py-4 lg:px-10 lg:py-5"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+          >
+            <button
+              disabled={!selectedDate}
+              onClick={handleDateContinue}
+              className="bg-primary mx-auto flex w-full max-w-none items-center justify-center rounded-xl py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50 lg:max-w-md lg:py-4 lg:text-base"
+            >
+              Choose Time
+              <ChevronRight className="ml-1 h-5 w-5" />
+            </button>
           </div>
         )}
 

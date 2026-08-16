@@ -31,6 +31,7 @@ export interface CompanyDetails {
   postalCode: string;
   mapUrl: string;
   mapEmbedUrl: string;
+  gymMembershipDiscountPercent: number;
   updatedAt: string | null;
 }
 
@@ -63,6 +64,7 @@ export const EMPTY_COMPANY: CompanyInput = {
   postalCode: "",
   mapUrl: "",
   mapEmbedUrl: "",
+  gymMembershipDiscountPercent: 0,
 };
 
 export const COMPANY_DOC_ID = "companyDetails";

@@ -1,25 +1,28 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { use, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
+import { getServiceLineItems } from "@features/billing/api/use-billing-data";
 import {
-  getServiceLineItems,
-  getTotal,
-  openWhatsAppInvoice,
-} from "@features/billing/api/use-billing-data";
+  applyMembershipDiscountToBooking,
+  getInvoiceSummary,
+} from "@features/billing/invoice-summary";
 import { PrintModal } from "@features/billing/ui/print-modal";
 import {
   deleteBooking,
   fetchBooking,
+  sendBookingInvoiceWhatsApp,
   updateBooking,
 } from "@features/bookings/api";
-import { BookingWizard } from "@features/bookings/booking-wizard";
+import { filterServicesByQuery } from "@features/bookings/filter-services";
+import { canPrintBookingInvoice } from "@features/bookings/service-validation";
 import {
   Booking,
   BookingStatus,
   getBookingDisplayId,
 } from "@features/bookings/types";
+import { fetchCompany } from "@features/company/api";
 import { fetchServices } from "@features/services/api";
 import { Service } from "@features/services/types";
 import {
@@ -31,14 +34,13 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Edit3,
   Loader2,
   MessageCircle,
+  Plus,
   Printer,
-  Save,
+  Search,
   Trash2,
   User,
-  X,
 } from "lucide-react";
 
 export default function BookingDetailPage({
@@ -53,16 +55,10 @@ export default function BookingDetailPage({
   const [savedBooking, setSavedBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // Editing wizard state derived from URL query
-  const searchParams = useSearchParams();
-  const isEditingWizard = searchParams.get("action") === "edit";
-  const step = Number(searchParams.get("step")) || 1;
-  const setStep = (newStep: number) =>
-    router.push(`?action=edit&step=${newStep}`);
-  const [isEditing, setIsEditing] = useState(false); // keep for legacy view mode
-  const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [whatsappSending, setWhatsappSending] = useState(false);
+  const [whatsappSuccess, setWhatsappSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -70,6 +66,15 @@ export default function BookingDetailPage({
   const [realServices, setRealServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState<string | null>(null);
+  const [gymDiscountPercent, setGymDiscountPercent] = useState(0);
+  const [membershipInput, setMembershipInput] = useState("");
+  const [membershipSaving, setMembershipSaving] = useState(false);
+  const [isManagingServices, setIsManagingServices] = useState(false);
+  const [servicesSaving, setServicesSaving] = useState(false);
+  const [serviceSearchQuery, setServiceSearchQuery] = useState("");
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPersistRef = useRef<Booking | null>(null);
 
   // POS State (service editor)
   const [posMode, setPosMode] = useState<"services" | "options">("services");
@@ -102,6 +107,24 @@ export default function BookingDetailPage({
       .finally(() => setServicesLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchCompany()
+      .then((company) =>
+        setGymDiscountPercent(company?.gymMembershipDiscountPercent ?? 0)
+      )
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    setMembershipInput(booking?.membershipId ?? "");
+  }, [booking?.id]);
+
   const activeService =
     activeServiceIndex !== null && booking
       ? booking.services[activeServiceIndex]
@@ -111,6 +134,11 @@ export default function BookingDetailPage({
       ? realServices.find((s) => s.name === activeService.name)
       : null;
   }, [activeService, realServices]);
+
+  const filteredCatalogServices = useMemo(
+    () => filterServicesByQuery(realServices, serviceSearchQuery),
+    [realServices, serviceSearchQuery]
+  );
 
   if (loading) {
     return (
@@ -138,32 +166,196 @@ export default function BookingDetailPage({
 
   const isCompleted =
     booking.status === "Completed" || booking.status === "Cancelled";
-  const canPrint = booking.status !== "Cancelled";
+  const canPrint = booking.status === "Completed";
+  const printValidation = canPrintBookingInvoice(booking, realServices);
+  const canPrintInvoice = canPrint && printValidation.allowed;
   const invoiceLines = getServiceLineItems(booking, realServices);
-  const invoiceTotal = getTotal(booking, realServices);
+  const invoiceSummary = getInvoiceSummary(booking, realServices);
 
-  // Deep compare to detect changes
-  const hasChanges = JSON.stringify(booking) !== JSON.stringify(savedBooking);
+  const syncBookingDiscount = (b: Booking): Booking => {
+    const membershipId = b.membershipId?.trim() ?? "";
+    const discountPercent = b.discountPercent ?? 0;
+    if (!membershipId || discountPercent <= 0) {
+      return applyMembershipDiscountToBooking(b, realServices, "", 0);
+    }
+    return applyMembershipDiscountToBooking(
+      b,
+      realServices,
+      membershipId,
+      discountPercent
+    );
+  };
 
-  const update = <K extends keyof Booking>(key: K, value: Booking[K]) =>
-    setBooking((prev) => (prev ? { ...prev, [key]: value } : prev));
-
-  const handleSave = async () => {
-    setSaving(true);
+  const persistMembershipChange = async (updated: Booking) => {
+    setMembershipSaving(true);
     setSaveError(null);
     try {
-      const result = await updateBooking(id, booking);
+      const result = await updateBooking(id, {
+        membershipId: updated.membershipId,
+        discountPercent: updated.discountPercent,
+        discountAmount: updated.discountAmount,
+        subtotal: updated.subtotal,
+        amount: updated.amount,
+      });
       setBooking(result);
       setSavedBooking(result);
-      setSaved(true);
-      setIsEditing(false);
-      setTimeout(() => setSaved(false), 2500);
+      setMembershipInput(result.membershipId ?? "");
     } catch (err) {
       setSaveError(
-        err instanceof Error ? err.message : "Failed to save changes"
+        err instanceof Error
+          ? err.message
+          : "Failed to update membership discount"
+      );
+      setMembershipInput(booking.membershipId ?? "");
+    } finally {
+      setMembershipSaving(false);
+    }
+  };
+
+  const persistBookingUpdate = async (
+    updated: Booking,
+    options?: { showLoading?: boolean }
+  ) => {
+    const showLoading = options?.showLoading ?? false;
+    if (showLoading) setServicesSaving(true);
+    setSaveError(null);
+    try {
+      const result = await updateBooking(id, {
+        services: updated.services,
+        membershipId: updated.membershipId,
+        discountPercent: updated.discountPercent,
+        discountAmount: updated.discountAmount,
+        subtotal: updated.subtotal,
+        amount: updated.amount,
+      });
+      const normalized: Booking = {
+        ...result,
+        services: (result.services ?? []).map((svc) => ({
+          ...svc,
+          options: svc.options ?? [],
+        })),
+      };
+      setBooking((prev) => {
+        if (!prev) return normalized;
+        const stale =
+          JSON.stringify(prev.services) !== JSON.stringify(updated.services) ||
+          prev.amount !== updated.amount;
+        if (stale) return prev;
+        return normalized;
+      });
+      setSavedBooking(normalized);
+      return true;
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to update booking"
+      );
+      if (!isManagingServices) {
+        setBooking(savedBooking);
+      }
+      return false;
+    } finally {
+      if (showLoading) setServicesSaving(false);
+    }
+  };
+
+  const flushPendingPersist = async () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    const toSave = pendingPersistRef.current;
+    if (!toSave) return;
+    pendingPersistRef.current = null;
+    await persistBookingUpdate(toSave, { showLoading: false });
+  };
+
+  const scheduleSilentPersist = (updated: Booking) => {
+    pendingPersistRef.current = updated;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      const toSave = pendingPersistRef.current;
+      if (!toSave) return;
+      pendingPersistRef.current = null;
+      persistBookingUpdate(toSave, { showLoading: false });
+    }, 450);
+  };
+
+  const hasServiceChanges = (current: Booking, saved: Booking) =>
+    JSON.stringify(current.services) !== JSON.stringify(saved.services) ||
+    current.amount !== saved.amount ||
+    current.membershipId !== saved.membershipId ||
+    current.discountPercent !== saved.discountPercent ||
+    current.discountAmount !== saved.discountAmount ||
+    current.subtotal !== saved.subtotal;
+
+  const handleDoneManagingServices = async () => {
+    if (hasServiceChanges(booking, savedBooking)) {
+      const ok = await persistBookingUpdate(booking, { showLoading: true });
+      if (!ok) return;
+    }
+    setIsManagingServices(false);
+    setPosMode("services");
+    setActiveServiceIndex(null);
+    setServiceSearchQuery("");
+  };
+
+  const handleStartManagingServices = async () => {
+    await flushPendingPersist();
+    setServiceSearchQuery("");
+    setIsManagingServices(true);
+    setPosMode("services");
+  };
+
+  const handleApplyMembership = async () => {
+    const trimmed = membershipInput.trim();
+    if (!trimmed) {
+      setSaveError("Enter a membership ID to apply the discount.");
+      return;
+    }
+
+    const current = booking.membershipId?.trim() ?? "";
+    if (trimmed === current) return;
+
+    if (gymDiscountPercent <= 0) {
+      setSaveError("Set gym membership discount % in Company settings first.");
+      return;
+    }
+
+    await persistMembershipChange(
+      applyMembershipDiscountToBooking(
+        booking,
+        realServices,
+        trimmed,
+        gymDiscountPercent
+      )
+    );
+  };
+
+  const handleRemoveDiscount = async () => {
+    setMembershipInput("");
+    await persistMembershipChange(
+      applyMembershipDiscountToBooking(booking, realServices, "", 0)
+    );
+  };
+
+  // Deep compare to detect changes
+  const handleSendWhatsAppInvoice = async () => {
+    setWhatsappSending(true);
+    setSaveError(null);
+    setWhatsappSuccess(false);
+    try {
+      await sendBookingInvoiceWhatsApp(id);
+      setWhatsappSuccess(true);
+      setTimeout(() => setWhatsappSuccess(false), 3000);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : "Failed to send invoice via WhatsApp"
       );
     } finally {
-      setSaving(false);
+      setWhatsappSending(false);
     }
   };
 
@@ -189,24 +381,12 @@ export default function BookingDetailPage({
     const serviceObj = realServices.find((s) => s.id === serviceId);
     if (!serviceObj) return;
 
-    setBooking((prev) => {
-      if (!prev) return prev;
+    const applyToggle = (prev: Booking): Booking => {
       const existingIndex = prev.services.findIndex(
         (s) => s.name === serviceObj.name
       );
 
       if (existingIndex >= 0) {
-        const removedService = prev.services[existingIndex]!;
-        const addonsPrice = (removedService.options ?? []).reduce(
-          (sum, aName) => {
-            const a = (serviceObj.options ?? []).find(
-              (ad) => ad.name === aName
-            );
-            return sum + (a?.price || 0);
-          },
-          0
-        );
-
         const newServices = [...prev.services];
         newServices.splice(existingIndex, 1);
 
@@ -220,17 +400,38 @@ export default function BookingDetailPage({
           setActiveServiceIndex(activeServiceIndex - 1);
         }
 
-        return {
+        return syncBookingDiscount({
           ...prev,
           services: newServices,
-          amount: prev.amount - addonsPrice,
-        };
-      } else {
-        return {
-          ...prev,
-          services: [...prev.services, { name: serviceObj.name, options: [] }],
-        };
+        });
       }
+
+      return syncBookingDiscount({
+        ...prev,
+        services: [...prev.services, { name: serviceObj.name, options: [] }],
+      });
+    };
+
+    if (isManagingServices) {
+      const wasAdding = !booking.services.some(
+        (s) => s.name === serviceObj.name
+      );
+      const next = applyToggle(booking);
+      setBooking(next);
+      if (wasAdding && (serviceObj.options ?? []).length > 0) {
+        const newIndex = next.services.findIndex(
+          (s) => s.name === serviceObj.name
+        );
+        if (newIndex >= 0) {
+          configureAddonsFor(newIndex);
+        }
+      }
+      return;
+    }
+
+    setBooking((prev) => {
+      if (!prev) return prev;
+      return applyToggle(prev);
     });
   };
 
@@ -239,11 +440,77 @@ export default function BookingDetailPage({
     setPosMode("options");
   };
 
-  const toggleAddon = (addonName: string, addonPrice: number) => {
+  const removeServiceAt = (index: number) => {
+    const applyRemove = (prev: Booking): Booking => {
+      const newServices = [...prev.services];
+      newServices.splice(index, 1);
+
+      if (activeServiceIndex === index) {
+        setPosMode("services");
+        setActiveServiceIndex(null);
+      } else if (activeServiceIndex !== null && activeServiceIndex > index) {
+        setActiveServiceIndex(activeServiceIndex - 1);
+      }
+
+      return syncBookingDiscount({
+        ...prev,
+        services: newServices,
+      });
+    };
+
+    const next = applyRemove(booking);
+    setBooking(next);
+    if (isManagingServices) {
+      return;
+    }
+    scheduleSilentPersist(next);
+  };
+
+  const handlePrintInvoice = () => {
+    if (!canPrintInvoice) {
+      setSaveError(
+        printValidation.message ??
+          "Complete all service options before printing the invoice."
+      );
+      return;
+    }
+    setShowPrintModal(true);
+  };
+
+  const handleStatusChange = (nextStatus: BookingStatus) => {
+    setStatusMenuOpen(false);
+    if (nextStatus === booking.status) return;
+
+    const previousStatus = booking.status;
+    setBooking((prev) => (prev ? { ...prev, status: nextStatus } : prev));
+    setSaveError(null);
+
+    updateBooking(id, { status: nextStatus })
+      .then((result) => {
+        const normalized: Booking = {
+          ...result,
+          services: (result.services ?? []).map((svc) => ({
+            ...svc,
+            options: svc.options ?? [],
+          })),
+        };
+        setBooking(normalized);
+        setSavedBooking(normalized);
+      })
+      .catch((err) => {
+        setBooking((prev) =>
+          prev ? { ...prev, status: previousStatus } : prev
+        );
+        setSaveError(
+          err instanceof Error ? err.message : "Failed to update status"
+        );
+      });
+  };
+
+  const toggleAddon = (addonName: string) => {
     if (activeServiceIndex === null) return;
 
-    setBooking((prev) => {
-      if (!prev) return prev;
+    const applyToggle = (prev: Booking): Booking => {
       const newServices = [...prev.services];
       const service = { ...newServices[activeServiceIndex]! };
       const hasAddon = service.options?.includes(addonName) ?? false;
@@ -253,11 +520,23 @@ export default function BookingDetailPage({
         : [...(service.options || []), addonName];
 
       newServices[activeServiceIndex] = service;
-      return {
+      return syncBookingDiscount({
         ...prev,
         services: newServices,
-        amount: prev.amount + (hasAddon ? -addonPrice : addonPrice),
-      };
+      });
+    };
+
+    if (isManagingServices) {
+      setBooking((prev) => {
+        if (!prev) return prev;
+        return applyToggle(prev);
+      });
+      return;
+    }
+
+    setBooking((prev) => {
+      if (!prev) return prev;
+      return applyToggle(prev);
     });
   };
 
@@ -269,16 +548,7 @@ export default function BookingDetailPage({
           <MobileMenuButton className="-ml-0" />
           <button
             type="button"
-            onClick={() => {
-              if (isEditingWizard) {
-                router.push(`/bookings/${id}`);
-              } else if (isEditing) {
-                setIsEditing(false);
-                setBooking(savedBooking);
-              } else {
-                router.back();
-              }
-            }}
+            onClick={() => router.back()}
             className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-[#fcf4f0] transition-colors"
             aria-label="Back"
           >
@@ -295,80 +565,65 @@ export default function BookingDetailPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:justify-end md:shrink-0">
-          {!isEditing && !isEditingWizard && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setStatusMenuOpen(!statusMenuOpen)}
-                disabled={saving}
-                className="border-primary text-primary hover:bg-primary/5 focus:ring-primary/20 inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors focus:ring-2 focus:outline-none sm:px-4 sm:text-sm"
-              >
-                <span className="max-w-[7rem] truncate sm:max-w-none">
-                  {booking.status}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-              </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setStatusMenuOpen(!statusMenuOpen)}
+              className="border-primary text-primary hover:bg-primary/5 focus:ring-primary/20 inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors focus:ring-2 focus:outline-none sm:px-4 sm:text-sm"
+            >
+              <span className="max-w-[7rem] truncate sm:max-w-none">
+                {booking.status}
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+            </button>
 
-              {statusMenuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setStatusMenuOpen(false)}
-                  />
-                  <div className="border-primary/10 absolute left-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border bg-white py-1.5 shadow-xl sm:right-0 sm:left-auto sm:w-48">
-                    {(
-                      [
-                        "Pending",
-                        "Confirmed",
-                        "Started",
-                        "Completed",
-                        "Cancelled",
-                      ] as BookingStatus[]
-                    ).map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={async () => {
-                          setStatusMenuOpen(false);
-                          if (s === booking.status) return;
-                          try {
-                            setSaving(true);
-                            const result = await updateBooking(id, {
-                              status: s,
-                            });
-                            setBooking(result);
-                            setSavedBooking(result);
-                          } catch (err) {
-                            setSaveError(
-                              err instanceof Error
-                                ? err.message
-                                : "Failed to update status"
-                            );
-                          } finally {
-                            setSaving(false);
-                          }
-                        }}
-                        className={`hover:bg-primary/5 flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors ${
-                          booking.status === s
-                            ? "text-primary bg-primary/5 font-bold"
-                            : "text-text-secondary font-medium"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+            {statusMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setStatusMenuOpen(false)}
+                />
+                <div className="border-primary/10 absolute left-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border bg-white py-1.5 shadow-xl sm:right-0 sm:left-auto sm:w-48">
+                  {(
+                    [
+                      "Pending",
+                      "Confirmed",
+                      "Started",
+                      "Completed",
+                      "Cancelled",
+                    ] as BookingStatus[]
+                  ).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => handleStatusChange(s)}
+                      className={`hover:bg-primary/5 flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors ${
+                        booking.status === s
+                          ? "text-primary bg-primary/5 font-bold"
+                          : "text-text-secondary font-medium"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-          {!isEditing && !isEditingWizard && canPrint && (
+          {canPrint && (
             <>
               <button
                 type="button"
-                onClick={() => setShowPrintModal(true)}
-                className="bg-primary inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 sm:px-4 sm:text-sm"
+                onClick={handlePrintInvoice}
+                disabled={!canPrintInvoice}
+                title={
+                  !canPrintInvoice
+                    ? (printValidation.message ??
+                      "Complete service options first")
+                    : undefined
+                }
+                className="bg-primary inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
               >
                 <Printer className="h-4 w-4" />
                 <span>Print</span>
@@ -376,72 +631,52 @@ export default function BookingDetailPage({
               {booking.phone?.replace(/\D/g, "") && (
                 <button
                   type="button"
-                  onClick={() => openWhatsAppInvoice(booking, realServices)}
-                  className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
+                  onClick={() => {
+                    if (!canPrintInvoice) {
+                      setSaveError(
+                        printValidation.message ??
+                          "Complete all service options before sending the invoice."
+                      );
+                      return;
+                    }
+                    handleSendWhatsAppInvoice();
+                  }}
+                  disabled={whatsappSending || !canPrintInvoice}
+                  title={
+                    !canPrintInvoice
+                      ? (printValidation.message ??
+                        "Complete service options first")
+                      : undefined
+                  }
+                  className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">Send</span>
+                  {whatsappSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : whatsappSuccess ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {whatsappSending
+                      ? "Sending…"
+                      : whatsappSuccess
+                        ? "Sent!"
+                        : "Send"}
+                  </span>
                 </button>
               )}
             </>
           )}
 
-          {!isEditing && !isEditingWizard && (
-            <button
-              type="button"
-              onClick={handleDeleteSession}
-              className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Delete</span>
-            </button>
-          )}
-
-          {!isCompleted && !isEditing && !isEditingWizard && (
-            <button
-              type="button"
-              onClick={() => router.push(`?action=edit&step=1`)}
-              className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
-            >
-              <Edit3 className="h-4 w-4" />
-              <span>Edit</span>
-            </button>
-          )}
-
-          {isEditing && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false);
-                  setBooking(savedBooking);
-                }}
-                className="border-primary/30 text-text-secondary hover:bg-primary/5 inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
-              >
-                <X className="h-4 w-4" />
-                <span className="hidden sm:inline">Discard</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={!hasChanges || saving}
-                className={`inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold shadow-sm transition-all sm:px-5 sm:text-sm ${
-                  saved
-                    ? "bg-green-500 text-white"
-                    : hasChanges
-                      ? "bg-primary text-white hover:opacity-90"
-                      : "bg-primary/20 text-primary/40 cursor-not-allowed"
-                }`}
-              >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                <span>{saving ? "Saving…" : saved ? "Saved" : "Save"}</span>
-              </button>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={handleDeleteSession}
+            className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Delete</span>
+          </button>
         </div>
       </header>
 
@@ -455,254 +690,257 @@ export default function BookingDetailPage({
       {/* ── Main Content ── */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* ── VIEW DETAILS ── */}
-        {!isEditing && !isEditingWizard && (
-          <div className="border-primary/10 scrollbar-hide h-full overflow-y-auto rounded-2xl border bg-white p-4 shadow-sm sm:rounded-[28px] sm:p-6 md:p-8 lg:p-10">
-            <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6 md:space-y-8">
-              <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-6">
-                <div className="border-primary/10 rounded-2xl border bg-[#fcf4f0] p-4 shadow-sm sm:rounded-3xl sm:p-6">
-                  <h3 className="text-primary mb-3 text-[11px] font-bold tracking-wider uppercase sm:mb-4 sm:text-xs">
-                    Customer
-                  </h3>
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="text-primary border-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white font-serif text-xl sm:h-16 sm:w-16 sm:text-2xl">
-                      {booking.customerName.charAt(0)}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-primary-dark truncate text-lg font-bold sm:text-xl">
-                        {booking.customerName}
-                      </h3>
-                      <p className="text-text-secondary mt-0.5 truncate text-sm sm:mt-1">
-                        {booking.phone || "No phone"}
-                      </p>
-                    </div>
+        <div className="border-primary/10 scrollbar-hide h-full overflow-y-auto rounded-2xl border bg-white p-4 shadow-sm sm:rounded-[28px] sm:p-6 md:p-8 lg:p-10">
+          <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6 md:space-y-8">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-6">
+              <div className="border-primary/10 rounded-2xl border bg-[#fcf4f0] p-4 shadow-sm sm:rounded-3xl sm:p-6">
+                <h3 className="text-primary mb-3 text-[11px] font-bold tracking-wider uppercase sm:mb-4 sm:text-xs">
+                  Customer
+                </h3>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="text-primary border-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white font-serif text-xl sm:h-16 sm:w-16 sm:text-2xl">
+                    {booking.customerName.charAt(0)}
                   </div>
-                </div>
-
-                <div className="border-primary/10 flex flex-col justify-center gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:gap-4 sm:rounded-3xl sm:p-6">
-                  <div className="text-text-secondary flex items-center gap-3 text-sm">
-                    <Calendar className="text-primary h-4 w-4 shrink-0" />
-                    <span className="text-primary-dark font-medium">
-                      {booking.date}
-                    </span>
-                  </div>
-                  <div className="text-text-secondary flex items-center gap-3 text-sm">
-                    <Clock className="text-primary h-4 w-4 shrink-0" />
-                    <span className="text-primary-dark font-medium">
-                      {booking.time}
-                    </span>
-                  </div>
-                  <div className="text-text-secondary flex items-center gap-3 text-sm">
-                    <User className="text-primary h-4 w-4 shrink-0" />
-                    <span className="text-primary-dark font-medium">
-                      {booking.services.length} Service
-                      {booking.services.length === 1 ? "" : "s"}
-                    </span>
+                  <div className="min-w-0">
+                    <h3 className="text-primary-dark truncate text-lg font-bold sm:text-xl">
+                      {booking.customerName}
+                    </h3>
+                    <p className="text-text-secondary mt-0.5 truncate text-sm sm:mt-1">
+                      {booking.phone || "No phone"}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="border-primary/10 rounded-2xl border bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 md:p-8">
-                <h3 className="text-primary mb-4 text-[11px] font-bold tracking-wider uppercase sm:mb-6 sm:text-xs">
+              <div className="border-primary/10 flex flex-col justify-center gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:gap-4 sm:rounded-3xl sm:p-6">
+                <div className="text-text-secondary flex items-center gap-3 text-sm">
+                  <Calendar className="text-primary h-4 w-4 shrink-0" />
+                  <span className="text-primary-dark font-medium">
+                    {booking.date}
+                  </span>
+                </div>
+                <div className="text-text-secondary flex items-center gap-3 text-sm">
+                  <Clock className="text-primary h-4 w-4 shrink-0" />
+                  <span className="text-primary-dark font-medium">
+                    {booking.time}
+                  </span>
+                </div>
+                <div className="text-text-secondary flex items-center gap-3 text-sm">
+                  <User className="text-primary h-4 w-4 shrink-0" />
+                  <span className="text-primary-dark font-medium">
+                    {booking.services.length} Service
+                    {booking.services.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-primary/10 rounded-2xl border bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 md:p-8">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-6">
+                <h3 className="text-primary text-[11px] font-bold tracking-wider uppercase sm:text-xs">
                   Session Services
                 </h3>
-                <div className="space-y-3 sm:space-y-4">
-                  {booking.services.length === 0 ? (
-                    <div className="text-text-secondary border-primary/5 rounded-2xl border bg-[#fcf4f0] py-8 text-center text-sm italic">
-                      No services selected.
-                    </div>
-                  ) : (
-                    booking.services.map((svc, idx) => {
-                      const matchedObj = realServices.find(
-                        (r) => r.name === svc.name
-                      );
-                      const optionsTotal = (svc.options ?? []).reduce(
-                        (sum, option) => {
-                          const matchedAddon = (matchedObj?.options ?? []).find(
-                            (a) => a.name === option
-                          );
-                          return sum + (matchedAddon?.price || 0);
-                        },
-                        0
-                      );
-                      return (
-                        <div
-                          key={idx}
-                          className="border-primary/10 rounded-2xl border bg-[#fcf4f0] p-4 sm:p-5"
-                        >
-                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                            <span className="text-primary-dark text-base font-semibold sm:text-lg">
-                              {svc.name}
+                {!isCompleted && (
+                  <div className="flex items-center gap-2">
+                    {isManagingServices &&
+                      hasServiceChanges(booking, savedBooking) && (
+                        <span className="text-text-secondary text-[10px] font-medium sm:text-xs">
+                          Unsaved changes
+                        </span>
+                      )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isManagingServices) {
+                          handleDoneManagingServices();
+                        } else {
+                          handleStartManagingServices();
+                        }
+                      }}
+                      disabled={servicesSaving}
+                      className="border-primary text-primary hover:bg-primary/5 inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-50 sm:h-10 sm:px-4 sm:text-sm"
+                    >
+                      {servicesSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : isManagingServices ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                      {servicesSaving
+                        ? "Saving…"
+                        : isManagingServices
+                          ? "Done"
+                          : "Add service"}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 sm:space-y-4">
+                {booking.services.length === 0 ? (
+                  <div className="text-text-secondary border-primary/5 rounded-2xl border bg-[#fcf4f0] py-8 text-center text-sm italic">
+                    No services selected.
+                  </div>
+                ) : (
+                  booking.services.map((svc, idx) => {
+                    const matchedObj = realServices.find(
+                      (r) => r.name === svc.name
+                    );
+                    const optionsTotal = (svc.options ?? []).reduce(
+                      (sum, option) => {
+                        const matchedAddon = (matchedObj?.options ?? []).find(
+                          (a) => a.name === option
+                        );
+                        return sum + (matchedAddon?.price || 0);
+                      },
+                      0
+                    );
+                    const catalogHasOptions =
+                      (matchedObj?.options ?? []).length > 0;
+                    const missingOptions =
+                      catalogHasOptions && (svc.options ?? []).length === 0;
+                    return (
+                      <div
+                        key={svc.name}
+                        className={`border-primary/10 rounded-2xl border bg-[#fcf4f0] p-4 sm:p-5 ${
+                          missingOptions
+                            ? "border-amber-400/60 ring-1 ring-amber-400/30"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                          <span className="text-primary-dark text-base font-semibold sm:text-lg">
+                            {svc.name}
+                          </span>
+                          {missingOptions && (
+                            <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                              Options required
                             </span>
-                            {(svc.options ?? []).length === 0 && (
+                          )}
+                          {!missingOptions &&
+                            (svc.options ?? []).length === 0 && (
                               <span className="text-text-secondary shrink-0 text-sm">
                                 No options selected
                               </span>
                             )}
-                          </div>
-                          {(svc.options ?? []).length > 0 && (
-                            <div className="border-primary/10 mt-3 space-y-2 border-t pt-3">
-                              {(svc.options ?? []).map((option, aIdx) => {
-                                const matchedAddon = (
-                                  matchedObj?.options ?? []
-                                ).find((a) => a.name === option);
-                                return (
-                                  <div
-                                    key={aIdx}
-                                    className="flex items-start justify-between gap-3 text-sm"
-                                  >
-                                    <span className="text-text-secondary flex min-w-0 items-start gap-2">
-                                      <ChevronRight className="text-primary/40 mt-0.5 h-4 w-4 shrink-0" />
-                                      <span className="text-primary-dark font-medium break-words">
-                                        {option}
-                                      </span>
-                                    </span>
-                                    <span className="text-primary-dark shrink-0 font-medium">
-                                      {matchedAddon
-                                        ? `QAR ${matchedAddon.price}`
-                                        : "—"}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                              <div className="text-text-secondary flex justify-end pt-1 text-xs font-semibold">
-                                Subtotal QAR {optionsTotal}
-                              </div>
-                            </div>
-                          )}
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <div className="border-primary/10 mt-5 flex items-center justify-between gap-3 border-t pt-5 sm:mt-8 sm:pt-6">
-                  <span className="text-text-secondary text-base font-bold sm:text-lg">
-                    Total Amount
-                  </span>
-                  <span className="text-primary-dark text-xl font-bold sm:text-2xl">
-                    QAR {invoiceTotal || booking.amount}
-                  </span>
-                </div>
-
-                {canPrint && (
-                  <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => setShowPrintModal(true)}
-                      className="bg-primary inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-                    >
-                      <Printer className="h-4 w-4" />
-                      Print Invoice
-                    </button>
-                    {booking.phone?.replace(/\D/g, "") && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openWhatsAppInvoice(booking, realServices)
-                        }
-                        className="border-primary text-primary hover:bg-primary/5 inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-colors"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Send via WhatsApp
-                      </button>
-                    )}
-                  </div>
+                        {(svc.options ?? []).length > 0 && (
+                          <div className="border-primary/10 mt-3 space-y-2 border-t pt-3">
+                            {(svc.options ?? []).map((option, aIdx) => {
+                              const matchedAddon = (
+                                matchedObj?.options ?? []
+                              ).find((a) => a.name === option);
+                              return (
+                                <div
+                                  key={aIdx}
+                                  className="flex items-start justify-between gap-3 text-sm"
+                                >
+                                  <span className="text-text-secondary flex min-w-0 items-start gap-2">
+                                    <ChevronRight className="text-primary/40 mt-0.5 h-4 w-4 shrink-0" />
+                                    <span className="text-primary-dark font-medium break-words">
+                                      {option}
+                                    </span>
+                                  </span>
+                                  <span className="text-primary-dark shrink-0 font-medium">
+                                    {matchedAddon
+                                      ? `QAR ${matchedAddon.price}`
+                                      : "—"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            <div className="text-text-secondary flex justify-end pt-1 text-xs font-semibold">
+                              Subtotal QAR {optionsTotal}
+                            </div>
+                          </div>
+                        )}
+                        {isManagingServices && (
+                          <div className="border-primary/10 mt-3 flex flex-wrap justify-end gap-2 border-t pt-3">
+                            {catalogHasOptions && (
+                              <button
+                                type="button"
+                                onClick={() => configureAddonsFor(idx)}
+                                className={`rounded-full px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
+                                  activeServiceIndex === idx &&
+                                  posMode === "options"
+                                    ? "bg-primary text-white"
+                                    : "border-primary/20 text-primary hover:bg-primary/5 border bg-white"
+                                }`}
+                              >
+                                {activeServiceIndex === idx &&
+                                posMode === "options"
+                                  ? "Editing options"
+                                  : "Edit options"}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeServiceAt(idx)}
+                              disabled={servicesSaving}
+                              className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-[10px] font-bold tracking-wider text-red-600 uppercase transition-colors hover:bg-red-50 disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                        {!isManagingServices && !isCompleted && (
+                          <div className="border-primary/10 mt-3 flex flex-wrap justify-end gap-2 border-t pt-3">
+                            {missingOptions && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsManagingServices(true);
+                                  configureAddonsFor(idx);
+                                }}
+                                className="border-primary/20 text-primary hover:bg-primary/5 rounded-full border bg-white px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Select options
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removeServiceAt(idx)}
+                              disabled={servicesSaving}
+                              className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-[10px] font-bold tracking-wider text-red-600 uppercase transition-colors hover:bg-red-50 disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* ── EDIT WIZARD ── */}
-        {isEditingWizard && (
-          <BookingWizard
-            initialData={booking}
-            step={step}
-            setStep={setStep}
-            onCancel={() => router.push(`/bookings/${id}`)}
-            onSubmit={async (payload) => {
-              const updated = await updateBooking(id, payload);
-              setBooking(updated);
-              setSavedBooking(updated);
-              router.push(`/bookings/${id}`);
-              setIsEditing(false);
-            }}
-          />
-        )}
-
-        {/* ── LEGACY EDIT MODE ── */}
-        {isEditing && (
-          <div className="flex h-full min-h-0 w-full flex-col gap-3 overflow-hidden lg:flex-row lg:gap-4">
-            <div className="border-primary/10 scrollbar-hide min-h-0 flex-1 overflow-y-auto rounded-2xl border bg-white p-4 shadow-sm sm:rounded-[28px] sm:p-6 md:p-8 lg:p-10">
-              {posMode === "services" && (
-                <div className="animate-in fade-in duration-200">
-                  <div className="mb-5 sm:mb-8">
-                    <h2 className="text-primary-dark mb-1 font-serif text-xl sm:mb-2 sm:text-2xl">
-                      Edit Session
-                    </h2>
-                    <p className="text-text-secondary text-sm">
-                      Update date, time, status, and services.
-                    </p>
+              {isManagingServices && posMode === "services" && (
+                <div className="border-primary/10 mt-5 border-t pt-5 sm:mt-6 sm:pt-6">
+                  <h4 className="text-primary mb-3 text-[11px] font-bold tracking-wider uppercase sm:mb-4 sm:text-xs">
+                    Select a service
+                  </h4>
+                  <div className="relative mb-4">
+                    <Search className="text-text-secondary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={serviceSearchQuery}
+                      onChange={(e) => setServiceSearchQuery(e.target.value)}
+                      placeholder="Search services or options..."
+                      className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-[#fcf4f0] py-2.5 pr-4 pl-9 text-sm transition-colors focus:outline-none"
+                    />
                   </div>
-
-                  <div className="border-primary/10 mb-5 grid grid-cols-1 gap-3 rounded-2xl border bg-[#fcf4f0] p-4 sm:mb-8 sm:gap-4 sm:p-6 md:grid-cols-3">
-                    <div>
-                      <label className="text-text-secondary mb-1.5 flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase">
-                        <Calendar className="h-3 w-3" /> Date
-                      </label>
-                      <input
-                        type="date"
-                        value={booking.date}
-                        onChange={(e) => update("date", e.target.value)}
-                        className="border-primary/20 focus:border-primary text-primary-dark h-10 w-full rounded-xl border bg-white px-3 text-sm font-medium focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-text-secondary mb-1.5 flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase">
-                        <Clock className="h-3 w-3" /> Time
-                      </label>
-                      <input
-                        type="time"
-                        value={booking.time}
-                        onChange={(e) => update("time", e.target.value)}
-                        className="border-primary/20 focus:border-primary text-primary-dark h-10 w-full rounded-xl border bg-white px-3 text-sm font-medium focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-text-secondary mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
-                        Status
-                      </label>
-                      <select
-                        value={booking.status}
-                        onChange={(e) =>
-                          update("status", e.target.value as BookingStatus)
-                        }
-                        className="border-primary/20 focus:border-primary text-primary-dark h-10 w-full rounded-xl border bg-white px-3 text-sm font-medium focus:outline-none"
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Started">Started</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <h3 className="text-primary mb-3 text-[11px] font-bold tracking-wider uppercase sm:mb-4 sm:text-xs">
-                    Service Catalog
-                  </h3>
                   {servicesLoading ? (
-                    <div className="text-text-secondary flex items-center justify-center gap-2 py-10 text-sm">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
-                      services...
+                    <div className="text-text-secondary flex items-center justify-center gap-2 py-8 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading services...
                     </div>
                   ) : servicesError ? (
-                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-red-500">
-                      <AlertCircle className="h-4 w-4" /> {servicesError}
+                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {servicesError}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
-                      {realServices.map((service) => {
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                      {filteredCatalogServices.map((service) => {
                         const isSelected = booking.services.some(
                           (s) => s.name === service.name
                         );
@@ -747,55 +985,40 @@ export default function BookingDetailPage({
                           </div>
                         );
                       })}
+                      {filteredCatalogServices.length === 0 && (
+                        <div className="text-text-secondary col-span-full rounded-2xl border border-dashed bg-[#fcf4f0] py-8 text-center text-sm">
+                          No services match your search.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
-              {posMode === "options" &&
+              {isManagingServices &&
+                posMode === "options" &&
                 currentServiceObject &&
                 activeService && (
-                  <div className="animate-in fade-in duration-200">
+                  <div className="border-primary/10 mt-5 border-t pt-5 sm:mt-6 sm:pt-6">
                     <button
                       type="button"
                       onClick={() => {
                         setPosMode("services");
                         setActiveServiceIndex(null);
                       }}
-                      className="text-primary mb-5 flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80 sm:mb-8"
+                      className="text-primary mb-4 flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-80"
                     >
-                      <ArrowLeft className="h-4 w-4" /> Back to Catalog
+                      <ArrowLeft className="h-4 w-4" />
+                      Back to services
                     </button>
-
-                    <div className="border-primary/10 mb-5 flex flex-col gap-4 border-b pb-5 sm:mb-8 sm:flex-row sm:items-center sm:gap-6 sm:pb-8">
-                      <div className="bg-primary/10 border-primary/20 mx-auto h-20 w-20 shrink-0 overflow-hidden rounded-2xl border sm:mx-0 sm:h-24 sm:w-24">
-                        {currentServiceObject.image ? (
-                          <img
-                            src={currentServiceObject.image}
-                            alt={currentServiceObject.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="text-primary/40 flex h-full w-full items-center justify-center font-serif text-xs">
-                            Oryx
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 text-center sm:text-left">
-                        <h2 className="text-primary-dark mb-1 font-serif text-2xl sm:mb-2 sm:text-3xl">
-                          {currentServiceObject.name}
-                        </h2>
-                        <p className="text-text-secondary text-sm">
-                          Enhance this service with premium add-ons.
-                        </p>
-                      </div>
-                    </div>
-
-                    <h3 className="text-primary mb-3 text-[11px] font-bold tracking-wider uppercase sm:mb-4 sm:text-sm">
-                      Available Service Options
-                    </h3>
+                    <h4 className="text-primary-dark mb-1 font-serif text-lg sm:text-xl">
+                      {currentServiceObject.name}
+                    </h4>
+                    <p className="text-text-secondary mb-4 text-sm">
+                      Select options for this service.
+                    </p>
                     {(currentServiceObject.options ?? []).length > 0 ? (
-                      <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {(currentServiceObject.options ?? []).map((option) => {
                           const isSelected = (
                             activeService.options ?? []
@@ -803,12 +1026,10 @@ export default function BookingDetailPage({
                           return (
                             <div
                               key={option.id}
-                              onClick={() =>
-                                toggleAddon(option.name, option.price)
-                              }
-                              className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-4 transition-all sm:p-5 ${
+                              onClick={() => toggleAddon(option.name)}
+                              className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-4 transition-all ${
                                 isSelected
-                                  ? "border-primary bg-primary ring-primary text-white shadow-md ring-1"
+                                  ? "border-primary bg-primary text-white shadow-md"
                                   : "border-primary/10 hover:border-primary/40 bg-white hover:shadow-sm"
                               }`}
                             >
@@ -836,118 +1057,170 @@ export default function BookingDetailPage({
                         })}
                       </div>
                     ) : (
-                      <div className="border-primary/10 bg-primary/5 rounded-2xl border border-dashed p-8 text-center sm:p-12">
+                      <div className="border-primary/10 bg-primary/5 rounded-2xl border border-dashed p-8 text-center">
                         <p className="text-primary-dark font-medium">
-                          No Service Options Available
+                          No options available for this service.
                         </p>
                       </div>
                     )}
                   </div>
                 )}
-            </div>
-
-            <div className="border-primary/10 scrollbar-hide flex max-h-[40vh] w-full shrink-0 flex-col overflow-y-auto rounded-2xl border bg-white shadow-sm sm:rounded-[28px] lg:max-h-none lg:w-[320px] xl:w-[360px]">
-              <div className="flex h-full flex-col gap-4 p-4 sm:gap-6 sm:p-6">
+              <div className="border-primary/10 mt-5 space-y-4 border-t pt-5 sm:mt-8 sm:pt-6">
                 <div>
-                  <h1 className="text-primary-dark mb-1 font-serif text-xl sm:text-2xl">
-                    Session Cart
-                  </h1>
-                  <p className="text-text-secondary text-xs">
-                    Services added to this booking.
-                  </p>
-                </div>
-
-                <div className="min-h-0 flex-1 space-y-3 sm:space-y-4">
-                  {booking.services.length === 0 ? (
-                    <div className="text-text-secondary border-primary/10 rounded-2xl border border-dashed bg-[#fcf4f0]/50 py-8 text-center text-sm italic">
-                      Cart is empty
-                    </div>
+                  <h4 className="text-primary mb-2 text-[11px] font-bold tracking-wider uppercase sm:text-xs">
+                    Gym Membership
+                  </h4>
+                  {gymDiscountPercent > 0 ? (
+                    <p className="text-text-secondary mb-3 text-xs">
+                      Discount rate: {gymDiscountPercent}% (from Company
+                      settings)
+                    </p>
                   ) : (
-                    booking.services.map((svc, idx) => {
-                      const matchedObj = realServices.find(
-                        (r) => r.name === svc.name
-                      );
-                      const isActive = activeServiceIndex === idx;
-
-                      return (
-                        <div
-                          key={idx}
-                          className={`rounded-2xl border bg-[#fcf4f0] p-3.5 transition-all sm:p-4 ${isActive ? "border-primary ring-primary shadow-sm ring-1" : "border-primary/10 hover:border-primary/30"}`}
-                        >
-                          <div className="mb-2">
-                            <span className="text-primary-dark min-w-0 text-sm font-semibold">
-                              {svc.name}
-                            </span>
-                          </div>
-                          {(svc.options ?? []).length > 0 ? (
-                            <div className="border-primary/10 mt-2 space-y-1.5 border-t pt-2">
-                              {(svc.options ?? []).map((option, aIdx) => {
-                                const matchedAddon = (
-                                  matchedObj?.options ?? []
-                                ).find((a) => a.name === option);
-                                return (
-                                  <div
-                                    key={aIdx}
-                                    className="flex items-center justify-between gap-2 text-xs"
-                                  >
-                                    <span className="text-text-secondary flex min-w-0 items-center gap-1.5">
-                                      <ChevronRight className="text-primary/40 h-3 w-3 shrink-0" />
-                                      <span className="truncate">{option}</span>
-                                    </span>
-                                    <span className="text-primary-dark shrink-0 font-medium">
-                                      {matchedAddon
-                                        ? `QAR ${matchedAddon.price}`
-                                        : "—"}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="text-text-secondary mt-1 text-[10px] italic">
-                              No options selected
-                            </div>
-                          )}
-                          <div className="border-primary/10 mt-3 flex justify-end border-t pt-3 sm:mt-4">
-                            <button
-                              type="button"
-                              onClick={() => configureAddonsFor(idx)}
-                              className={`rounded-full px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-colors ${
-                                isActive
-                                  ? "bg-primary text-white"
-                                  : "border-primary/20 text-primary hover:bg-primary/5 border bg-white"
-                              }`}
-                            >
-                              {isActive ? "Configuring" : "Edit Options"}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
+                    <p className="mb-3 text-xs text-amber-700">
+                      Set membership discount % in Company settings to enable.
+                    </p>
                   )}
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <input
+                      type="text"
+                      value={membershipInput}
+                      onChange={(e) => setMembershipInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyMembership();
+                        }
+                      }}
+                      placeholder="Enter membership ID"
+                      disabled={membershipSaving || gymDiscountPercent <= 0}
+                      className="border-primary/20 text-primary-dark focus:ring-primary/20 h-11 flex-1 rounded-xl border bg-[#fcf4f0] px-4 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyMembership}
+                      disabled={
+                        membershipSaving ||
+                        gymDiscountPercent <= 0 ||
+                        !membershipInput.trim() ||
+                        membershipInput.trim() ===
+                          (booking.membershipId?.trim() ?? "")
+                      }
+                      className="bg-primary h-11 shrink-0 rounded-xl px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                    >
+                      {membershipSaving ? "Applying…" : "Apply"}
+                    </button>
+                    {invoiceSummary.hasDiscount && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveDiscount}
+                        disabled={membershipSaving}
+                        className="border-primary/20 text-primary hover:bg-primary/5 h-11 shrink-0 rounded-xl border px-4 text-sm font-semibold transition-colors disabled:opacity-50"
+                      >
+                        Remove discount
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-primary-dark mt-auto shrink-0 rounded-2xl p-4 text-white shadow-md sm:p-6">
-                  <div className="mb-2 flex items-center justify-between text-sm opacity-80">
-                    <span>Subtotal</span>
-                    <span>QAR {booking.amount}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-lg font-bold sm:text-xl">
-                    <span>Total</span>
-                    <span>QAR {booking.amount}</span>
+                <div className="space-y-2">
+                  {invoiceSummary.hasDiscount && (
+                    <>
+                      <div className="text-text-secondary flex items-center justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>QAR {invoiceSummary.subtotal}</span>
+                      </div>
+                      <div className="text-text-secondary flex items-center justify-between text-sm">
+                        <span>
+                          Gym discount ({invoiceSummary.discountPercent}%)
+                        </span>
+                        <span>−QAR {invoiceSummary.discountAmount}</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-secondary text-base font-bold sm:text-lg">
+                      Total Amount
+                    </span>
+                    <span className="text-primary-dark text-xl font-bold sm:text-2xl">
+                      QAR {invoiceSummary.total}
+                    </span>
                   </div>
                 </div>
               </div>
+
+              {canPrint && (
+                <div className="mt-5 space-y-3 sm:mt-6">
+                  {!canPrintInvoice && printValidation.message && (
+                    <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{printValidation.message}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2.5 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={handlePrintInvoice}
+                      disabled={!canPrintInvoice}
+                      title={
+                        !canPrintInvoice
+                          ? (printValidation.message ??
+                            "Complete service options first")
+                          : undefined
+                      }
+                      className="bg-primary inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Print Invoice
+                    </button>
+                    {booking.phone?.replace(/\D/g, "") && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!canPrintInvoice) {
+                            setSaveError(
+                              printValidation.message ??
+                                "Complete all service options before sending the invoice."
+                            );
+                            return;
+                          }
+                          handleSendWhatsAppInvoice();
+                        }}
+                        disabled={whatsappSending || !canPrintInvoice}
+                        title={
+                          !canPrintInvoice
+                            ? (printValidation.message ??
+                              "Complete service options first")
+                            : undefined
+                        }
+                        className="border-primary text-primary hover:bg-primary/5 inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {whatsappSending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : whatsappSuccess ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <MessageCircle className="h-4 w-4" />
+                        )}
+                        {whatsappSending
+                          ? "Sending…"
+                          : whatsappSuccess
+                            ? "Sent via WhatsApp!"
+                            : "Send via WhatsApp"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {showPrintModal && (
         <PrintModal
           booking={booking}
           lines={invoiceLines}
-          total={invoiceTotal}
+          summary={invoiceSummary}
           onClose={() => setShowPrintModal(false)}
         />
       )}

@@ -10,30 +10,22 @@ import {
 import { Booking, getBookingDisplayId } from "../../bookings/types";
 import { fetchServices } from "../../services/api";
 import { Service } from "../../services/types";
+import {
+  getInvoiceTotal,
+  getServiceLineItems,
+  type InvoiceLineItem,
+} from "../invoice-lines";
+import { getInvoiceSummary, type InvoiceSummary } from "../invoice-summary";
 
 export type FilterStatus = "All" | "Started" | "Completed";
 export type BillingBooking = Booking;
 export type ThermalSize = "58mm" | "80mm" | "110mm";
 
-export function getServiceLineItems(
-  booking: BillingBooking,
-  catalog: Service[]
-) {
-  return booking.services.map((svc) => {
-    const obj = catalog.find((r) => r.name === svc.name);
-    const addonItems = (svc.options || []).map((aName) => {
-      const a = (obj?.options || []).find((ad) => ad.name === aName);
-      return { name: aName, price: a?.price || 0 };
-    });
-    return { name: svc.name, base: 0, options: addonItems };
-  });
-}
+export { getInvoiceTotal, getServiceLineItems, type InvoiceLineItem };
+export { getInvoiceSummary } from "../invoice-summary";
 
 export function getTotal(booking: BillingBooking, catalog: Service[]) {
-  return getServiceLineItems(booking, catalog).reduce(
-    (sum, s) => sum + s.options.reduce((a, ad) => a + ad.price, 0),
-    0
-  );
+  return getInvoiceTotal(booking, catalog);
 }
 
 export function openWhatsAppInvoice(
@@ -72,7 +64,7 @@ export function openWhatsAppInvoice(
 export function buildInvoiceHTML(
   booking: BillingBooking,
   lines: ReturnType<typeof getServiceLineItems>,
-  total: number,
+  summary: InvoiceSummary,
   thermalSize: ThermalSize
 ) {
   const date = new Date().toLocaleDateString("en-GB", {
@@ -157,9 +149,10 @@ export function buildInvoiceHTML(
     <div class="row th"><span>Description</span><span>Amount</span></div>
     <div style="margin-top:6px;">${lineItemsHtml}</div>
     <hr class="dash"/>
+    ${summary.hasDiscount ? `<div class="row" style="margin-bottom:4px;"><span class="sub">Subtotal</span><span class="sub" style="font-weight:600;">QAR ${summary.subtotal}</span></div><div class="row" style="margin-bottom:4px;"><span class="sub">Gym discount (${summary.discountPercent}%)</span><span class="sub" style="font-weight:600;">−QAR ${summary.discountAmount}</span></div><div class="sub" style="text-align:right;margin-bottom:4px;">Membership: ${summary.membershipId ?? ""}</div>` : ""}
     <div class="row" style="align-items:center;">
       <span class="total-label">Total Due</span>
-      <span class="total-val">QAR ${total}</span>
+      <span class="total-val">QAR ${summary.total}</span>
     </div>
     <hr class="dash"/>
     <div class="footer">Thank you for choosing <strong>Oryx Spa</strong> 🌸</div>
@@ -237,7 +230,7 @@ export function useBillingData() {
 
   const totalRevenue = bookings
     .filter((b) => b.status === "Started" || b.status === "Completed")
-    .reduce((s, b) => s + getTotal(b, services), 0);
+    .reduce((s, b) => s + getInvoiceSummary(b, services).total, 0);
   const startedCount =
     list.meta?.startedCount ??
     bookings.filter((b) => b.status === "Started").length;
@@ -246,7 +239,15 @@ export function useBillingData() {
     bookings.filter((b) => b.status === "Completed").length;
 
   const selectedLines = selected ? getServiceLineItems(selected, services) : [];
-  const selectedTotal = selected ? getTotal(selected, services) : 0;
+  const selectedSummary = selected
+    ? getInvoiceSummary(selected, services)
+    : {
+        subtotal: 0,
+        discountPercent: 0,
+        discountAmount: 0,
+        total: 0,
+        hasDiscount: false,
+      };
 
   return {
     search: list.searchQuery,
@@ -276,6 +277,6 @@ export function useBillingData() {
     startedCount,
     completedCount,
     selectedLines,
-    selectedTotal,
+    selectedSummary,
   };
 }

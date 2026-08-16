@@ -7,6 +7,7 @@ import {
   buildInvoiceHTML,
   ThermalSize,
 } from "../api/use-billing-data";
+import type { InvoiceSummary } from "../invoice-summary";
 
 const THERMAL_SIZES: {
   id: ThermalSize;
@@ -22,7 +23,7 @@ const THERMAL_SIZES: {
 export function PrintModal({
   booking,
   lines,
-  total,
+  summary,
   onClose,
 }: {
   booking: BillingBooking;
@@ -31,7 +32,7 @@ export function PrintModal({
     base: number;
     options: { name: string; price: number }[];
   }[];
-  total: number;
+  summary: InvoiceSummary;
   onClose: () => void;
 }) {
   const [thermalSize, setThermalSize] = useState<ThermalSize>("80mm");
@@ -42,7 +43,7 @@ export function PrintModal({
 
   const handleConfirmPrint = () => {
     setPrinting(true);
-    const html = buildInvoiceHTML(booking, lines, total, thermalSize);
+    const html = buildInvoiceHTML(booking, lines, summary, thermalSize);
     const iframe = iframeRef.current;
     if (!iframe) return;
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -147,7 +148,10 @@ export function PrintModal({
                 { label: "Client", value: booking.customerName },
                 { label: "Invoice", value: getBookingDisplayId(booking) },
                 { label: "Date", value: currentDate },
-                { label: "Total", value: `QAR ${total}` },
+                {
+                  label: "Total",
+                  value: `QAR ${summary.total}`,
+                },
               ].map(({ label, value }) => (
                 <div
                   key={label}
@@ -253,13 +257,30 @@ export function PrintModal({
                 </div>
               </div>
 
-              <div className="border-primary/20 flex items-center justify-between border-b border-dashed px-4 py-3">
-                <span className="text-text-secondary text-[8px] font-bold tracking-widest uppercase">
-                  Total Due
-                </span>
-                <span className="text-text-primary text-sm font-bold">
-                  QAR {total}
-                </span>
+              <div className="border-primary/20 border-b border-dashed px-4 py-3">
+                {summary.hasDiscount && (
+                  <>
+                    <div className="text-text-secondary flex justify-between text-[8px]">
+                      <span>Subtotal</span>
+                      <span>QAR {summary.subtotal}</span>
+                    </div>
+                    <div className="text-text-secondary mt-1 flex justify-between text-[8px]">
+                      <span>Gym discount ({summary.discountPercent}%)</span>
+                      <span>−QAR {summary.discountAmount}</span>
+                    </div>
+                    <div className="text-text-secondary mt-0.5 text-right text-[7px]">
+                      Membership: {summary.membershipId}
+                    </div>
+                  </>
+                )}
+                <div className="border-primary/20 flex items-center justify-between border-t border-dashed pt-2">
+                  <span className="text-text-secondary text-[8px] font-bold tracking-widest uppercase">
+                    Total Due
+                  </span>
+                  <span className="text-text-primary text-sm font-bold">
+                    QAR {summary.total}
+                  </span>
+                </div>
               </div>
 
               <div className="px-4 py-3 text-center">

@@ -17,6 +17,10 @@ export interface Booking {
   time: string;
   status: BookingStatus;
   amount: number;
+  membershipId?: string;
+  discountPercent?: number;
+  discountAmount?: number;
+  subtotal?: number;
   createdAt?: string;
 }
 

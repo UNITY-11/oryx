@@ -89,9 +89,6 @@ export function useNotifications() {
 
     const prev = notifications;
     const bd = notif.bookingData;
-    const msg = `Hello ${bd.customerName.split(" ")[0]},\n\nYour booking for ${bd.serviceName} has been confirmed!\n\n📅 Date: ${bd.date}\n⏰ Time: ${bd.time}\n⏳ Duration: ${bd.duration}\n\nWe look forward to welcoming you.\n\nBest regards,\nOryx Spa`;
-    const waUrl = `https://wa.me/${bd.customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, "_blank");
 
     const updatedFields = {
       title: "Booking Confirmed",

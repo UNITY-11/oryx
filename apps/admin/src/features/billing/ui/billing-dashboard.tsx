@@ -18,7 +18,7 @@ import { Service } from "../../services/types";
 import {
   BillingBooking,
   FilterStatus,
-  getTotal,
+  getInvoiceSummary,
 } from "../api/use-billing-data";
 import { PrintModal } from "./print-modal";
 
@@ -50,7 +50,14 @@ interface BillingDashboardProps {
   startedCount: number;
   completedCount: number;
   selectedLines: any[];
-  selectedTotal: number;
+  selectedSummary: {
+    subtotal: number;
+    discountPercent: number;
+    discountAmount: number;
+    total: number;
+    hasDiscount: boolean;
+    membershipId?: string;
+  };
 }
 
 export function BillingDashboard({
@@ -81,7 +88,7 @@ export function BillingDashboard({
   startedCount,
   completedCount,
   selectedLines,
-  selectedTotal,
+  selectedSummary,
 }: BillingDashboardProps) {
   const router = useRouter();
 
@@ -91,7 +98,7 @@ export function BillingDashboard({
         <PrintModal
           booking={selected}
           lines={selectedLines}
-          total={selectedTotal}
+          summary={selectedSummary}
           onClose={() => setShowPrintModal(false)}
         />
       )}
@@ -218,7 +225,7 @@ export function BillingDashboard({
 
                   <div className="divide-primary/5 divide-y">
                     {billable.map((booking) => {
-                      const total = getTotal(booking, services);
+                      const total = getInvoiceSummary(booking, services).total;
                       const isStarted = booking.status === "Started";
 
                       return (

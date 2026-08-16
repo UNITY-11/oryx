@@ -71,6 +71,19 @@ export function validateCompany(data: CompanyInput): FieldErrors {
     errors.mapEmbedUrl = "Embed URL must start with http:// or https://";
   }
 
+  const discount = data.gymMembershipDiscountPercent;
+  if (
+    discount !== undefined &&
+    discount !== null &&
+    (Number.isNaN(discount) ||
+      !Number.isFinite(discount) ||
+      discount < 0 ||
+      discount > 100)
+  ) {
+    errors.gymMembershipDiscountPercent =
+      "Gym membership discount must be between 0 and 100";
+  }
+
   const socialError = validateSocialLinks(data.socialLinks);
   if (socialError) {
     errors.socialLinks = socialError;

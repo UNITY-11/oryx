@@ -263,16 +263,21 @@ export default function HomePage() {
                       alt={item.name}
                       className="h-full w-full object-cover"
                     />
-                    <div className="absolute bottom-4 left-1/2 w-[95%] -translate-x-1/2 drop-shadow-md md:bottom-5 md:w-[90%]">
-                      <h3
-                        className="animate-shine line-clamp-1 bg-[#c8a24a] px-6 py-1.5 text-center font-serif text-[11px] font-medium text-white md:text-sm"
+                    <div className="absolute bottom-4 left-1/2 w-[95%] max-w-full -translate-x-1/2 drop-shadow-md md:bottom-5 md:w-[90%]">
+                      <div
+                        className="animate-shine overflow-hidden bg-[#c8a24a] px-3 py-1.5 md:px-5"
                         style={{
                           clipPath:
                             "polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%)",
                         }}
                       >
-                        {item.name}
-                      </h3>
+                        <h3
+                          className="truncate text-center font-serif text-[10px] leading-tight font-medium text-white sm:text-[11px] md:text-sm"
+                          title={item.name}
+                        >
+                          {item.name}
+                        </h3>
+                      </div>
                     </div>
                   </div>
                 </Link>

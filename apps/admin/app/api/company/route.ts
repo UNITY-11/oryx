@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { COMPANY_QUERY } from "@/features/company/sanity-queries";
 import {
   COMPANY_DOC_ID,
+  SOCIAL_PLATFORMS,
   type CompanyInput,
   type SocialLink,
+  type SocialPlatform,
 } from "@/features/company/types";
 import { hasFieldErrors, validateCompany } from "@/features/company/validation";
 import { sanityClient } from "@/shared/lib/sanity/client";
@@ -24,10 +26,13 @@ function normalizeSocialLinks(value: unknown): SocialLink[] {
       if (!item || typeof item !== "object") return null;
       const link = item as Record<string, unknown>;
       const url = typeof link.url === "string" ? link.url.trim() : "";
-      const platform =
-        typeof link.platform === "string" && link.platform.trim()
-          ? link.platform.trim()
-          : "Other";
+      const rawPlatform =
+        typeof link.platform === "string" ? link.platform.trim() : "";
+      const platform: SocialPlatform = SOCIAL_PLATFORMS.includes(
+        rawPlatform as SocialPlatform
+      )
+        ? (rawPlatform as SocialPlatform)
+        : "Other";
       const id =
         typeof link.id === "string" && link.id.trim()
           ? link.id.trim()
@@ -60,6 +65,15 @@ function normalizeInput(body: Record<string, unknown>): CompanyInput {
     postalCode: str("postalCode"),
     mapUrl: str("mapUrl"),
     mapEmbedUrl: str("mapEmbedUrl"),
+    gymMembershipDiscountPercent: (() => {
+      const raw = body.gymMembershipDiscountPercent;
+      if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+      if (typeof raw === "string" && raw.trim() !== "") {
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      return 0;
+    })(),
   };
 }
 

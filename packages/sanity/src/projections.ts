@@ -86,6 +86,7 @@ export const COMPANY_PROJECTION = `{
     platform,
     url
   },
+  gymMembershipDiscountPercent,
   updatedAt
 }`;
 

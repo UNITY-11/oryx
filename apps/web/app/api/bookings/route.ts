@@ -1,16 +1,30 @@
 import { NextResponse } from "next/server";
 import { sanityWriteClient } from "@/shared/lib/sanity/client";
 import { generateNextBookingCode } from "@repo/sanity";
+import {
+  sendAdminNewBookingAlert,
+  type BookingWhatsAppPayload,
+  type CompanyWhatsAppContext,
+} from "@repo/whatsapp";
 
 type BookingServiceInput = {
   name: string;
   options?: string[];
 };
 
+const COMPANY_CONTEXT_QUERY = `*[_type == "company" && _id == "companyDetails"][0]{
+  name,
+  phone,
+  whatsapp,
+  email,
+  addressLine1,
+  city,
+  country
+}`;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log("POST /api/bookings payload:", body);
 
     if (
       !body.customerName ||
@@ -32,7 +46,6 @@ export async function POST(request: Request) {
       options: svc.options ?? [],
     }));
 
-    // 1. Check if customer exists by phone
     const existingCustomer = await sanityWriteClient.fetch(
       `*[_type == "customer" && phone == $phone][0]`,
       { phone: body.phone || "" }
@@ -40,7 +53,6 @@ export async function POST(request: Request) {
 
     let customerId = existingCustomer?._id;
 
-    // 2. If not, create a new customer
     if (!customerId && body.phone) {
       const newCustomer = await sanityWriteClient.create({
         _type: "customer",
@@ -72,7 +84,6 @@ export async function POST(request: Request) {
 
     const created = await sanityWriteClient.create(doc);
 
-    // Create corresponding notification document in Sanity
     const serviceNames = services.map((s) => s.name).join(", ");
     const notificationDoc = {
       _type: "notification",
@@ -104,7 +115,28 @@ export async function POST(request: Request) {
         "Failed to create booking notification in Sanity:",
         notifErr
       );
-      // Don't fail the booking request if only the notification creation fails
+    }
+
+    try {
+      const company = (await sanityWriteClient.fetch(
+        COMPANY_CONTEXT_QUERY
+      )) as CompanyWhatsAppContext | null;
+
+      const whatsappPayload: BookingWhatsAppPayload = {
+        id: created._id,
+        bookingCode,
+        customerName: doc.customerName,
+        phone: doc.phone,
+        services,
+        date: doc.date,
+        time: doc.time,
+        amount: doc.amount,
+        status: "Pending",
+      };
+
+      await sendAdminNewBookingAlert(whatsappPayload, company ?? undefined);
+    } catch (whatsappErr) {
+      console.error("Failed to send admin WhatsApp alert:", whatsappErr);
     }
 
     return NextResponse.json(

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { isValidPhone } from "@/shared/lib/phone";
-import { PhoneInput } from "@/shared/ui/phone-input";
 import {
   AlertCircle,
   ChevronLeft,
@@ -15,7 +14,14 @@ import {
 import { fetchServices } from "../services/api";
 import { Service } from "../services/types";
 import { createBooking, updateBooking } from "./api";
+import { filterServicesByQuery } from "./filter-services";
+import {
+  canProceedFromServicesStep,
+  getSelectedServicesMissingOptions,
+} from "./service-validation";
+import { getTimeSlotsForDate } from "./time-slots";
 import { Booking } from "./types";
+import { BookingCustomerStep } from "./ui/booking-customer-step";
 
 interface BookingWizardProps {
   /** Optional existing data for edit flow */
@@ -103,9 +109,7 @@ export function BookingWizard({
         .reduce((s, a) => s + a.price, 0)
     );
   }, 0);
-  const filteredServices = services.filter((s) =>
-    s.name.toLowerCase().includes(serviceSearchQuery.toLowerCase())
-  );
+  const filteredServices = filterServicesByQuery(services, serviceSearchQuery);
 
   // ---------- Calendar helpers ----------
   const getDaysInMonth = (date: Date) =>
@@ -134,51 +138,11 @@ export function BookingWizard({
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const blanks = Array.from({ length: firstDay }, (_, i) => i);
 
-  // ---------- Time slots ----------
-  const generateTimeSlots = (date: Date | null) => {
-    if (!date) return [];
-    const day = date.getDate();
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    const allSlots = [
-      "10:00 AM",
-      "10:30 AM",
-      "11:00 AM",
-      "11:30 AM",
-      "12:00 PM",
-      "12:30 PM",
-      "01:00 PM",
-      "01:30 PM",
-      "02:00 PM",
-      "02:30 PM",
-      "03:00 PM",
-      "03:30 PM",
-      "04:00 PM",
-      "04:30 PM",
-      "05:00 PM",
-      "05:30 PM",
-      "06:00 PM",
-      "06:30 PM",
-      "07:00 PM",
-      "07:30 PM",
-      "08:00 PM",
-      "08:30 PM",
-    ];
-    if (isWeekend) return allSlots.filter((_, i) => i % 2 === 0);
-    else if (day % 3 === 0) return allSlots.slice(0, 10);
-    else if (day % 3 === 1) return allSlots.slice(10, 20);
-    else return allSlots;
-  };
-
-  const generateBookedSlots = (date: Date | null, slots: string[]) => {
-    if (!date) return [];
-    const day = date.getDate();
-    return slots.filter((_, i) => (i + day) % 4 === 0);
-  };
-
-  const dynamicTimeSlots = generateTimeSlots(selectedDate);
-  const dynamicBookedSlots = generateBookedSlots(
-    selectedDate,
-    dynamicTimeSlots
+  const dynamicTimeSlots = getTimeSlotsForDate(selectedDate);
+  const canProceedServices = canProceedFromServicesStep(
+    selectedServiceIds,
+    selectedOptions,
+    services
   );
 
   const toIsoDate = (date: Date | null) => {
@@ -205,6 +169,17 @@ export function BookingWizard({
     e.preventDefault();
     if (selectedServiceIds.length === 0) {
       setSubmitError("Please select at least one service.");
+      return;
+    }
+    const missingOptions = getSelectedServicesMissingOptions(
+      selectedServiceIds,
+      selectedOptions,
+      services
+    );
+    if (missingOptions.length > 0) {
+      setSubmitError(
+        `Select service options for: ${missingOptions.join(", ")}.`
+      );
       return;
     }
     if (!selectedTime) {
@@ -273,7 +248,7 @@ export function BookingWizard({
                       type="text"
                       value={serviceSearchQuery}
                       onChange={(e) => setServiceSearchQuery(e.target.value)}
-                      placeholder="Search services..."
+                      placeholder="Search services or options..."
                       className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 py-3 pr-4 pl-9 text-sm shadow-sm transition-colors focus:outline-none"
                     />
                   </div>
@@ -416,10 +391,9 @@ export function BookingWizard({
                 </div>
               </div>
             )}
-            {/* STEP 2: Date & Time */}
+            {/* STEP 2: Date */}
             {step === 2 && (
-              <div className="animate-in fade-in slide-in-from-right-4 space-y-4 duration-300">
-                {/* Calendar Container */}
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="bg-surface border-primary/10 overflow-hidden rounded-2xl border shadow-sm sm:rounded-3xl">
                   <div className="bg-primary/5 border-primary/10 flex items-center justify-between border-b p-3.5 sm:p-5">
                     <h3 className="text-primary-dark font-serif text-base font-semibold capitalize sm:text-lg">
@@ -511,85 +485,61 @@ export function BookingWizard({
                     </div>
                   </div>
                 </div>
-                {/* Time Slots */}
-                <div>
-                  <div className="mt-4 mb-4 flex items-center justify-between">
-                    <h3 className="text-primary-dark font-serif text-lg">
-                      Available Times
-                    </h3>
-                    {selectedDate && (
-                      <span className="text-text-secondary text-sm font-medium">
-                        {selectedDate.toLocaleString("default", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    )}
-                  </div>
-                  {dynamicTimeSlots.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
-                      {dynamicTimeSlots.map((t) => {
-                        const isBooked = dynamicBookedSlots.includes(t);
-                        const isSelected = selectedTime === t;
-                        return (
-                          <button
-                            type="button"
-                            key={t}
-                            disabled={isBooked}
-                            onClick={() => setSelectedTime(t)}
-                            className={`rounded-xl border py-2.5 text-xs font-medium transition-colors sm:rounded-2xl sm:py-2 sm:text-sm ${
-                              isBooked
-                                ? "border-transparent bg-gray-100 text-gray-400 opacity-40"
-                                : isSelected
-                                  ? "border-primary bg-primary text-white shadow-md"
-                                  : "bg-surface text-text-primary border-primary/30 hover:border-primary hover:shadow-sm"
-                            } `}
-                          >
-                            {t}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-text-secondary rounded-2xl border border-dashed bg-gray-50 py-6 text-center text-sm">
-                      Please select a date to see available times.
-                    </div>
-                  )}
-                </div>
               </div>
             )}
-            {/* STEP 3: Customer Details */}
+            {/* STEP 3: Time */}
             {step === 3 && (
-              <div className="animate-in fade-in slide-in-from-right-4 flex min-h-[300px] flex-col justify-center duration-300">
-                <div className="mx-auto w-full max-w-sm space-y-5">
-                  <div>
-                    <label className="text-primary-dark mb-1.5 block text-sm font-medium">
-                      Customer Name
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[0-9]/g, "");
-                        setCustomerName(val);
-                      }}
-                      className="border-primary/10 focus:border-primary/30 w-full rounded-2xl border bg-gray-50 px-4 py-3 shadow-sm transition-colors focus:bg-white focus:outline-none"
-                      placeholder="e.g. Sarah Smith"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-primary-dark mb-1.5 block text-sm font-medium">
-                      Phone Number
-                    </label>
-                    <PhoneInput
-                      value={phone}
-                      onChange={setPhone}
-                      placeholder="5555 0000"
-                    />
-                  </div>
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-primary-dark font-serif text-lg">
+                    Available Times
+                  </h3>
+                  {selectedDate && (
+                    <span className="text-text-secondary text-sm font-medium">
+                      {selectedDate.toLocaleString("default", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
                 </div>
+                {dynamicTimeSlots.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
+                    {dynamicTimeSlots.map((t) => {
+                      const isSelected = selectedTime === t;
+                      return (
+                        <button
+                          type="button"
+                          key={t}
+                          onClick={() => setSelectedTime(t)}
+                          className={`rounded-xl border py-2.5 text-xs font-medium transition-colors sm:rounded-2xl sm:py-2 sm:text-sm ${
+                            isSelected
+                              ? "border-primary bg-primary text-white shadow-md"
+                              : "bg-surface text-text-primary border-primary/30 hover:border-primary hover:shadow-sm"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-text-secondary rounded-2xl border border-dashed bg-gray-50 py-6 text-center text-sm">
+                    Please select a date first.
+                  </div>
+                )}
+              </div>
+            )}
+            {/* STEP 4: Customer Details */}
+            {step === 4 && (
+              <div className="animate-in fade-in slide-in-from-right-4 flex min-h-[300px] flex-col justify-center duration-300">
+                <BookingCustomerStep
+                  customerName={customerName}
+                  setCustomerName={setCustomerName}
+                  phone={phone}
+                  setPhone={setPhone}
+                />
               </div>
             )}
           </form>
@@ -684,12 +634,13 @@ export function BookingWizard({
                 </div>
               )}
             </div>
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 disabled={
-                  (step === 1 && selectedServiceIds.length === 0) ||
-                  (step === 2 && !selectedTime)
+                  (step === 1 && !canProceedServices) ||
+                  (step === 2 && !selectedDate) ||
+                  (step === 3 && !selectedTime)
                 }
                 onClick={() => {
                   setSubmitError(null);

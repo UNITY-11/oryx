@@ -1,0 +1,18 @@
+{
+  "name": "@repo/whatsapp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "pdfkit": "^0.17.2"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "@types/pdfkit": "^0.17.3",
+    "typescript": "5.9.2"
+  }
+}

@@ -32,7 +32,7 @@ export default function BillingPage() {
     startedCount,
     completedCount,
     selectedLines,
-    selectedTotal,
+    selectedSummary,
   } = useBillingData();
 
   return (
@@ -64,7 +64,7 @@ export default function BillingPage() {
       startedCount={startedCount}
       completedCount={completedCount}
       selectedLines={selectedLines}
-      selectedTotal={selectedTotal}
+      selectedSummary={selectedSummary}
     />
   );
 }

@@ -20,6 +20,15 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/images")) return true;
   if (pathname === "/favicon.ico") return true;
+  if (
+    pathname === "/sw.js" ||
+    pathname === "/sw.js.map" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest.json" ||
+    pathname.startsWith("/workbox-")
+  ) {
+    return true;
+  }
   return false;
 }
 

@@ -35,7 +35,13 @@ export async function ensureAdminAuthSeeded(): Promise<AdminAuthRecord> {
   const existing = await getAdminAuthRecord();
   if (existing?.passwordHash) return existing;
 
-  const passwordHash = await hashPassword("admin@oryxspa2026");
+  const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD;
+  if (!defaultPassword) {
+    throw new Error(
+      "Database is not seeded and ADMIN_DEFAULT_PASSWORD is not set in environment."
+    );
+  }
+  const passwordHash = await hashPassword(defaultPassword);
   const doc = {
     _id: ADMIN_AUTH_DOCUMENT_ID,
     _type: "adminAuth",

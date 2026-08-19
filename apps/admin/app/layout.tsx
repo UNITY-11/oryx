@@ -20,6 +20,7 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: "ORYX Admin Panel",
   description: "Manage bookings, services, and customers",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/images/favicon.png",
   },
@@ -31,6 +32,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#f3e6dc",
 };
 
 export default function RootLayout({

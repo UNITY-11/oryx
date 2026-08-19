@@ -1,3 +1,14 @@
+import { createRequire } from "module";
+import withSerwistInit from "@serwist/next";
+
+const require = createRequire(import.meta.url);
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === "development",
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
@@ -22,4 +33,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

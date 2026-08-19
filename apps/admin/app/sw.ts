@@ -10,12 +10,34 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// To fix CORS issues with Sanity's Server-Sent Events (data/listen),
+// we must completely bypass the Service Worker for any Sanity API request.
+const bypassedCache = defaultCache.map((entry) => {
+  const originalMatcher = entry.matcher;
+  return {
+    ...entry,
+    matcher: (options: any) => {
+      // If it's a Sanity API request, do NOT match this caching rule.
+      if (options.url.hostname.includes("api.sanity.io")) {
+        return false;
+      }
+      if (typeof originalMatcher === "function") {
+        return originalMatcher(options);
+      }
+      if (originalMatcher instanceof RegExp) {
+        return originalMatcher.test(options.url.href);
+      }
+      return originalMatcher === options.url.href;
+    },
+  };
+});
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: bypassedCache,
 });
 
 serwist.addEventListeners();

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { useSanityListener } from "../hooks/use-sanity-listener";
+import { InstallPwaButton } from "./install-pwa-button";
 import { useSidebar } from "./sidebar-context";
 
 const navClusters = [
@@ -94,6 +95,7 @@ function SidebarFooter() {
           </span>
         </div>
       </div>
+      <InstallPwaButton />
       <button
         type="button"
         onClick={handleLogout}

@@ -33,6 +33,7 @@ function normalizeSocialLinks(value: unknown): SocialLink[] {
       )
         ? (rawPlatform as SocialPlatform)
         : "Other";
+
       const id =
         typeof link.id === "string" && link.id.trim()
           ? link.id.trim()

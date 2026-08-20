@@ -57,7 +57,7 @@ export function TestimonialCarousel() {
 
   return (
     <div
-      className="relative flex h-[250px] w-full items-center justify-center overflow-hidden md:h-[280px] lg:h-[340px]"
+      className="relative flex h-[250px] w-full items-center justify-center md:h-[280px] lg:h-[340px]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={onTouchStart}

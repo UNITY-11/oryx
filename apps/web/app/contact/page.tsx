@@ -1,7 +1,7 @@
 import { fetchCompany } from "@/features/company/sanity";
 import { ContactView } from "@/features/contact/contact-view";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function ContactPage() {
   let company: Awaited<ReturnType<typeof fetchCompany>> = null;

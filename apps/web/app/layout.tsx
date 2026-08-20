@@ -26,8 +26,11 @@ export const metadata: Metadata = {
 
   description: "Book your appointment at ORYX Beauty Spa & Salon",
 
+  manifest: "/manifest.json",
+
   icons: {
     icon: "/images/favicon.png",
+    apple: "/icon-192x192.png",
   },
 
   appleWebApp: {
@@ -64,6 +67,17 @@ export default function RootLayout({
         className="bg-background text-text-primary min-h-screen overflow-x-hidden antialiased"
       >
         <AppShell>{children}</AppShell>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { fetchItemById } from "@/features/catalog/sanity";
 import { ServiceDetailClient } from "@/features/catalog/service-detail-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function ServiceDetailPage({
   params,

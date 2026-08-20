@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_PAGE_SIZE } from "@/shared/ui/list-pagination";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
 import { createBooking, fetchBookingsPage } from "../api";
 import { Booking, BookingStatus } from "../types";
-import type { BookingsSortField } from "./bookings-list-types";
+import type {
+  BookingsPageResponse,
+  BookingsSortField,
+} from "./bookings-list-types";
 
-export function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+export function useBookings(initialData?: BookingsPageResponse) {
+  const [bookings, setBookings] = useState<Booking[]>(initialData?.items ?? []);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,8 +22,8 @@ export function useBookings() {
   const [sortField, setSortField] = useState<BookingsSortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(initialData?.total ?? 0);
+  const [totalPages, setTotalPages] = useState(initialData?.totalPages ?? 1);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
@@ -56,9 +59,15 @@ export function useBookings() {
       .finally(() => setLoading(false));
   }, [debouncedSearch, statusFilter, page, sortField, sortOrder]);
 
+  const isFirstRender = React.useRef(true);
+
   useEffect(() => {
+    if (isFirstRender.current && initialData) {
+      isFirstRender.current = false;
+      return;
+    }
     loadBookings();
-  }, [loadBookings]);
+  }, [loadBookings, initialData]);
 
   useSanityListener('*[_type == "booking"]', loadBookings);
 

@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useCatalog } from "@/features/catalog/use-catalog";
 import { useSearch } from "@/shared/providers/search-provider";
+import { Item } from "@/shared/types";
 import { LotusSeparator } from "@/shared/ui/lotus-separator";
 import { Loader2, Search, X } from "lucide-react";
 
-export function ServicesPageClient() {
-  const { services, loading, error } = useCatalog();
+export function ServicesPageClient({
+  initialServices,
+}: {
+  initialServices: Item[];
+}) {
+  const services = initialServices;
+  const loading = false;
+  const error = null;
   const { query, setQuery } = useSearch();
 
   const isSearching = Boolean(query.trim());

@@ -6,6 +6,7 @@ export async function POST(req: NextRequest) {
     // Revalidate the paths that depend on Sanity data
     revalidatePath("/");
     revalidatePath("/services");
+    revalidatePath("/products");
     revalidatePath("/contact");
 
     // If you have individual service pages, revalidate the dynamic path

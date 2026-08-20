@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { fetchProducts } from "@/features/catalog/sanity";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function ProductsPage() {
   let products: Awaited<ReturnType<typeof fetchProducts>> = [];
@@ -26,7 +26,7 @@ export default async function ProductsPage() {
             <Link
               key={item.id}
               href={`/service/${item.id}`}
-              className="bg-surface flex flex-col lg:flex-row overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1"
+              className="bg-surface flex flex-col overflow-hidden rounded-2xl shadow-sm transition-transform hover:-translate-y-1 lg:flex-row"
             >
               <div className="relative aspect-square lg:w-1/2 lg:shrink-0">
                 <img

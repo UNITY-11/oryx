@@ -2,10 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Loader2 } from "lucide-react";
+import { ADMIN_PIN_LENGTH } from "@/features/pin/constants";
+import { PinCodeInput, PinCodeStatus } from "@/shared/ui/pin-code-input";
+import { Lock } from "lucide-react";
 
-export function PinLockModal() {
-  const [pin, setPin] = useState("");
+type PinLockModalProps = {
+  description?: string;
+  onSuccess?: () => void;
+};
+
+export function PinLockModal({
+  description = "Enter the 6-digit admin PIN to access this section.",
+  onSuccess,
+}: PinLockModalProps) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,78 +25,52 @@ export function PinLockModal() {
       const res = await fetch("/api/auth/verify-pin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: currentPin }),
+        body: JSON.stringify({ pin: currentPin, setSession: !onSuccess }),
       });
-      
+
       if (res.ok) {
-        router.refresh(); // Reload layout to clear the lock
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.refresh();
+        }
       } else {
         setError(true);
-        setPin("");
       }
-    } catch (e) {
+    } catch {
       setError(true);
-      setPin("");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-md p-4">
-      <div className={`relative flex flex-col items-center max-w-md w-full bg-white rounded-[2rem] p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-100 transition-all duration-300 ${error ? "scale-105 shadow-red-500/10" : ""}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent p-4 backdrop-blur-md">
+      <div
+        className={`relative flex w-full max-w-md flex-col items-center rounded-[2rem] border border-gray-100 bg-white p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 sm:p-10 ${error ? "scale-105 shadow-red-500/10" : ""}`}
+      >
         <div className="relative mb-6">
-          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-          <div className="relative w-20 h-20 bg-gradient-to-br from-primary/5 to-primary/10 text-primary rounded-full flex items-center justify-center border border-primary/20 shadow-inner">
-            <Lock className="w-9 h-9" />
+          <div className="bg-primary/20 absolute inset-0 rounded-full blur-xl" />
+          <div className="border-primary/20 from-primary/5 to-primary/10 text-primary relative flex h-20 w-20 items-center justify-center rounded-full border bg-gradient-to-br shadow-inner">
+            <Lock className="h-9 w-9" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Admin Locked</h2>
-        <p className="text-gray-500 text-sm text-center mb-8 px-4 leading-relaxed">Enter the 4-digit admin PIN to access staff management and attendance.</p>
-        
-        <div className="w-full flex flex-col items-center gap-4">
-          <div className="relative flex gap-3 sm:gap-4 justify-center w-full">
-            <input
-              type="tel"
-              autoFocus
-              maxLength={4}
-              value={pin}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '');
-                if (val.length <= 4) {
-                  setPin(val);
-                  setError(false);
-                  if (val.length === 4) {
-                    verifyPin(val);
-                  }
-                }
-              }}
-              disabled={loading}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-text z-10"
-            />
-            {[0, 1, 2, 3].map((index) => {
-              const isActive = pin.length === index;
-              const isFilled = pin.length > index;
-              return (
-                <div 
-                  key={index} 
-                  className={`w-14 h-16 sm:w-16 sm:h-20 flex items-center justify-center rounded-2xl text-4xl font-bold transition-all duration-200 ${
-                    error ? 'border-2 border-red-500 bg-red-50 text-red-500 shadow-sm' :
-                    isActive ? 'border-2 border-primary bg-white shadow-md scale-105' :
-                    isFilled ? 'border-2 border-primary/50 bg-primary/5 text-gray-800' :
-                    'border-2 border-gray-100 bg-gray-50/50'
-                  }`}
-                >
-                  {isFilled ? '•' : ''}
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="h-8 mt-4 flex items-center justify-center w-full">
-            {loading && <div className="flex items-center text-primary text-sm font-medium"><Loader2 className="w-4 h-4 animate-spin mr-2" /> Authenticating...</div>}
-            {error && <div className="text-red-500 text-sm text-center font-medium bg-red-50 py-2 px-6 rounded-xl border border-red-100">Incorrect PIN. Please try again.</div>}
-          </div>
+        <h2 className="mb-2 text-2xl font-bold text-gray-900">
+          Section Locked
+        </h2>
+        <p className="mb-8 px-4 text-center text-sm leading-relaxed text-gray-500">
+          {description}
+        </p>
+
+        <div className="flex w-full flex-col items-center gap-4">
+          <PinCodeInput
+            length={ADMIN_PIN_LENGTH}
+            disabled={loading}
+            error={error}
+            onChange={() => setError(false)}
+            onComplete={verifyPin}
+          />
+          <PinCodeStatus loading={loading} error={error} />
         </div>
       </div>
     </div>

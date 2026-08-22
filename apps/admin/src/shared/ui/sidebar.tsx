@@ -16,9 +16,9 @@ import {
   Megaphone,
   MessageSquare,
   Shield,
+  ShoppingBag,
   // Receipt, // Billing disabled for now — print from booking details
   // Settings, // Settings disabled for now
-  // ShoppingBag, // Products disabled for now
   // Ticket, // Coupons disabled for now
   UserCircle2,
   // UserCog, // Staff disabled for now
@@ -43,8 +43,7 @@ const navClusters = [
   ],
   [
     { name: "Services", href: "/services", icon: Briefcase },
-    // Products disabled for now — not in use
-    // { name: "Products", href: "/products", icon: ShoppingBag },
+    { name: "Products", href: "/products", icon: ShoppingBag },
   ],
   [
     // Staff disabled for now — not in use

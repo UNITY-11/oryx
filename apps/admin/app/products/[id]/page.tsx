@@ -14,6 +14,7 @@ import {
 import { Product, ProductCategory } from "@features/products/types";
 import {
   hasProductFieldErrors,
+  PRODUCT_CATEGORIES,
   validateProduct,
   validateProductImageFile,
   type ProductFieldErrors,
@@ -33,14 +34,7 @@ import {
   Upload,
 } from "lucide-react";
 
-const CATEGORIES: ProductCategory[] = [
-  "Skincare",
-  "Body Care",
-  "Hair Care",
-  "Aromatherapy",
-  "Accessories",
-  "Supplements",
-];
+const CATEGORIES = PRODUCT_CATEGORIES;
 
 const inputClass =
   "border-primary/40 focus:border-primary text-primary-dark w-full rounded-2xl border bg-transparent px-4 py-3 text-sm focus:outline-none disabled:opacity-60";
@@ -299,95 +293,82 @@ export default function ProductDetailPage({
         : "text-green-600";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden pt-4">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden pt-4 sm:gap-4">
       <Toast toast={toast} onClose={closeToast} />
 
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
-        {/* Top Bar */}
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b px-3 py-3 sm:px-4 sm:py-4 md:flex-row md:items-center md:justify-between md:px-6 md:py-5 lg:px-8">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <MobileMenuButton className="-ml-0" />
-            <button
-              type="button"
-              onClick={() => router.push("/products")}
-              className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-[#fcf4f0] transition-colors"
-              aria-label="Back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="min-w-0">
-              <h1 className="text-primary-dark truncate font-serif text-base font-medium sm:text-xl">
-                {product.name || "Product details"}
-              </h1>
-              <p className="text-text-secondary truncate text-[11px] sm:text-xs">
-                {product.category}
-                {product.brand ? ` · ${product.brand}` : ""}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <span
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase sm:text-xs ${
-                product.status === "Active"
-                  ? "border-green-200 bg-green-50 text-green-700"
-                  : "border-gray-200 bg-gray-100 text-gray-500"
-              }`}
-            >
-              {product.status}
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                update(
-                  "status",
-                  product.status === "Active" ? "Inactive" : "Active"
-                )
-              }
-              disabled={saving}
-              className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
-            >
-              {product.status === "Active" ? (
-                <>
-                  <Ban className="h-4 w-4" />
-                  <span className="hidden sm:inline">Disable</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">Enable</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={saving}
-              className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors sm:px-4 sm:text-sm"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Delete</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || !isDirty}
-              className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-5 sm:text-sm"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <span>{saving ? "Saving…" : "Save"}</span>
-            </button>
-          </div>
+      <header className="border-primary/10 flex shrink-0 flex-wrap items-center gap-2 rounded-2xl border bg-white px-2.5 py-2 shadow-sm sm:gap-3 sm:rounded-3xl sm:px-4 sm:py-2.5 md:px-5">
+        <MobileMenuButton className="-ml-0" />
+        <button
+          type="button"
+          onClick={() => router.push("/products")}
+          className="text-text-secondary hover:text-primary-dark hover:bg-primary/5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+          aria-label="Back to products"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-primary truncate font-serif text-base leading-tight font-medium uppercase sm:text-xl md:text-2xl">
+            Product Details
+          </h1>
+          {product.name ? (
+            <p className="text-text-secondary mt-0.5 truncate text-xs sm:text-sm">
+              {product.name}
+            </p>
+          ) : null}
         </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={saving}
+            className="border-primary/25 text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-2.5 text-sm font-semibold transition-colors sm:px-4"
+            title="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Delete</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              update(
+                "status",
+                product.status === "Active" ? "Inactive" : "Active"
+              )
+            }
+            disabled={saving}
+            className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-2.5 text-sm font-semibold transition-colors sm:px-4 ${
+              product.status === "Active"
+                ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+            }`}
+            title={product.status}
+          >
+            {product.status === "Active" ? (
+              <CheckCircle className="h-4 w-4" />
+            ) : (
+              <Ban className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">{product.status}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !isDirty}
+            className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-4"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {saving ? "Saving…" : "Save"}
+            </span>
+          </button>
+        </div>
+      </header>
 
-        {/* Scrollable Content */}
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <div className="mx-auto flex max-w-4xl flex-col gap-6 sm:gap-8 lg:flex-row">
             <div className="mx-auto w-full max-w-xs shrink-0 sm:max-w-sm lg:mx-0 lg:w-64">

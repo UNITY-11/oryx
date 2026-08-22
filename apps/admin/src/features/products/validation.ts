@@ -1,5 +1,14 @@
 import type { Product, ProductCategory } from "./types";
 
+export const PRODUCT_CATEGORIES: ProductCategory[] = [
+  "Skincare",
+  "Body Care",
+  "Hair Care",
+  "Aromatherapy",
+  "Accessories",
+  "Supplements",
+];
+
 export type ProductFormData = {
   name: string;
   brand: string;
@@ -23,52 +32,149 @@ const ALLOWED_IMAGE_TYPES = [
   "image/gif",
 ];
 
+const MIN_NAME_LENGTH = 2;
+const MAX_NAME_LENGTH = 120;
+const MIN_BRAND_LENGTH = 2;
+const MAX_BRAND_LENGTH = 80;
+const MIN_SIZE_LENGTH = 2;
+const MAX_SIZE_LENGTH = 40;
+const MAX_PRICE = 1_000_000;
+const MAX_QUANTITY = 1_000_000;
+
 function isBlank(value: string | null | undefined): boolean {
   return !value || !String(value).trim();
+}
+
+export function isValidProductCategory(
+  value: unknown
+): value is ProductCategory {
+  return (
+    typeof value === "string" &&
+    PRODUCT_CATEGORIES.includes(value as ProductCategory)
+  );
+}
+
+export function isValidProductStatus(
+  value: unknown
+): value is Product["status"] {
+  return value === "Active" || value === "Inactive";
+}
+
+function hasAtMostTwoDecimalPlaces(value: number): boolean {
+  return Math.abs(value * 100 - Math.round(value * 100)) < 1e-8;
+}
+
+function validateName(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return "Product name is required";
+  if (trimmed.length < MIN_NAME_LENGTH) {
+    return `Name must be at least ${MIN_NAME_LENGTH} characters`;
+  }
+  if (trimmed.length > MAX_NAME_LENGTH) {
+    return `Name must be ${MAX_NAME_LENGTH} characters or less`;
+  }
+  return undefined;
+}
+
+function validateBrand(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length < MIN_BRAND_LENGTH) {
+    return `Brand must be at least ${MIN_BRAND_LENGTH} characters`;
+  }
+  if (trimmed.length > MAX_BRAND_LENGTH) {
+    return `Brand must be ${MAX_BRAND_LENGTH} characters or less`;
+  }
+  return undefined;
+}
+
+function validateVolumeOrWeight(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length < MIN_SIZE_LENGTH) {
+    return `Size must be at least ${MIN_SIZE_LENGTH} characters`;
+  }
+  if (trimmed.length > MAX_SIZE_LENGTH) {
+    return `Size must be ${MAX_SIZE_LENGTH} characters or less`;
+  }
+  return undefined;
+}
+
+function validateCategory(value: ProductCategory): string | undefined {
+  if (!isValidProductCategory(value)) {
+    return "Select a valid category";
+  }
+  return undefined;
+}
+
+function validatePrice(value: number): string | undefined {
+  if (!Number.isFinite(value)) {
+    return "Price must be a valid number";
+  }
+  if (value <= 0) {
+    return "Price must be greater than 0";
+  }
+  if (!hasAtMostTwoDecimalPlaces(value)) {
+    return "Price can have at most 2 decimal places";
+  }
+  if (value > MAX_PRICE) {
+    return `Price cannot exceed ${MAX_PRICE.toLocaleString()} QAR`;
+  }
+  return undefined;
+}
+
+function validateQuantity(value: number): string | undefined {
+  if (!Number.isFinite(value)) {
+    return "Quantity must be a valid number";
+  }
+  if (!Number.isInteger(value)) {
+    return "Quantity must be a whole number";
+  }
+  if (value < 0) {
+    return "Quantity cannot be negative";
+  }
+  if (value > MAX_QUANTITY) {
+    return `Quantity cannot exceed ${MAX_QUANTITY.toLocaleString()}`;
+  }
+  return undefined;
+}
+
+function validateStatus(value: unknown): string | undefined {
+  if (!isValidProductStatus(value)) {
+    return "Status must be Active or Inactive";
+  }
+  return undefined;
 }
 
 export function validateProduct(
   data: Pick<
     ProductFormData,
     "name" | "brand" | "volumeOrWeight" | "quantity" | "price" | "category"
-  >
+  > & { status?: ProductFormData["status"] }
 ): ProductFieldErrors {
   const errors: ProductFieldErrors = {};
 
-  if (isBlank(data.name)) {
-    errors.name = "Product name is required";
-  } else if (data.name.trim().length < 2) {
-    errors.name = "Name must be at least 2 characters";
-  } else if (data.name.trim().length > 120) {
-    errors.name = "Name must be 120 characters or less";
-  }
+  const nameError = validateName(data.name);
+  if (nameError) errors.name = nameError;
 
-  if (!isBlank(data.brand) && data.brand.trim().length > 80) {
-    errors.brand = "Brand must be 80 characters or less";
-  }
+  const brandError = validateBrand(data.brand);
+  if (brandError) errors.brand = brandError;
 
-  if (!isBlank(data.volumeOrWeight) && data.volumeOrWeight.trim().length > 40) {
-    errors.volumeOrWeight = "Size must be 40 characters or less";
-  }
+  const sizeError = validateVolumeOrWeight(data.volumeOrWeight);
+  if (sizeError) errors.volumeOrWeight = sizeError;
 
-  if (!data.category) {
-    errors.category = "Category is required";
-  }
+  const categoryError = validateCategory(data.category);
+  if (categoryError) errors.category = categoryError;
 
-  if (Number.isNaN(data.price) || data.price < 0) {
-    errors.price = "Price must be 0 or greater";
-  } else if (data.price > 1_000_000) {
-    errors.price = "Price is too high";
-  }
+  const priceError = validatePrice(data.price);
+  if (priceError) errors.price = priceError;
 
-  if (
-    Number.isNaN(data.quantity) ||
-    data.quantity < 0 ||
-    !Number.isInteger(data.quantity)
-  ) {
-    errors.quantity = "Quantity must be a whole number (0 or greater)";
-  } else if (data.quantity > 1_000_000) {
-    errors.quantity = "Quantity is too high";
+  const quantityError = validateQuantity(data.quantity);
+  if (quantityError) errors.quantity = quantityError;
+
+  if (data.status !== undefined) {
+    const statusError = validateStatus(data.status);
+    if (statusError) errors.status = statusError;
   }
 
   return errors;
@@ -86,6 +192,13 @@ export function validateProductImageFile(file: File): string | null {
 
 export function hasProductFieldErrors(errors: ProductFieldErrors): boolean {
   return Object.values(errors).some(Boolean);
+}
+
+export function firstProductFieldError(
+  errors: ProductFieldErrors
+): string | null {
+  const first = Object.values(errors).find(Boolean);
+  return first ?? null;
 }
 
 export function productToFormData(product: Product): ProductFormData {

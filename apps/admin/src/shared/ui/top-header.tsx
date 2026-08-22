@@ -20,11 +20,11 @@ export function TopHeader() {
     // Billing disabled for now
     // pathname === "/billing" ||
     pathname === "/company" ||
+    pathname === "/promotional-banner" ||
     (pathname.startsWith("/services/") && pathname !== "/services") ||
     // Staff disabled for now
     // (pathname.startsWith("/staff/") && pathname !== "/staff") ||
-    // Products disabled for now
-    // (pathname.startsWith("/products/") && pathname !== "/products") ||
+    (pathname.startsWith("/products/") && pathname !== "/products") ||
     (pathname.startsWith("/customers/") && pathname !== "/customers") ||
     (pathname.startsWith("/hero/") && pathname !== "/hero") ||
     (pathname.startsWith("/reviews/") && pathname !== "/reviews")
@@ -42,9 +42,8 @@ export function TopHeader() {
         return "Bookings Management";
       case "/services":
         return "Services Management";
-      // Products disabled for now
-      // case "/products":
-      //   return "Products Inventory";
+      case "/products":
+        return "Products Inventory";
       case "/customers":
         return "Customers Directory";
       case "/reviews":
@@ -63,8 +62,7 @@ export function TopHeader() {
         return "Account Security";
       default:
         if (pathname.startsWith("/services/")) return "Service Details";
-        // Products disabled for now
-        // if (pathname.startsWith("/products/")) return "Product Details";
+        if (pathname.startsWith("/products/")) return "Product Details";
         if (pathname.startsWith("/customers/")) return "Customer Details";
         if (pathname.startsWith("/reviews/")) return "Review Details";
         if (pathname === "/hero") return "Hero Section";
@@ -157,17 +155,15 @@ export function TopHeader() {
                 </Link>
               )}
 
-              {/* Products disabled for now
-            {pathname === "/products" && (
-              <Link
-                href="/products/new"
-                className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Product</span>
-              </Link>
-            )}
-            */}
+              {pathname === "/products" && (
+                <Link
+                  href="/products/new"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90 sm:px-6"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Product</span>
+                </Link>
+              )}
 
               {pathname === "/customers" && (
                 <Link

@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import { Toast, type ToastState } from "@/shared/ui/toast";
-import { createProduct, uploadProductImage } from "@features/products/api";
+import { uploadProductImage } from "@features/products/api";
 import { ProductCategory } from "@features/products/types";
 import {
   hasProductFieldErrors,
+  PRODUCT_CATEGORIES,
   validateProduct,
   validateProductImageFile,
   type ProductFieldErrors,
@@ -15,7 +16,9 @@ import {
 } from "@features/products/validation";
 import {
   ArrowLeft,
+  Ban,
   Check,
+  CheckCircle,
   ChevronDown,
   ImageIcon,
   Loader2,
@@ -24,14 +27,7 @@ import {
   Upload,
 } from "lucide-react";
 
-const CATEGORIES: ProductCategory[] = [
-  "Skincare",
-  "Body Care",
-  "Hair Care",
-  "Aromatherapy",
-  "Accessories",
-  "Supplements",
-];
+const CATEGORIES = PRODUCT_CATEGORIES;
 
 const DEFAULT_STATE: ProductFormData = {
   name: "",
@@ -171,6 +167,12 @@ export default function NewProductPage() {
     if (hasProductFieldErrors(errors)) {
       setFieldErrors(errors);
       setToast({ type: "error", message: "Please fix the highlighted fields" });
+      const firstKey = Object.keys(errors)[0];
+      if (firstKey) {
+        document
+          .querySelector(`[data-field="${firstKey}"]`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
@@ -180,13 +182,29 @@ export default function NewProductPage() {
       if (pendingImageFile) {
         imageUrl = await uploadProductImage(pendingImageFile);
       }
-      await createProduct({
-        ...product,
-        name: product.name.trim(),
-        brand: product.brand.trim(),
-        volumeOrWeight: product.volumeOrWeight.trim(),
-        image: imageUrl,
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...product,
+          name: product.name.trim(),
+          brand: product.brand.trim(),
+          volumeOrWeight: product.volumeOrWeight.trim(),
+          image: imageUrl,
+        }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data.fieldErrors && typeof data.fieldErrors === "object") {
+          setFieldErrors(data.fieldErrors as ProductFieldErrors);
+        }
+        setToast({
+          type: "error",
+          message: data.error ?? "Failed to create product",
+        });
+        setSaving(false);
+        return;
+      }
       setToast({ type: "success", message: "Product created successfully" });
       setTimeout(() => router.push("/products"), 900);
     } catch (err) {
@@ -207,69 +225,73 @@ export default function NewProductPage() {
         : "text-green-600";
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden pt-4">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden pt-4 sm:gap-4">
       <Toast toast={toast} onClose={closeToast} />
 
-      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b px-3 py-3 sm:px-4 sm:py-4 md:flex-row md:items-center md:justify-between md:px-6 md:py-5 lg:px-8">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <MobileMenuButton className="-ml-0" />
-            <button
-              type="button"
-              onClick={() => router.push("/products")}
-              className="border-primary/10 text-primary hover:bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-[#fcf4f0] transition-colors"
-              aria-label="Back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="min-w-0">
-              <h1 className="text-primary-dark truncate font-serif text-base font-medium sm:text-xl">
-                New Product
-              </h1>
-              <p className="text-text-secondary truncate text-[11px] sm:text-xs">
-                Add a retail item to inventory
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <button
-              type="button"
-              onClick={() =>
-                update(
-                  "status",
-                  product.status === "Active" ? "Inactive" : "Active"
-                )
-              }
-              disabled={saving}
-              className={`rounded-full border px-3 py-2 text-[10px] font-bold tracking-wider uppercase transition-colors sm:px-4 sm:text-xs ${
-                product.status === "Active"
-                  ? "border-green-200 bg-green-50 text-green-700"
-                  : "border-gray-200 bg-gray-100 text-gray-500"
-              }`}
-            >
-              {product.status}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={saving}
-              className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-5 sm:text-sm"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <span>{saving ? "Creating…" : "Create Product"}</span>
-            </button>
-          </div>
+      <header className="border-primary/10 flex shrink-0 flex-wrap items-center gap-2 rounded-2xl border bg-white px-2.5 py-2 shadow-sm sm:gap-3 sm:rounded-3xl sm:px-4 sm:py-2.5 md:px-5">
+        <MobileMenuButton className="-ml-0" />
+        <button
+          type="button"
+          onClick={() => router.push("/products")}
+          className="text-text-secondary hover:text-primary-dark hover:bg-primary/5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+          aria-label="Back to products"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-primary truncate font-serif text-base leading-tight font-medium uppercase sm:text-xl md:text-2xl">
+            New Product
+          </h1>
         </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              update(
+                "status",
+                product.status === "Active" ? "Inactive" : "Active"
+              )
+            }
+            disabled={saving}
+            className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-2.5 text-sm font-semibold transition-colors sm:px-4 ${
+              product.status === "Active"
+                ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                : "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+            }`}
+            title={product.status}
+          >
+            {product.status === "Active" ? (
+              <CheckCircle className="h-4 w-4" />
+            ) : (
+              <Ban className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">{product.status}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={saving}
+            className="bg-primary inline-flex h-10 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 sm:px-4"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {saving ? "Creating…" : "Create Product"}
+            </span>
+          </button>
+        </div>
+      </header>
 
+      <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <div className="mx-auto flex max-w-4xl flex-col gap-6 sm:gap-8 lg:flex-row">
-            <div className="mx-auto w-full max-w-xs shrink-0 sm:max-w-sm lg:mx-0 lg:w-64">
+            <div
+              className="mx-auto w-full max-w-xs shrink-0 sm:max-w-sm lg:mx-0 lg:w-64"
+              data-field="image"
+            >
               <label className={labelClass}>Product Image</label>
               <div
                 onClick={() => !saving && fileInputRef.current?.click()}
@@ -314,7 +336,7 @@ export default function NewProductPage() {
 
             <div className="min-w-0 flex-1 space-y-5 sm:space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
+                <div data-field="name">
                   <label className={labelClass}>Product Name *</label>
                   <input
                     value={product.name}
@@ -325,7 +347,7 @@ export default function NewProductPage() {
                   />
                   <FieldError message={fieldErrors.name} />
                 </div>
-                <div>
+                <div data-field="category">
                   <label className={labelClass}>Category *</label>
                   <CategoryDropdown
                     value={product.category}
@@ -338,7 +360,7 @@ export default function NewProductPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
+                <div data-field="brand">
                   <label className={labelClass}>Brand</label>
                   <input
                     value={product.brand}
@@ -349,7 +371,7 @@ export default function NewProductPage() {
                   />
                   <FieldError message={fieldErrors.brand} />
                 </div>
-                <div>
+                <div data-field="volumeOrWeight">
                   <label className={labelClass}>Liters / Grams</label>
                   <input
                     value={product.volumeOrWeight}
@@ -363,22 +385,29 @@ export default function NewProductPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
+                <div data-field="price">
                   <label className={labelClass}>Price (QAR) *</label>
                   <input
                     type="number"
                     min={0}
                     step="0.01"
                     disabled={saving}
-                    value={product.price}
-                    onChange={(e) =>
-                      update("price", Math.max(0, Number(e.target.value) || 0))
-                    }
+                    value={product.price === 0 ? "" : product.price}
+                    placeholder="e.g. 150"
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        update("price", 0);
+                        return;
+                      }
+                      const num = Number(raw);
+                      if (!Number.isNaN(num)) update("price", num);
+                    }}
                     className={`${inputClass} ${fieldErrors.price ? inputErrorClass : ""}`}
                   />
                   <FieldError message={fieldErrors.price} />
                 </div>
-                <div>
+                <div data-field="quantity">
                   <label className={labelClass}>Quantity (Stock) *</label>
                   <div className="relative">
                     <input

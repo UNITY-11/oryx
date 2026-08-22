@@ -5,15 +5,14 @@ import Link from "next/link";
 import { fetchBookings } from "@features/bookings/api";
 import { Booking } from "@features/bookings/types";
 import { fetchCustomers } from "@features/customers/api";
-// Products disabled for now
-// import { fetchProducts } from "@features/products/api";
+import { fetchProducts } from "@features/products/api";
 import {
   AlertCircle,
   Calendar,
   DollarSign,
   Loader2,
   RefreshCw,
-  // ShoppingBag, // Products disabled for now
+  ShoppingBag,
   Users,
 } from "lucide-react";
 
@@ -29,12 +28,17 @@ function statusBadgeClass(status: Booking["status"]) {
 export function AdminDashboardClient({
   initialBookings,
   initialCustomerCount,
+  initialActiveProductCount,
 }: {
   initialBookings: Booking[];
   initialCustomerCount: number;
+  initialActiveProductCount: number;
 }) {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [customerCount, setCustomerCount] = useState(initialCustomerCount);
+  const [activeProductCount, setActiveProductCount] = useState(
+    initialActiveProductCount
+  );
 
   // We can still use loading/error states if we want to add a refresh button
   // but initial state is ready
@@ -44,10 +48,13 @@ export function AdminDashboardClient({
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    Promise.all([fetchBookings(), fetchCustomers()])
-      .then(([b, c]) => {
+    Promise.all([fetchBookings(), fetchCustomers(), fetchProducts()])
+      .then(([b, c, p]) => {
         setBookings(b);
         setCustomerCount(c.filter((cust) => cust.status === "Active").length);
+        setActiveProductCount(
+          p.filter((prod) => prod.status === "Active").length
+        );
       })
       .catch((err) =>
         setError(
@@ -71,12 +78,11 @@ export function AdminDashboardClient({
       icon: DollarSign,
     },
     { label: "Active Customers", value: String(customerCount), icon: Users },
-    // Products disabled for now
-    // {
-    //   label: "Active Products",
-    //   value: String(activeProductCount),
-    //   icon: ShoppingBag,
-    // },
+    {
+      label: "Active Products",
+      value: String(activeProductCount),
+      icon: ShoppingBag,
+    },
   ];
 
   const recentBookings = [...bookings]
@@ -90,7 +96,7 @@ export function AdminDashboardClient({
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden sm:gap-5 md:gap-6">
       {/* Stats */}
-      <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+      <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (

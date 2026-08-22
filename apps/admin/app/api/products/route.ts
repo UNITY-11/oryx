@@ -4,9 +4,12 @@ import {
   PRODUCTS_LIST_QUERY,
   type ProductsSortField,
 } from "@/features/products/sanity-queries";
-import type { ProductCategory } from "@/features/products/types";
+import type { Product, ProductCategory } from "@/features/products/types";
 import {
+  firstProductFieldError,
   hasProductFieldErrors,
+  isValidProductCategory,
+  isValidProductStatus,
   validateProduct,
 } from "@/features/products/validation";
 import {
@@ -17,6 +20,24 @@ import {
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
+
+function parseProductBody(body: Record<string, unknown>) {
+  const status: Product["status"] =
+    body.status === "Active" || body.status === "Inactive"
+      ? body.status
+      : "Active";
+
+  return {
+    name: String(body.name ?? ""),
+    brand: String(body.brand ?? ""),
+    volumeOrWeight: String(body.volumeOrWeight ?? ""),
+    quantity: Number(body.quantity ?? 0),
+    price: Number(body.price ?? 0),
+    category: (body.category ?? "Skincare") as ProductCategory,
+    status,
+    image: body.image ?? null,
+  };
+}
 
 export async function GET(request: Request) {
   try {
@@ -73,33 +94,49 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const product = {
-      name: body.name ?? "",
-      brand: body.brand ?? "",
-      volumeOrWeight: body.volumeOrWeight ?? "",
-      quantity: Number(body.quantity ?? 0),
-      price: Number(body.price ?? 0),
-      category: (body.category ?? "Skincare") as ProductCategory,
-    };
-    const errors = validateProduct(product);
-    if (hasProductFieldErrors(errors)) {
-      const first = Object.values(errors).find(Boolean);
+    const parsed = parseProductBody(body);
+
+    if (!isValidProductCategory(parsed.category)) {
       return NextResponse.json(
-        { error: first ?? "Invalid product data" },
+        {
+          error: "Select a valid category",
+          fieldErrors: { category: "Select a valid category" },
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidProductStatus(parsed.status)) {
+      return NextResponse.json(
+        {
+          error: "Status must be Active or Inactive",
+          fieldErrors: { status: "Status must be Active or Inactive" },
+        },
+        { status: 400 }
+      );
+    }
+
+    const errors = validateProduct(parsed);
+    if (hasProductFieldErrors(errors)) {
+      return NextResponse.json(
+        {
+          error: firstProductFieldError(errors) ?? "Invalid product data",
+          fieldErrors: errors,
+        },
         { status: 400 }
       );
     }
 
     const doc = {
       _type: "product",
-      name: product.name.trim(),
-      brand: product.brand.trim(),
-      volumeOrWeight: product.volumeOrWeight.trim(),
-      quantity: product.quantity,
-      price: product.price,
-      category: product.category,
-      image: body.image ?? null,
-      status: body.status ?? "Active",
+      name: parsed.name.trim(),
+      brand: parsed.brand.trim(),
+      volumeOrWeight: parsed.volumeOrWeight.trim(),
+      quantity: parsed.quantity,
+      price: parsed.price,
+      category: parsed.category,
+      image: parsed.image,
+      status: parsed.status,
     };
 
     const created = await sanityClient.create(doc);

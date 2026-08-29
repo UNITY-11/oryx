@@ -10,6 +10,7 @@ export default function ServicesPage() {
     searchQuery,
     setSearchQuery,
     filtered,
+    setFiltered,
     activeCount,
     inactiveCount,
     page,
@@ -29,6 +30,9 @@ export default function ServicesPage() {
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
       filtered={filtered}
+      onItemsDeleted={(ids) =>
+        setFiltered((prev) => prev.filter((s) => !ids.includes(s.id)))
+      }
       activeCount={activeCount}
       inactiveCount={inactiveCount}
       page={page}

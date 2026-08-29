@@ -1,7 +1,18 @@
+"use client";
+
+import { useCallback, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
+import { Toast, type ToastState } from "@/shared/ui/toast";
 import { AlertCircle, ImageIcon, Loader2, Search, Star } from "lucide-react";
 
+import { deleteService } from "../api";
 import { Service } from "../types";
 
 interface ServicesGridProps {
@@ -20,6 +31,7 @@ interface ServicesGridProps {
   to: number;
   hasPrev: boolean;
   hasNext: boolean;
+  onItemsDeleted?: (ids: string[]) => void;
 }
 
 export function ServicesGrid({
@@ -38,13 +50,21 @@ export function ServicesGrid({
   to,
   hasPrev,
   hasNext,
+  onItemsDeleted,
 }: ServicesGridProps) {
+  const router = useRouter();
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const selection = useBulkSelection(filtered.map((s) => s.id));
+
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <Toast toast={toast} onClose={closeToast} />
+
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
         {/* Toolbar */}
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:flex-row md:items-center md:justify-between md:p-6">
-          <div className="relative w-full md:max-w-sm md:shrink-0">
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:p-6">
+          <div className="relative w-full md:max-w-sm">
             <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
             <input
               type="text"
@@ -54,6 +74,23 @@ export function ServicesGrid({
               className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
             />
           </div>
+
+          {!loading && filtered.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={filtered.map((s) => s.id)}
+              entityLabel="services"
+              deleteOne={deleteService}
+              onDeleted={(ids) => {
+                onItemsDeleted?.(ids);
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} service(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         {/* Grid */}
@@ -92,10 +129,10 @@ export function ServicesGrid({
               </Link>
 
               {filtered.map((service) => (
-                <Link
+                <div
                   key={service.id}
-                  href={`/services/${service.id}`}
-                  className="group from-primary/10 to-primary/5 relative aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md sm:rounded-3xl"
+                  onClick={() => router.push(`/services/${service.id}`)}
+                  className="group from-primary/10 to-primary/5 relative aspect-[3/4] cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md sm:rounded-3xl"
                 >
                   {service.image ? (
                     <img
@@ -109,7 +146,6 @@ export function ServicesGrid({
                     </div>
                   )}
 
-                  {/* Always visible on touch; hover-enhanced on desktop */}
                   <div className="from-primary-dark/80 via-primary-dark/20 absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 opacity-100 transition-opacity duration-300 sm:p-4 md:via-transparent md:opacity-0 md:group-hover:opacity-100">
                     <p className="line-clamp-2 text-xs leading-tight font-semibold text-white sm:text-sm">
                       {service.name}
@@ -137,7 +173,21 @@ export function ServicesGrid({
                       Featured
                     </span>
                   )}
-                </Link>
+
+                  <div
+                    className="absolute bottom-2 left-2 z-20 sm:bottom-3 sm:left-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
+                      <BulkSelectCheckbox
+                        selection={selection}
+                        id={service.id}
+                        label={`Select ${service.name}`}
+                        className="border-white/50"
+                      />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}

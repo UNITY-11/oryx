@@ -12,6 +12,7 @@ export default function CustomersPage() {
     tierFilter,
     setTierFilter,
     filtered,
+    setFiltered,
     activeCount,
     inactiveCount,
     page,
@@ -34,6 +35,9 @@ export default function CustomersPage() {
       tierFilter={tierFilter}
       setTierFilter={setTierFilter}
       filtered={filtered}
+      onItemsDeleted={(ids) =>
+        setFiltered((prev) => prev.filter((c) => !ids.includes(c.id)))
+      }
       activeCount={activeCount}
       inactiveCount={inactiveCount}
       page={page}

@@ -1,7 +1,15 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
+import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
   Loader2,
@@ -12,6 +20,7 @@ import {
   UserCircle2,
 } from "lucide-react";
 
+import { deleteCustomer } from "../api";
 import { TIER_FILTERS } from "../api/use-customers";
 import { Customer, CustomerTier } from "../types";
 
@@ -34,6 +43,7 @@ interface CustomersListProps {
   hasPrev: boolean;
   hasNext: boolean;
   onRetry?: () => void;
+  onItemsDeleted?: (ids: string[]) => void;
 }
 
 function tierBadgeClass(tier: CustomerTier) {
@@ -63,42 +73,67 @@ export function CustomersList({
   hasPrev,
   hasNext,
   onRetry,
+  onItemsDeleted,
 }: CustomersListProps) {
+  const router = useRouter();
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const selection = useBulkSelection(filtered.map((c) => c.id));
   const hasFilters = Boolean(searchQuery.trim()) || tierFilter !== "All";
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <Toast toast={toast} onClose={closeToast} />
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:flex-row md:items-center md:justify-between md:p-6">
-          <div className="relative w-full md:max-w-sm md:shrink-0">
-            <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
-            <input
-              type="text"
-              placeholder="Search by name, email or phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
-            />
-          </div>
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-sm md:shrink-0">
+              <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
+              <input
+                type="text"
+                placeholder="Search by name, email or phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
+              />
+            </div>
 
-          <div className="-mx-3 w-[calc(100%+1.5rem)] overflow-x-auto px-3 sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
-            <div className="scrollbar-hide flex w-max items-center gap-2 pb-0.5 sm:w-auto sm:flex-wrap sm:justify-end">
-              {TIER_FILTERS.map((tier) => (
-                <button
-                  key={tier}
-                  type="button"
-                  onClick={() => setTierFilter(tier)}
-                  className={`rounded-full border px-3 py-1.5 text-[11px] font-medium whitespace-nowrap transition-colors sm:px-4 sm:py-2 sm:text-xs ${
-                    tierFilter === tier
-                      ? "bg-primary border-primary text-white shadow-sm"
-                      : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
-                  }`}
-                >
-                  {tier}
-                </button>
-              ))}
+            <div className="-mx-3 w-[calc(100%+1.5rem)] overflow-x-auto px-3 sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
+              <div className="scrollbar-hide flex w-max items-center gap-2 pb-0.5 sm:w-auto sm:flex-wrap sm:justify-end">
+                {TIER_FILTERS.map((tier) => (
+                  <button
+                    key={tier}
+                    type="button"
+                    onClick={() => setTierFilter(tier)}
+                    className={`rounded-full border px-3 py-1.5 text-[11px] font-medium whitespace-nowrap transition-colors sm:px-4 sm:py-2 sm:text-xs ${
+                      tierFilter === tier
+                        ? "bg-primary border-primary text-white shadow-sm"
+                        : "text-text-secondary border-primary/10 hover:bg-primary/5 bg-white"
+                    }`}
+                  >
+                    {tier}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+
+          {!loading && filtered.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={filtered.map((c) => c.id)}
+              entityLabel="customers"
+              deleteOne={deleteCustomer}
+              onDeleted={(ids) => {
+                onItemsDeleted?.(ids);
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} customer(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
@@ -150,7 +185,7 @@ export function CustomersList({
           ) : (
             <div className="border-primary/10 overflow-hidden rounded-2xl border">
               <div className="text-text-secondary border-primary/10 sticky top-0 z-10 hidden grid-cols-[auto_1fr_1fr_100px_100px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase lg:grid">
-                <span className="w-10" />
+                <span className="w-6" />
                 <span>Customer</span>
                 <span>Contact</span>
                 <span>Tier</span>
@@ -159,12 +194,19 @@ export function CustomersList({
 
               <div className="divide-primary/5 divide-y">
                 {filtered.map((customer) => (
-                  <Link
+                  <div
                     key={customer.id}
-                    href={`/customers/${customer.id}`}
-                    className="hover:bg-primary/5 group grid grid-cols-1 gap-3 px-3.5 py-4 transition-colors sm:gap-4 sm:px-5 md:px-6 lg:grid-cols-[auto_1fr_1fr_100px_100px] lg:items-center"
+                    onClick={() => router.push(`/customers/${customer.id}`)}
+                    className="hover:bg-primary/5 group flex cursor-pointer gap-3 px-3.5 py-4 transition-colors sm:gap-4 sm:px-5 md:px-6 lg:grid lg:grid-cols-[auto_1fr_1fr_100px_100px] lg:items-center lg:gap-4"
                   >
-                    <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex shrink-0 items-start pt-0.5 lg:items-center">
+                      <BulkSelectCheckbox
+                        selection={selection}
+                        id={customer.id}
+                        label={`Select ${customer.name}`}
+                      />
+                    </div>
+                    <div className="flex min-w-0 flex-1 items-center gap-3 lg:col-start-2">
                       <div className="bg-primary/10 border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border font-serif">
                         {customer.avatar ? (
                           <img
@@ -238,12 +280,12 @@ export function CustomersList({
                       </span>
                     </div>
 
-                    <div className="hidden text-right lg:block">
+                    <div className="hidden text-right lg:col-start-5 lg:block">
                       <span className="text-primary-dark text-sm font-semibold">
                         QAR {customer.totalSpent}
                       </span>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>

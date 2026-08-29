@@ -4,8 +4,13 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { deleteCoupon, fetchCouponsPage } from "@/features/coupons/api";
 import { Coupon } from "@/features/coupons/types";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 import { useSanityListener } from "@/shared/hooks/use-sanity-listener";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -79,6 +84,7 @@ export default function CouponsPage() {
 
   useSanityListener('*[_type == "coupon"]', loadCoupons);
 
+  const selection = useBulkSelection(coupons.map((c) => c.id));
   const hasSearch = Boolean(searchQuery.trim());
 
   const handleConfirmDelete = async () => {
@@ -104,33 +110,52 @@ export default function CouponsPage() {
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 md:p-6">
-          <div className="min-w-0">
-            <h2 className="text-primary-dark font-serif text-xl font-medium sm:text-2xl">
-              Coupons & Offers
-            </h2>
-            <p className="text-text-secondary mt-0.5 text-sm">
-              Manage promotional banners and discount codes.
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-            <div className="relative w-full sm:w-56">
-              <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search coupons..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none"
-              />
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-4 sm:p-5 md:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-primary-dark font-serif text-xl font-medium sm:text-2xl">
+                Coupons & Offers
+              </h2>
+              <p className="text-text-secondary mt-0.5 text-sm">
+                Manage promotional banners and discount codes.
+              </p>
             </div>
-            <Link
-              href="/coupons/new"
-              className="bg-primary hover:bg-primary-dark inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold text-white transition-colors sm:h-10 sm:w-auto"
-            >
-              <Plus className="h-4 w-4" /> Add Coupon
-            </Link>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-56">
+                <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search coupons..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none"
+                />
+              </div>
+              <Link
+                href="/coupons/new"
+                className="bg-primary hover:bg-primary-dark inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold text-white transition-colors sm:h-10 sm:w-auto"
+              >
+                <Plus className="h-4 w-4" /> Add Coupon
+              </Link>
+            </div>
           </div>
+
+          {!loading && coupons.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={coupons.map((c) => c.id)}
+              entityLabel="coupons"
+              deleteOne={deleteCoupon}
+              onDeleted={(ids) => {
+                setCoupons((prev) => prev.filter((c) => !ids.includes(c.id)));
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} coupon(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
@@ -184,6 +209,13 @@ export default function CouponsPage() {
                   key={coupon.id}
                   className="border-primary/15 relative w-full overflow-hidden rounded-2xl border bg-white shadow-sm"
                 >
+                  <div className="absolute top-2 right-14 z-20 sm:top-2 sm:right-16">
+                    <BulkSelectCheckbox
+                      selection={selection}
+                      id={coupon.id}
+                      label={`Select ${coupon.title}`}
+                    />
+                  </div>
                   <div className="absolute top-2 right-2 z-20 flex gap-1.5 rounded-full bg-white/90 p-1 shadow-sm backdrop-blur-sm">
                     <Link
                       href={`/coupons/${coupon.id}`}

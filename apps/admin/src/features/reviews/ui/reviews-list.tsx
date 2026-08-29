@@ -2,6 +2,11 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -70,6 +75,7 @@ export function ReviewsList({
   const [deleteTarget, setDeleteTarget] = useState<Review | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
+  const selection = useBulkSelection(reviews.map((r) => r.id));
 
   const hasSearch = Boolean(searchQuery.trim());
   const applyLocalUpdate = useCallback(
@@ -133,7 +139,7 @@ export function ReviewsList({
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
-        <div className="border-primary/10 flex shrink-0 border-b p-3 sm:p-4 md:p-6">
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:p-4 md:p-6">
           <div className="relative w-full md:max-w-sm">
             <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
             <input
@@ -144,6 +150,25 @@ export function ReviewsList({
               className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
             />
           </div>
+
+          {!loading && reviews.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={reviews.map((r) => r.id)}
+              entityLabel="reviews"
+              deleteOne={deleteReview}
+              onDeleted={(ids) => {
+                applyLocalUpdate((items) =>
+                  items.filter((r) => !ids.includes(r.id))
+                );
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} review(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
@@ -194,7 +219,8 @@ export function ReviewsList({
             </div>
           ) : (
             <div className="border-primary/10 overflow-hidden rounded-2xl border">
-              <div className="text-text-secondary border-primary/10 sticky top-0 z-10 hidden grid-cols-[minmax(0,1fr)_minmax(0,2fr)_80px_90px_100px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase lg:grid">
+              <div className="text-text-secondary border-primary/10 sticky top-0 z-10 hidden grid-cols-[auto_minmax(0,1fr)_minmax(0,2fr)_80px_90px_100px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase lg:grid">
+                <span className="w-6" />
                 <span>Reviewer</span>
                 <span>Review Text</span>
                 <span className="text-center">Rating</span>
@@ -206,86 +232,96 @@ export function ReviewsList({
                 {reviews.map((review) => (
                   <div
                     key={review.id}
-                    className="hover:bg-primary/5 grid grid-cols-1 gap-3 px-3.5 py-4 transition-colors sm:gap-4 sm:px-5 md:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_80px_90px_100px] lg:items-center"
+                    className="hover:bg-primary/5 flex gap-3 px-3.5 py-4 transition-colors sm:gap-4 sm:px-5 md:px-6 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,2fr)_80px_90px_100px] lg:items-center lg:gap-4"
                   >
-                    <div className="flex min-w-0 items-start justify-between gap-2 lg:contents">
-                      <div className="flex min-w-0 flex-col lg:col-start-1">
-                        <span className="text-primary-dark truncate text-sm font-semibold">
-                          {review.name}
-                        </span>
-                        <div className="mt-1 flex items-center gap-1.5 lg:hidden">
-                          <span className="text-primary-dark text-xs font-medium">
-                            {review.rating}
+                    <div className="flex shrink-0 items-start pt-0.5 lg:items-center">
+                      <BulkSelectCheckbox
+                        selection={selection}
+                        id={review.id}
+                        label={`Select ${review.name}`}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-2 lg:contents">
+                      <div className="flex min-w-0 items-start justify-between gap-2 lg:col-start-2">
+                        <div className="flex min-w-0 flex-col">
+                          <span className="text-primary-dark truncate text-sm font-semibold">
+                            {review.name}
                           </span>
-                          <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
-                          <span
-                            className={`ml-1 rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase ${statusBadgeClass(review.status)}`}
+                          <div className="mt-1 flex items-center gap-1.5 lg:hidden">
+                            <span className="text-primary-dark text-xs font-medium">
+                              {review.rating}
+                            </span>
+                            <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                            <span
+                              className={`ml-1 rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase ${statusBadgeClass(review.status)}`}
+                            >
+                              {review.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(review)}
+                            disabled={isProcessing === review.id}
+                            className="text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-50"
+                            title={
+                              review.status === "Active"
+                                ? "Hide review"
+                                : "Show review"
+                            }
+                            aria-label={
+                              review.status === "Active"
+                                ? "Hide review"
+                                : "Show review"
+                            }
                           >
-                            {review.status}
-                          </span>
+                            {isProcessing === review.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : review.status === "Active" ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                          <Link
+                            href={`/reviews/${review.id}`}
+                            className="text-primary hover:text-primary-dark transition-colors"
+                            title="Edit"
+                            aria-label="Edit review"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(review)}
+                            disabled={isProcessing === review.id}
+                            className="text-red-400 transition-colors hover:text-red-600 disabled:opacity-50"
+                            title="Delete"
+                            aria-label="Delete review"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-1.5 lg:hidden">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(review)}
-                          disabled={isProcessing === review.id}
-                          className="text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-50"
-                          title={
-                            review.status === "Active"
-                              ? "Hide review"
-                              : "Show review"
-                          }
-                          aria-label={
-                            review.status === "Active"
-                              ? "Hide review"
-                              : "Show review"
-                          }
-                        >
-                          {isProcessing === review.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : review.status === "Active" ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                        <Link
-                          href={`/reviews/${review.id}`}
-                          className="text-primary hover:text-primary-dark transition-colors"
-                          title="Edit"
-                          aria-label="Edit review"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(review)}
-                          disabled={isProcessing === review.id}
-                          className="text-red-400 transition-colors hover:text-red-600 disabled:opacity-50"
-                          title="Delete"
-                          aria-label="Delete review"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                      <div className="min-w-0 lg:col-start-3">
+                        <p className="text-text-secondary line-clamp-2 text-sm italic">
+                          &ldquo;{review.text}&rdquo;
+                        </p>
                       </div>
                     </div>
 
-                    <div className="min-w-0 lg:col-start-2">
-                      <p className="text-text-secondary line-clamp-2 text-sm italic">
-                        &ldquo;{review.text}&rdquo;
-                      </p>
-                    </div>
-
-                    <div className="hidden items-center justify-center gap-1 lg:flex">
+                    <div className="hidden items-center justify-center gap-1 lg:col-start-4 lg:flex">
                       <span className="text-primary-dark text-sm font-medium">
                         {review.rating}
                       </span>
                       <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                     </div>
 
-                    <div className="hidden text-center lg:block">
+                    <div className="hidden text-center lg:col-start-5 lg:block">
                       <span
                         className={`inline-block rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase ${statusBadgeClass(review.status)}`}
                       >
@@ -293,7 +329,7 @@ export function ReviewsList({
                       </span>
                     </div>
 
-                    <div className="hidden items-center justify-end gap-2 lg:flex">
+                    <div className="hidden items-center justify-end gap-2 lg:col-start-6 lg:flex">
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(review)}

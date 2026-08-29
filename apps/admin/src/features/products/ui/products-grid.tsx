@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -16,6 +21,7 @@ import {
   Search,
 } from "lucide-react";
 
+import { deleteProduct } from "../api";
 import {
   CATEGORY_FILTERS,
   getStockBadgeClasses,
@@ -48,6 +54,7 @@ interface ProductsGridProps {
   hasPrev: boolean;
   hasNext: boolean;
   onRetry?: () => void;
+  onItemsDeleted?: (ids: string[]) => void;
 }
 
 export function ProductsGrid({
@@ -74,8 +81,10 @@ export function ProductsGrid({
   hasPrev,
   hasNext,
   onRetry,
+  onItemsDeleted,
 }: ProductsGridProps) {
   const router = useRouter();
+  const selection = useBulkSelection(filtered.map((p) => p.id));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [quantityProduct, setQuantityProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
@@ -197,6 +206,23 @@ export function ProductsGrid({
               ))}
             </div>
           </div>
+
+          {!loading && filtered.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={filtered.map((p) => p.id)}
+              entityLabel="products"
+              deleteOne={deleteProduct}
+              onDeleted={(ids) => {
+                onItemsDeleted?.(ids);
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} product(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         {/* Grid */}
@@ -294,6 +320,20 @@ export function ProductsGrid({
                       {product.status === "Inactive" && (
                         <div className="absolute inset-0 bg-white/45 backdrop-blur-[1px]" />
                       )}
+                    </div>
+
+                    <div
+                      className="absolute bottom-2 left-2 z-20 sm:bottom-3 sm:left-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
+                        <BulkSelectCheckbox
+                          selection={selection}
+                          id={product.id}
+                          label={`Select ${product.name}`}
+                          className="border-white/50"
+                        />
+                      </div>
                     </div>
 
                     <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1 sm:top-3 sm:left-3">

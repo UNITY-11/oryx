@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DEFAULT_PAGE_SIZE } from "@/shared/ui/list-pagination";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
@@ -100,6 +100,7 @@ export function useBookings(initialData?: BookingsPageResponse) {
     sortOrder,
     toggleSort,
     bookings,
+    setBookings,
     page,
     setPage,
     totalPages,

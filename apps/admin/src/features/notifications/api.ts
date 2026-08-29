@@ -25,3 +25,11 @@ export async function markAllNotificationsRead(): Promise<void> {
   });
   await parseOrThrow<{ success: boolean }>(res, "Failed to mark all as read");
 }
+
+export async function deleteNotification(id: string): Promise<void> {
+  const res = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+  await parseOrThrow<{ success: boolean }>(
+    res,
+    "Failed to delete notification"
+  );
+}

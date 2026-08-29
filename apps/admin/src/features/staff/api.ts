@@ -80,3 +80,11 @@ export async function updateStaff(
   });
   return parseOrThrow<Staff>(res, "Failed to update staff");
 }
+
+export async function deleteStaff(id: string): Promise<void> {
+  const res = await fetch(`/api/staff/${id}`, { method: "DELETE" });
+  await parseOrThrow<{ success: boolean }>(
+    res,
+    "Failed to delete staff member"
+  );
+}

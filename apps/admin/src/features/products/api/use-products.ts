@@ -75,6 +75,7 @@ export function useProducts() {
     isSortOpen,
     setIsSortOpen,
     filtered: list.items,
+    setFiltered: list.setItems,
     activeCount: list.meta?.activeCount ?? 0,
     lowStockCount: list.meta?.lowStockCount ?? 0,
     outOfStockCount: list.meta?.outOfStockCount ?? 0,

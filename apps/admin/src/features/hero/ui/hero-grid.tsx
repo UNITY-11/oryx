@@ -1,5 +1,12 @@
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   closestCenter,
@@ -27,7 +34,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-import { reorderHeroItems } from "../api";
+import { deleteHeroItem, reorderHeroItems } from "../api";
 import { HeroItem } from "../types";
 
 interface HeroGridProps {
@@ -37,7 +44,13 @@ interface HeroGridProps {
   onRetry?: () => void;
 }
 
-function SortableHeroCard({ item }: { item: HeroItem }) {
+function SortableHeroCard({
+  item,
+  selection,
+}: {
+  item: HeroItem;
+  selection: ReturnType<typeof useBulkSelection>;
+}) {
   const {
     attributes,
     listeners,
@@ -63,6 +76,21 @@ function SortableHeroCard({ item }: { item: HeroItem }) {
         isDragging ? "scale-105 shadow-lg" : "hover:shadow-md"
       }`}
     >
+      <div
+        className="absolute bottom-2 left-2 z-20 sm:bottom-3 sm:left-3"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
+          <BulkSelectCheckbox
+            selection={selection}
+            id={item.id}
+            label={`Select ${item.title || "slide"}`}
+            className="border-white/50"
+          />
+        </div>
+      </div>
+
       <div
         {...attributes}
         {...listeners}
@@ -129,6 +157,7 @@ export function HeroGrid({
   const [items, setItems] = useState(initialItems);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
+  const selection = useBulkSelection(items.map((i) => i.id));
 
   const closeToast = useCallback(() => setToast(null), []);
 
@@ -186,16 +215,35 @@ export function HeroGrid({
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
-        <div className="border-primary/10 flex shrink-0 flex-col gap-2 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <h2 className="text-primary flex items-center gap-2 text-lg font-medium sm:text-xl">
-            Hero Slides
-            {saving && (
-              <Loader2 className="text-text-secondary h-4 w-4 animate-spin" />
-            )}
-          </h2>
-          <p className="text-text-secondary text-xs sm:text-sm">
-            Drag slides to reorder · tap to edit
-          </p>
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
+            <h2 className="text-primary flex items-center gap-2 text-lg font-medium sm:text-xl">
+              Hero Slides
+              {saving && (
+                <Loader2 className="text-text-secondary h-4 w-4 animate-spin" />
+              )}
+            </h2>
+            <p className="text-text-secondary text-xs sm:text-sm">
+              Drag slides to reorder · tap to edit
+            </p>
+          </div>
+
+          {!loading && items.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={items.map((i) => i.id)}
+              entityLabel="slides"
+              deleteOne={deleteHeroItem}
+              onDeleted={(ids) => {
+                setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} slide(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         <div className="scrollbar-hide flex-1 overflow-auto p-4 sm:p-6">
@@ -250,7 +298,11 @@ export function HeroGrid({
                     strategy={rectSortingStrategy}
                   >
                     {items.map((item) => (
-                      <SortableHeroCard key={item.id} item={item} />
+                      <SortableHeroCard
+                        key={item.id}
+                        item={item}
+                        selection={selection}
+                      />
                     ))}
                   </SortableContext>
                 </DndContext>

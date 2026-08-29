@@ -163,6 +163,7 @@ export function useNotifications() {
 
   return {
     notifications,
+    setNotifications,
     loading,
     error,
     filter,

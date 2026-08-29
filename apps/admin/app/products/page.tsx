@@ -16,6 +16,7 @@ export default function ProductsPage() {
     isSortOpen,
     setIsSortOpen,
     filtered,
+    setFiltered,
     activeCount,
     lowStockCount,
     outOfStockCount,
@@ -43,6 +44,9 @@ export default function ProductsPage() {
       isSortOpen={isSortOpen}
       setIsSortOpen={setIsSortOpen}
       filtered={filtered}
+      onItemsDeleted={(ids) =>
+        setFiltered((prev) => prev.filter((p) => !ids.includes(p.id)))
+      }
       activeCount={activeCount}
       lowStockCount={lowStockCount}
       outOfStockCount={outOfStockCount}

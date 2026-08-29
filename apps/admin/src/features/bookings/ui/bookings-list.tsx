@@ -1,5 +1,12 @@
+import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
+import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
   ArrowUpDown,
@@ -8,6 +15,7 @@ import {
   Search,
 } from "lucide-react";
 
+import { deleteBooking } from "../api";
 import type { BookingsSortField } from "../api/bookings-list-types";
 import { BookingWizard } from "../booking-wizard";
 import { Booking, BookingStatus } from "../types";
@@ -60,6 +68,7 @@ interface BookingsListProps {
   hasNext: boolean;
   handleAddBooking: () => void;
   createBooking: (payload: any) => Promise<Booking>;
+  onItemsDeleted?: (ids: string[]) => void;
 }
 
 export function BookingsList({
@@ -82,9 +91,13 @@ export function BookingsList({
   hasNext,
   handleAddBooking,
   createBooking,
+  onItemsDeleted,
 }: BookingsListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const selection = useBulkSelection(bookings.map((b) => b.id));
   const isAdding = searchParams.get("action") === "add";
   const step = Number(searchParams.get("step")) || 1;
   const setStep = (newStep: number) => {
@@ -93,6 +106,7 @@ export function BookingsList({
 
   return (
     <div className="flex h-full flex-col space-y-6 md:space-y-8">
+      <Toast toast={toast} onClose={closeToast} />
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border bg-white shadow-sm">
         {isAdding ? (
           <BookingWizard
@@ -139,6 +153,23 @@ export function BookingsList({
                   </button>
                 ))}
               </div>
+
+              {!loading && bookings.length > 0 && (
+                <BulkDeleteToolbar
+                  selection={selection}
+                  itemIds={bookings.map((b) => b.id)}
+                  entityLabel="bookings"
+                  deleteOne={deleteBooking}
+                  onDeleted={(ids) => {
+                    onItemsDeleted?.(ids);
+                    setToast({
+                      type: "success",
+                      message: `Deleted ${ids.length} booking(s)`,
+                    });
+                  }}
+                  onError={(msg) => setToast({ type: "error", message: msg })}
+                />
+              )}
             </div>
 
             {/* Mobile cards */}
@@ -158,41 +189,50 @@ export function BookingsList({
                 </div>
               ) : (
                 bookings.map((booking) => (
-                  <button
+                  <div
                     key={booking.id}
-                    type="button"
-                    onClick={() => router.push(`/bookings/${booking.id}`)}
-                    className="border-primary/10 hover:border-primary/25 w-full rounded-2xl border bg-[#fcf4f0] p-4 text-left transition-colors"
+                    className="border-primary/10 hover:border-primary/25 flex w-full gap-3 rounded-2xl border bg-[#fcf4f0] p-4 text-left transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-primary-dark truncate font-semibold">
-                          {booking.customerName}
-                        </p>
-                        <p className="text-text-secondary mt-0.5 truncate text-sm">
-                          {booking.phone || "No phone"}
+                    <BulkSelectCheckbox
+                      selection={selection}
+                      id={booking.id}
+                      label={`Select ${booking.customerName}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/bookings/${booking.id}`)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-primary-dark truncate font-semibold">
+                            {booking.customerName}
+                          </p>
+                          <p className="text-text-secondary mt-0.5 truncate text-sm">
+                            {booking.phone || "No phone"}
+                          </p>
+                        </div>
+                        <span
+                          className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusBadgeClass(booking.status)}`}
+                        >
+                          {booking.status}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-text-primary truncate text-sm font-medium">
+                            {booking.services[0]?.name || "Custom Session"}
+                          </p>
+                          <p className="text-text-secondary mt-0.5 text-xs">
+                            {formatBookingDate(booking.date)} · {booking.time}
+                          </p>
+                        </div>
+                        <p className="text-primary-dark shrink-0 text-sm font-semibold">
+                          QAR {booking.amount}
                         </p>
                       </div>
-                      <span
-                        className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusBadgeClass(booking.status)}`}
-                      >
-                        {booking.status}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-end justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-text-primary truncate text-sm font-medium">
-                          {booking.services[0]?.name || "Custom Session"}
-                        </p>
-                        <p className="text-text-secondary mt-0.5 text-xs">
-                          {formatBookingDate(booking.date)} · {booking.time}
-                        </p>
-                      </div>
-                      <p className="text-primary-dark shrink-0 text-sm font-semibold">
-                        QAR {booking.amount}
-                      </p>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 ))
               )}
             </div>
@@ -202,6 +242,7 @@ export function BookingsList({
               <table className="w-full min-w-[900px] border-collapse text-left">
                 <thead className="sticky top-0 z-10 bg-[#fcf4f0]">
                   <tr className="border-primary/10 text-text-secondary border-b text-xs tracking-wider uppercase">
+                    <th className="w-10 py-4 pl-4 font-medium md:pl-6" />
                     <th
                       className="group cursor-pointer py-4 pl-6 font-medium md:pl-8"
                       onClick={() => toggleSort("customerName")}
@@ -243,7 +284,7 @@ export function BookingsList({
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="text-text-secondary py-12 text-center"
                       >
                         <div className="flex items-center justify-center gap-2">
@@ -255,7 +296,7 @@ export function BookingsList({
                   ) : error ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="py-12 text-center text-red-500"
                       >
                         <div className="flex items-center justify-center gap-2">
@@ -266,7 +307,7 @@ export function BookingsList({
                   ) : totalItems === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="text-text-secondary py-12 text-center"
                       >
                         No bookings found matching your filters.
@@ -279,7 +320,16 @@ export function BookingsList({
                         onClick={() => router.push(`/bookings/${booking.id}`)}
                         className="hover:bg-primary/5 group cursor-pointer transition-colors"
                       >
-                        <td className="py-5 pl-6 md:pl-8">
+                        <td
+                          className="py-5 pl-4 md:pl-6"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <BulkSelectCheckbox
+                            selection={selection}
+                            id={booking.id}
+                          />
+                        </td>
+                        <td className="py-5 pl-2">
                           <p className="text-primary-dark font-medium">
                             {booking.customerName}
                           </p>

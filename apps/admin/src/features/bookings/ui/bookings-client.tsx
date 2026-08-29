@@ -19,6 +19,7 @@ export function BookingsClient({
     sortField,
     toggleSort,
     bookings,
+    setBookings,
     page,
     setPage,
     totalPages,
@@ -29,6 +30,7 @@ export function BookingsClient({
     hasNext,
     handleAddBooking,
     createBooking,
+    reloadBookings,
   } = useBookings(initialData);
 
   return (
@@ -52,6 +54,10 @@ export function BookingsClient({
       hasNext={hasNext}
       handleAddBooking={handleAddBooking}
       createBooking={createBooking}
+      onItemsDeleted={(ids) => {
+        setBookings((prev) => prev.filter((b) => !ids.includes(b.id)));
+        reloadBookings();
+      }}
     />
   );
 }

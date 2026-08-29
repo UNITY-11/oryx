@@ -1,4 +1,13 @@
+"use client";
+
+import { useCallback, useState } from "react";
 import Link from "next/link";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
+import { Toast, type ToastState } from "@/shared/ui/toast";
 import { buildWhatsAppUrl } from "@repo/validation";
 import {
   AlertCircle,
@@ -18,6 +27,7 @@ import {
   Star,
 } from "lucide-react";
 
+import { deleteNotification } from "../api";
 import { Notification, NotificationType } from "../types";
 
 interface NotificationsPanelProps {
@@ -36,6 +46,7 @@ interface NotificationsPanelProps {
   toggleStar: (e: React.MouseEvent, id: string) => void;
   onRetry?: () => void;
   onBack?: () => void;
+  onItemsDeleted?: (ids: string[]) => void;
 }
 
 function getNotificationIcon(type: NotificationType) {
@@ -271,190 +282,227 @@ export function NotificationsPanel({
   toggleStar,
   onRetry,
   onBack,
+  onItemsDeleted,
 }: NotificationsPanelProps) {
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const selection = useBulkSelection(filtered.map((n) => n.id));
   const showMobileDetail = Boolean(selectedNotif);
 
   return (
-    <div className="border-primary/20 flex h-full overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
-      {/* Inbox list */}
-      <div
-        className={`border-primary/20 flex w-full shrink-0 flex-col border-r bg-white md:w-[400px] lg:w-[450px] ${
-          showMobileDetail ? "hidden md:flex" : "flex"
-        }`}
-      >
-        <div className="border-primary/10 border-b p-4 sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6">
-            <h1 className="text-primary-dark font-serif text-xl sm:text-2xl">
-              Inbox
-            </h1>
-            <button
-              type="button"
-              onClick={markAllAsRead}
-              disabled={unreadCount === 0 || loading}
-              className="text-text-secondary hover:text-primary flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold tracking-wider uppercase transition-colors disabled:opacity-40"
-            >
-              <Check className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Mark all read</span>
-              <span className="sm:hidden">Read all</span>
-            </button>
+    <>
+      <Toast toast={toast} onClose={closeToast} />
+      <div className="border-primary/20 flex h-full overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
+        {/* Inbox list */}
+        <div
+          className={`border-primary/20 flex w-full shrink-0 flex-col border-r bg-white md:w-[400px] lg:w-[450px] ${
+            showMobileDetail ? "hidden md:flex" : "flex"
+          }`}
+        >
+          <div className="border-primary/10 border-b p-4 sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6">
+              <h1 className="text-primary-dark font-serif text-xl sm:text-2xl">
+                Inbox
+              </h1>
+              <button
+                type="button"
+                onClick={markAllAsRead}
+                disabled={unreadCount === 0 || loading}
+                className="text-text-secondary hover:text-primary flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold tracking-wider uppercase transition-colors disabled:opacity-40"
+              >
+                <Check className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Mark all read</span>
+                <span className="sm:hidden">Read all</span>
+              </button>
+            </div>
+
+            <div className="scrollbar-hide -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
+              {["All", "Starred", "Booking", "Stock"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() =>
+                    setFilter(type as NotificationType | "All" | "Starred")
+                  }
+                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wider uppercase transition-all duration-300 ${
+                    filter === type
+                      ? "bg-primary shadow-primary/20 text-white shadow-md"
+                      : "text-primary/60 border-primary/20 hover:border-primary/40 hover:text-primary border bg-white"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            {!loading && filtered.length > 0 && (
+              <BulkDeleteToolbar
+                selection={selection}
+                itemIds={filtered.map((n) => n.id)}
+                entityLabel="notifications"
+                deleteOne={deleteNotification}
+                onDeleted={(ids) => {
+                  onItemsDeleted?.(ids);
+                  setToast({
+                    type: "success",
+                    message: `Deleted ${ids.length} notification(s)`,
+                  });
+                }}
+                onError={(msg) => setToast({ type: "error", message: msg })}
+                className="mt-3"
+              />
+            )}
           </div>
 
-          <div className="scrollbar-hide -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
-            {["All", "Starred", "Booking", "Stock"].map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() =>
-                  setFilter(type as NotificationType | "All" | "Starred")
-                }
-                className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wider uppercase transition-all duration-300 ${
-                  filter === type
-                    ? "bg-primary shadow-primary/20 text-white shadow-md"
-                    : "text-primary/60 border-primary/20 hover:border-primary/40 hover:text-primary border bg-white"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
+          <div className="scrollbar-hide divide-primary/10 flex-1 divide-y overflow-auto">
+            {loading ? (
+              <div className="text-text-secondary flex h-full min-h-48 flex-col items-center justify-center p-6 text-center sm:p-8">
+                <Loader2 className="text-primary mb-4 h-8 w-8 animate-spin" />
+                <p className="text-sm font-medium">Loading notifications...</p>
+              </div>
+            ) : error ? (
+              <div className="flex h-full min-h-48 flex-col items-center justify-center p-6 text-center sm:p-8">
+                <AlertCircle className="mb-4 h-8 w-8 text-red-500" />
+                <p className="text-primary-dark mb-1 text-sm font-semibold">
+                  Couldn&apos;t load notifications
+                </p>
+                <p className="text-text-secondary mb-5 max-w-xs text-sm">
+                  {error}
+                </p>
+                {onRetry && (
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center gap-2 rounded-full border px-5 text-sm font-semibold"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Try again
+                  </button>
+                )}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex h-full min-h-48 flex-col items-center justify-center p-6 text-center sm:p-8">
+                <Bell className="text-primary/20 mb-4 h-10 w-10" />
+                <p className="text-primary-dark mb-1 text-sm font-semibold">
+                  {filter === "Starred"
+                    ? "No starred notifications"
+                    : filter === "All"
+                      ? "You're all caught up"
+                      : `No ${filter} notifications`}
+                </p>
+                <p className="text-text-secondary max-w-xs text-xs sm:text-sm">
+                  {filter === "Starred"
+                    ? "Star important items to find them quickly."
+                    : "New alerts will appear here when they arrive."}
+                </p>
+              </div>
+            ) : (
+              filtered.map((notification) => (
+                <div
+                  key={notification.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleSelect(notification.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelect(notification.id);
+                    }
+                  }}
+                  className={`relative flex cursor-pointer gap-3 p-4 transition-all duration-300 sm:gap-4 sm:p-5 ${
+                    selectedId === notification.id
+                      ? "bg-primary/5 shadow-[inset_4px_0_0_0_rgba(200,169,156,1)]"
+                      : notification.status === "Unread"
+                        ? "hover:bg-primary/5 active:bg-primary/10 bg-white"
+                        : "hover:bg-primary/5 active:bg-primary/10 opacity-70"
+                  }`}
+                >
+                  <div
+                    className="flex shrink-0 items-center self-center"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <BulkSelectCheckbox
+                      selection={selection}
+                      id={notification.id}
+                      label={`Select ${notification.title}`}
+                    />
+                  </div>
+
+                  <div className="border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-white">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="mb-1 flex items-baseline justify-between gap-2">
+                      <h3
+                        className={`flex-1 truncate pr-2 text-sm ${
+                          notification.status === "Unread"
+                            ? "text-primary-dark font-bold"
+                            : "text-primary-dark/80 font-medium"
+                        }`}
+                      >
+                        {notification.title}
+                      </h3>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {notification.isStarred && (
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        )}
+                        <span className="text-primary/60 text-[10px] font-semibold whitespace-nowrap">
+                          {notification.timestamp}
+                        </span>
+                      </div>
+                    </div>
+                    <p
+                      className={`truncate pr-6 text-xs ${
+                        notification.status === "Unread"
+                          ? "text-text-secondary font-medium"
+                          : "text-text-secondary/70"
+                      }`}
+                    >
+                      {notification.message}
+                    </p>
+                  </div>
+
+                  {notification.status === "Unread" &&
+                    selectedId !== notification.id && (
+                      <div className="bg-primary absolute top-1/2 right-3 h-2 w-2 -translate-y-1/2 rounded-full sm:right-4" />
+                    )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        <div className="scrollbar-hide divide-primary/10 flex-1 divide-y overflow-auto">
-          {loading ? (
-            <div className="text-text-secondary flex h-full min-h-48 flex-col items-center justify-center p-6 text-center sm:p-8">
-              <Loader2 className="text-primary mb-4 h-8 w-8 animate-spin" />
-              <p className="text-sm font-medium">Loading notifications...</p>
-            </div>
-          ) : error ? (
-            <div className="flex h-full min-h-48 flex-col items-center justify-center p-6 text-center sm:p-8">
-              <AlertCircle className="mb-4 h-8 w-8 text-red-500" />
-              <p className="text-primary-dark mb-1 text-sm font-semibold">
-                Couldn&apos;t load notifications
-              </p>
-              <p className="text-text-secondary mb-5 max-w-xs text-sm">
-                {error}
-              </p>
-              {onRetry && (
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center gap-2 rounded-full border px-5 text-sm font-semibold"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Try again
-                </button>
-              )}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex h-full min-h-48 flex-col items-center justify-center p-6 text-center sm:p-8">
-              <Bell className="text-primary/20 mb-4 h-10 w-10" />
-              <p className="text-primary-dark mb-1 text-sm font-semibold">
-                {filter === "Starred"
-                  ? "No starred notifications"
-                  : filter === "All"
-                    ? "You're all caught up"
-                    : `No ${filter} notifications`}
-              </p>
-              <p className="text-text-secondary max-w-xs text-xs sm:text-sm">
-                {filter === "Starred"
-                  ? "Star important items to find them quickly."
-                  : "New alerts will appear here when they arrive."}
-              </p>
-            </div>
+        {/* Detail panel */}
+        <div
+          className={`relative flex flex-1 flex-col overflow-hidden bg-white ${
+            showMobileDetail ? "flex" : "hidden md:flex"
+          }`}
+        >
+          {selectedNotif ? (
+            <NotificationDetail
+              selectedNotif={selectedNotif}
+              toggleStar={toggleStar}
+              confirmBooking={confirmBooking}
+              declineBooking={declineBooking}
+              onBack={onBack}
+            />
           ) : (
-            filtered.map((notification) => (
-              <div
-                key={notification.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleSelect(notification.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleSelect(notification.id);
-                  }
-                }}
-                className={`relative flex cursor-pointer gap-3 p-4 transition-all duration-300 sm:gap-4 sm:p-5 ${
-                  selectedId === notification.id
-                    ? "bg-primary/5 shadow-[inset_4px_0_0_0_rgba(200,169,156,1)]"
-                    : notification.status === "Unread"
-                      ? "hover:bg-primary/5 active:bg-primary/10 bg-white"
-                      : "hover:bg-primary/5 active:bg-primary/10 opacity-70"
-                }`}
-              >
-                <div className="border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-white">
-                  {getNotificationIcon(notification.type)}
-                </div>
-
-                <div className="min-w-0 flex-1 pr-2">
-                  <div className="mb-1 flex items-baseline justify-between gap-2">
-                    <h3
-                      className={`flex-1 truncate pr-2 text-sm ${
-                        notification.status === "Unread"
-                          ? "text-primary-dark font-bold"
-                          : "text-primary-dark/80 font-medium"
-                      }`}
-                    >
-                      {notification.title}
-                    </h3>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {notification.isStarred && (
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      )}
-                      <span className="text-primary/60 text-[10px] font-semibold whitespace-nowrap">
-                        {notification.timestamp}
-                      </span>
-                    </div>
-                  </div>
-                  <p
-                    className={`truncate pr-6 text-xs ${
-                      notification.status === "Unread"
-                        ? "text-text-secondary font-medium"
-                        : "text-text-secondary/70"
-                    }`}
-                  >
-                    {notification.message}
-                  </p>
-                </div>
-
-                {notification.status === "Unread" &&
-                  selectedId !== notification.id && (
-                    <div className="bg-primary absolute top-1/2 right-3 h-2 w-2 -translate-y-1/2 rounded-full sm:right-4" />
-                  )}
+            <div className="bg-primary/5 flex h-full flex-col items-center justify-center p-6 text-center">
+              <div className="border-primary/10 mb-6 flex h-20 w-20 items-center justify-center rounded-[2rem] border bg-white shadow-sm sm:h-24 sm:w-24">
+                <Bell className="text-primary/30 h-10 w-10" />
               </div>
-            ))
+              <h3 className="text-primary-dark mb-2 font-serif text-lg sm:text-xl">
+                Select a notification
+              </h3>
+              <p className="text-text-secondary max-w-xs text-sm">
+                Choose an item from the inbox to view its details here.
+              </p>
+            </div>
           )}
         </div>
       </div>
-
-      {/* Detail panel */}
-      <div
-        className={`relative flex flex-1 flex-col overflow-hidden bg-white ${
-          showMobileDetail ? "flex" : "hidden md:flex"
-        }`}
-      >
-        {selectedNotif ? (
-          <NotificationDetail
-            selectedNotif={selectedNotif}
-            toggleStar={toggleStar}
-            confirmBooking={confirmBooking}
-            declineBooking={declineBooking}
-            onBack={onBack}
-          />
-        ) : (
-          <div className="bg-primary/5 flex h-full flex-col items-center justify-center p-6 text-center">
-            <div className="border-primary/10 mb-6 flex h-20 w-20 items-center justify-center rounded-[2rem] border bg-white shadow-sm sm:h-24 sm:w-24">
-              <Bell className="text-primary/30 h-10 w-10" />
-            </div>
-            <h3 className="text-primary-dark mb-2 font-serif text-lg sm:text-xl">
-              Select a notification
-            </h3>
-            <p className="text-text-secondary max-w-xs text-sm">
-              Choose an item from the inbox to view its details here.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 }

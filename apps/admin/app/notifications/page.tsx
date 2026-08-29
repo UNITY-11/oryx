@@ -17,6 +17,7 @@ export default function NotificationsPage() {
     selectedNotif,
     reload,
     clearSelection,
+    setNotifications,
     markAllAsRead,
     handleSelect,
     confirmBooking,
@@ -87,6 +88,10 @@ export default function NotificationsPage() {
         toggleStar={handleToggleStar}
         onRetry={reload}
         onBack={clearSelection}
+        onItemsDeleted={(ids) => {
+          setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+          if (selectedId && ids.includes(selectedId)) clearSelection();
+        }}
       />
     </>
   );

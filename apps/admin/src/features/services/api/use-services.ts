@@ -22,6 +22,7 @@ export function useServices() {
     searchQuery: list.searchQuery,
     setSearchQuery: list.setSearchQuery,
     filtered: list.items,
+    setFiltered: list.setItems,
     activeCount: list.meta?.activeCount ?? 0,
     inactiveCount: list.meta?.inactiveCount ?? 0,
     page: list.page,

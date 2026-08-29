@@ -2,9 +2,14 @@
 
 import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
-import { fetchStaffPage } from "@/features/staff/api";
+import { deleteStaff, fetchStaffPage } from "@/features/staff/api";
 import { addAttendance } from "@/features/staff/api/use-staff";
+import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -170,6 +175,7 @@ function StaffList() {
 
   const {
     items: staffList,
+    setItems: setStaffList,
     loading,
     error,
     searchQuery: searchTerm,
@@ -207,6 +213,7 @@ function StaffList() {
   });
 
   const filteredStaff = staffList;
+  const selection = useBulkSelection(filteredStaff.map((s) => s.id));
 
   const openModal = (
     staffId: string,
@@ -296,7 +303,7 @@ function StaffList() {
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pt-2 sm:pt-4">
-        <div className="mb-4 px-1 sm:px-0">
+        <div className="mb-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between sm:px-0">
           <div className="relative max-w-sm">
             <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
             <input
@@ -307,6 +314,23 @@ function StaffList() {
               className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-white py-2.5 pr-4 pl-10 text-sm shadow-sm focus:ring-1 focus:outline-none"
             />
           </div>
+
+          {!loading && filteredStaff.length > 0 && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={filteredStaff.map((s) => s.id)}
+              entityLabel="staff members"
+              deleteOne={deleteStaff}
+              onDeleted={(ids) => {
+                setStaffList((prev) => prev.filter((s) => !ids.includes(s.id)));
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} staff member(s)`,
+                });
+              }}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
+          )}
         </div>
 
         {loading ? (
@@ -357,6 +381,16 @@ function StaffList() {
                 key={staff.id}
                 className="border-primary/10 group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all sm:rounded-[2rem]"
               >
+                <div
+                  className="absolute top-3 left-3 z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <BulkSelectCheckbox
+                    selection={selection}
+                    id={staff.id}
+                    label={`Select ${staff.name}`}
+                  />
+                </div>
                 <Link
                   href={`/staff/${staff.id}`}
                   className="flex flex-1 flex-col items-center p-4 text-center sm:p-6"

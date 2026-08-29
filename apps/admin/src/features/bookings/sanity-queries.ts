@@ -65,7 +65,7 @@ function buildOrderClause(
 
 function buildFilterClause(): string {
   return `_type == "booking"
-    && ($billable != true || status in ["Started", "Completed"])
+    && ($billable != true || status in ["Confirmed", "Completed", "Started"])
     && ($status == "All" || !defined($status) || $status == "" || status == $status)
     && (
       !defined($q) || $q == "" ||
@@ -85,15 +85,15 @@ export function buildBookingsListQueries(input: BookingsListQueryInput) {
   const filter = buildFilterClause();
   const orderClause =
     sort === "billing"
-      ? `select(status == "Started" => 0, status == "Completed" => 1, 2) asc, date desc`
+      ? `select(status == "Confirmed" => 0, status == "Started" => 0, status == "Completed" => 1, 2) asc, date desc`
       : buildOrderClause(sort as BookingsSortField, order);
 
   const listQuery = `*[${filter}] | order(${orderClause}) [${input.start}...${input.end}] ${BOOKING_PROJECTION}`;
   const countQuery = `count(*[${filter}])`;
-  const startedCountQuery = `count(*[_type == "booking" && status == "Started"])`;
+  const confirmedCountQuery = `count(*[_type == "booking" && (status == "Confirmed" || status == "Started")])`;
   const completedCountQuery = `count(*[_type == "booking" && status == "Completed"])`;
 
-  return { listQuery, countQuery, startedCountQuery, completedCountQuery };
+  return { listQuery, countQuery, confirmedCountQuery, completedCountQuery };
 }
 
 export function toGroqSearchPattern(q: string): string {

@@ -71,7 +71,7 @@ export async function updateAdminPassword(passwordHash: string) {
       resetTokenExpires: null,
       updatedAt: new Date().toISOString(),
     })
-    .commit();
+    .commit({ visibility: "sync" });
 }
 
 export async function setPasswordResetToken(token: string) {
@@ -87,7 +87,12 @@ export async function setPasswordResetToken(token: string) {
       resetTokenExpires,
       updatedAt: new Date().toISOString(),
     })
-    .commit();
+    .commit({ visibility: "sync" });
+
+  const record = await getAdminAuthRecord();
+  if (record?.resetTokenHash !== resetTokenHash) {
+    throw new Error("Failed to persist password reset token");
+  }
 }
 
 export async function clearPasswordResetToken() {
@@ -98,7 +103,7 @@ export async function clearPasswordResetToken() {
       resetTokenExpires: null,
       updatedAt: new Date().toISOString(),
     })
-    .commit();
+    .commit({ visibility: "sync" });
 }
 
 export function isResetTokenValid(

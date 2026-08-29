@@ -9,6 +9,7 @@ import {
 } from "@/features/company/types";
 import { hasFieldErrors, validateCompany } from "@/features/company/validation";
 import { sanityClient } from "@/shared/lib/sanity/client";
+import { normalizePhone } from "@repo/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -109,6 +110,8 @@ export async function PUT(request: Request) {
       _id: COMPANY_DOC_ID,
       _type: "company" as const,
       ...input,
+      phone: normalizePhone(input.phone),
+      whatsapp: normalizePhone(input.whatsapp),
       socialLinks: withKeys<SocialLink>(input.socialLinks),
       updatedAt: now,
     };

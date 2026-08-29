@@ -1,12 +1,17 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ListPagination } from "@/shared/ui/list-pagination";
+import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
   AlertCircle,
   ChevronDown,
   Loader2,
+  MoreVertical,
   Package,
+  Pencil,
   Plus,
   Search,
 } from "lucide-react";
@@ -17,6 +22,7 @@ import {
   SORT_OPTIONS,
 } from "../api/use-products";
 import { Product, ProductCategory } from "../types";
+import { ProductQuantityModal } from "./product-quantity-modal";
 
 interface ProductsGridProps {
   loading: boolean;
@@ -69,13 +75,49 @@ export function ProductsGrid({
   hasNext,
   onRetry,
 }: ProductsGridProps) {
+  const router = useRouter();
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [quantityProduct, setQuantityProduct] = useState<Product | null>(null);
+  const [toast, setToast] = useState<ToastState>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const hasFilters =
     Boolean(searchQuery.trim()) ||
     categoryFilter !== "All" ||
     sortBy !== "Default";
 
+  useEffect(() => {
+    if (!openMenuId) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenuId(null);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [openMenuId]);
+
+  const closeToast = useCallback(() => setToast(null), []);
+
+  const handleQuantitySaved = () => {
+    onRetry?.();
+    setToast({ type: "success", message: "Quantity updated" });
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <Toast toast={toast} onClose={closeToast} />
+
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
         {/* Toolbar */}
         <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:p-6">
@@ -219,57 +261,115 @@ export function ProductsGrid({
                 </span>
               </Link>
 
-              {filtered.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/products/${product.id}`}
-                  className="group from-primary/10 to-primary/5 relative aspect-square overflow-hidden rounded-2xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md sm:rounded-3xl"
-                >
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Package className="text-primary/20 h-8 w-8 sm:h-10 sm:w-10" />
-                    </div>
-                  )}
+              {filtered.map((product) => {
+                const menuOpen = openMenuId === product.id;
 
-                  {/* Always visible on touch; hover-enhanced on desktop */}
-                  <div className="from-primary-dark/80 via-primary-dark/25 absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 opacity-100 transition-opacity duration-300 sm:p-4 md:via-transparent md:opacity-0 md:group-hover:opacity-100">
-                    <p className="line-clamp-2 pr-10 text-xs leading-tight font-semibold text-white sm:text-sm">
-                      {product.name}
-                    </p>
-                    <p className="mt-0.5 text-[10px] font-medium text-white/80 sm:text-xs">
-                      QAR {product.price}
-                    </p>
-                  </div>
-
-                  {product.status === "Inactive" && (
-                    <>
-                      <div className="absolute inset-0 bg-white/45 backdrop-blur-[1px]" />
-                      <span className="absolute top-2 left-2 z-20 rounded-full bg-gray-800/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px]">
-                        Inactive
-                      </span>
-                    </>
-                  )}
-
-                  <span
-                    className={`absolute top-2 right-2 z-20 inline-flex min-w-7 items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums shadow-sm sm:top-3 sm:right-3 sm:min-w-8 sm:px-2.5 sm:py-1 sm:text-xs ${getStockBadgeClasses(product.quantity)}`}
-                    title={
-                      Number(product.quantity) <= 10
-                        ? "Low stock"
-                        : Number(product.quantity) <= 30
-                          ? "Medium stock"
-                          : "Good stock"
-                    }
+                return (
+                  <div
+                    key={product.id}
+                    className="group from-primary/10 to-primary/5 relative aspect-square rounded-2xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md sm:rounded-3xl"
                   >
-                    {Number(product.quantity) || 0}
-                  </span>
-                </Link>
-              ))}
+                    <div className="absolute inset-0 overflow-hidden rounded-2xl sm:rounded-3xl">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Package className="text-primary/20 h-8 w-8 sm:h-10 sm:w-10" />
+                        </div>
+                      )}
+
+                      <div className="from-primary-dark/80 via-primary-dark/25 absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 opacity-100 transition-opacity duration-300 sm:p-4 md:via-transparent md:opacity-0 md:group-hover:opacity-100">
+                        <p className="line-clamp-2 pr-2 text-xs leading-tight font-semibold text-white sm:text-sm">
+                          {product.name}
+                        </p>
+                        <p className="mt-0.5 text-[10px] font-medium text-white/80 sm:text-xs">
+                          QAR {product.price}
+                        </p>
+                      </div>
+
+                      {product.status === "Inactive" && (
+                        <div className="absolute inset-0 bg-white/45 backdrop-blur-[1px]" />
+                      )}
+                    </div>
+
+                    <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1 sm:top-3 sm:left-3">
+                      {product.status === "Inactive" && (
+                        <span className="rounded-full bg-gray-800/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px]">
+                          Inactive
+                        </span>
+                      )}
+                      <span
+                        className={`inline-flex min-w-7 items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums shadow-sm sm:min-w-8 sm:px-2.5 sm:py-1 sm:text-xs ${getStockBadgeClasses(product.quantity)}`}
+                        title={
+                          Number(product.quantity) <= 10
+                            ? "Low stock"
+                            : Number(product.quantity) <= 30
+                              ? "Medium stock"
+                              : "Good stock"
+                        }
+                      >
+                        {Number(product.quantity) || 0}
+                      </span>
+                    </div>
+
+                    <div
+                      className="absolute top-2 right-2 z-30 sm:top-3 sm:right-3"
+                      ref={menuOpen ? menuRef : undefined}
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenMenuId(menuOpen ? null : product.id);
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-black/45 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/60 sm:h-9 sm:w-9"
+                        aria-label={`Actions for ${product.name}`}
+                        aria-expanded={menuOpen}
+                        aria-haspopup="menu"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+
+                      {menuOpen && (
+                        <div
+                          role="menu"
+                          className="border-primary/10 absolute top-full right-0 mt-1.5 w-40 overflow-hidden rounded-2xl border bg-white py-1.5 shadow-xl"
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              router.push(`/products/${product.id}`);
+                            }}
+                            className="text-primary-dark hover:bg-primary/5 flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium transition-colors"
+                          >
+                            <Pencil className="text-primary h-4 w-4" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              setQuantityProduct(product);
+                            }}
+                            className="text-primary-dark hover:bg-primary/5 flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium transition-colors"
+                          >
+                            <Package className="text-primary h-4 w-4" />
+                            Quantity
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -295,6 +395,14 @@ export function ProductsGrid({
           <span className="ml-auto">{totalItems} shown</span>
         </div>
       </div>
+
+      {quantityProduct && (
+        <ProductQuantityModal
+          product={quantityProduct}
+          onClose={() => setQuantityProduct(null)}
+          onSaved={handleQuantitySaved}
+        />
+      )}
     </div>
   );
 }

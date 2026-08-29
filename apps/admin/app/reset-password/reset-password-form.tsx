@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AuthInput,
@@ -16,7 +16,16 @@ import {
 export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const token = useMemo(() => {
+    const fromParams = searchParams.get("token") ?? "";
+    if (fromParams.trim()) return fromParams.trim();
+
+    if (typeof window === "undefined") return "";
+
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("token") ?? "";
+    return fromUrl.trim();
+  }, [searchParams]);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

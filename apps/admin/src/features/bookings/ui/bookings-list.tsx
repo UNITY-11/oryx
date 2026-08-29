@@ -16,19 +16,17 @@ const STATUS_FILTERS: Array<BookingStatus | "All"> = [
   "All",
   "Pending",
   "Confirmed",
-  "Started",
-  "Completed",
   "Cancelled",
 ];
 
-function statusBadgeClass(status: BookingStatus) {
+function statusBadgeClass(status: Booking["status"]) {
   if (status === "Confirmed")
     return "border-green-200 bg-green-50 text-green-700";
   if (status === "Pending")
     return "border-yellow-200 bg-yellow-50 text-yellow-700";
-  if (status === "Started") return "border-blue-200 bg-blue-50 text-blue-700";
   if (status === "Completed")
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  if (status === "Started") return "border-blue-200 bg-blue-50 text-blue-700";
   return "border-red-200 bg-red-50 text-red-700";
 }
 

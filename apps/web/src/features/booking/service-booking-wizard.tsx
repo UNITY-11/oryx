@@ -1,24 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import {
   DEFAULT_PHONE_COUNTRY,
   validateName,
   validatePhoneValue,
   type CountryCode,
 } from "@/shared/lib/phone";
+import { redirectToWhatsApp } from "@/shared/lib/whatsapp-redirect";
 import { Item, ItemVariant } from "@/shared/types";
 import { PhoneInput } from "@/shared/ui/phone-input";
-import {
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Loader2 } from "lucide-react";
 
-type Step = "date" | "time" | "details" | "success";
+type Step = "date" | "time" | "details";
 
 interface ServiceBookingWizardProps {
   item: Item;
@@ -109,7 +103,6 @@ export function ServiceBookingWizard({
   const [touched, setTouched] = useState({ name: false, phone: false });
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
-  const [bookingRef, setBookingRef] = useState("");
 
   const handlePhoneCountryChange = useCallback(
     (country: CountryCode) => {
@@ -133,7 +126,6 @@ export function ServiceBookingWizard({
       setTouched({ name: false, phone: false });
       setBookingError(null);
       setBookingSubmitting(false);
-      setBookingRef("");
     }
   }, [open]);
 
@@ -174,10 +166,7 @@ export function ServiceBookingWizard({
     }) === "";
 
   const handleBack = () => {
-    if (step === "success") {
-      onSuccess();
-      onClose();
-    } else if (step === "details") {
+    if (step === "details") {
       setStep("time");
     } else if (step === "time") {
       setStep("date");
@@ -248,9 +237,15 @@ export function ServiceBookingWizard({
       const created = (await res.json()) as {
         id: string;
         bookingCode?: string;
+        whatsappRedirectUrl?: string | null;
       };
-      setBookingRef(created.bookingCode ?? created.id);
-      setStep("success");
+      if (!created.whatsappRedirectUrl) {
+        throw new Error(
+          "Booking saved but WhatsApp is unavailable. Please contact us on WhatsApp directly."
+        );
+      }
+      onSuccess();
+      redirectToWhatsApp(created.whatsappRedirectUrl);
     } catch (err) {
       setBookingError(
         err instanceof Error ? err.message : "Failed to create booking"
@@ -272,26 +267,24 @@ export function ServiceBookingWizard({
   return (
     <div className="bg-surface fixed inset-0 z-50 flex flex-col lg:items-center lg:justify-center lg:bg-black/45 lg:p-8">
       <div className="bg-surface flex h-full w-full flex-col overflow-hidden lg:h-auto lg:max-h-[92vh] lg:max-w-4xl lg:rounded-[2rem] lg:shadow-2xl xl:max-w-5xl">
-        {step !== "success" && (
-          <div className="border-primary/10 shrink-0 border-b bg-white px-6 pt-6 pb-4 lg:px-10 lg:pt-8 lg:pb-5">
-            <div className="relative flex items-center justify-center">
-              <button
-                onClick={handleBack}
-                className="text-text-secondary absolute left-0 flex items-center justify-center rounded-full p-2 transition-colors hover:bg-black/5 lg:p-2.5"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              <div className="text-center">
-                <h1 className="text-primary-dark font-serif text-2xl font-medium lg:text-3xl">
-                  Book Appointment
-                </h1>
-                <p className="text-text-secondary mt-1 text-xs lg:text-sm">
-                  {stepLabel}
-                </p>
-              </div>
+        <div className="border-primary/10 shrink-0 border-b bg-white px-6 pt-6 pb-4 lg:px-10 lg:pt-8 lg:pb-5">
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={handleBack}
+              className="text-text-secondary absolute left-0 flex items-center justify-center rounded-full p-2 transition-colors hover:bg-black/5 lg:p-2.5"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <div className="text-center">
+              <h1 className="text-primary-dark font-serif text-2xl font-medium lg:text-3xl">
+                Book Appointment
+              </h1>
+              <p className="text-text-secondary mt-1 text-xs lg:text-sm">
+                {stepLabel}
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         {step === "date" && (
           <div
@@ -592,42 +585,6 @@ export function ServiceBookingWizard({
                 </form>
               </div>
             </div>
-          </div>
-        )}
-
-        {step === "success" && (
-          <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center lg:px-12 lg:py-14">
-            <CheckCircle2 className="text-primary h-20 w-20 lg:h-24 lg:w-24" />
-            <h2 className="text-primary-dark mt-6 font-serif text-3xl lg:text-4xl">
-              Booking Confirmed!
-            </h2>
-            {bookingRef && (
-              <>
-                <p className="text-text-secondary mt-4 text-sm">Booking ID</p>
-                <p className="text-primary font-medium tracking-wide uppercase">
-                  {bookingRef}
-                </p>
-              </>
-            )}
-            <p className="text-text-secondary mx-auto mt-4 max-w-sm">
-              Your appointment has been scheduled. We will contact you shortly
-              on WhatsApp.
-            </p>
-            <button
-              onClick={() => {
-                onSuccess();
-                onClose();
-              }}
-              className="bg-primary mt-8 rounded-xl px-8 py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
-            >
-              Done
-            </button>
-            <Link
-              href="/"
-              className="text-primary mt-4 text-sm font-medium hover:underline"
-            >
-              Return to Home
-            </Link>
           </div>
         )}
 

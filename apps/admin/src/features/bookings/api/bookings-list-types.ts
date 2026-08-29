@@ -20,7 +20,7 @@ export type BookingsPageResponse = {
   pageSize: number;
   totalPages: number;
   meta?: {
-    startedCount?: number;
+    confirmedCount?: number;
     completedCount?: number;
   };
 };

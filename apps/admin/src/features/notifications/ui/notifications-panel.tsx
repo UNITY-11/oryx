@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buildWhatsAppUrl } from "@repo/validation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -148,7 +149,10 @@ function NotificationDetail({
                   <MessageSquare className="h-4 w-4" />
                 </a>
                 <a
-                  href={`https://wa.me/${selectedNotif.bookingData.customerPhone.replace(/\D/g, "")}`}
+                  href={
+                    buildWhatsAppUrl(selectedNotif.bookingData.customerPhone) ??
+                    undefined
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-primary flex h-11 items-center justify-center rounded-xl border bg-white transition-all sm:h-auto sm:rounded-2xl sm:p-3"

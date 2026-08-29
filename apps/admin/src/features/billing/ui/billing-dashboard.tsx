@@ -47,7 +47,7 @@ interface BillingDashboardProps {
   hasPrev: boolean;
   hasNext: boolean;
   totalRevenue: number;
-  startedCount: number;
+  confirmedCount: number;
   completedCount: number;
   selectedLines: any[];
   selectedSummary: {
@@ -85,7 +85,7 @@ export function BillingDashboard({
   hasPrev,
   hasNext,
   totalRevenue,
-  startedCount,
+  confirmedCount,
   completedCount,
   selectedLines,
   selectedSummary,
@@ -117,7 +117,7 @@ export function BillingDashboard({
                   Billing
                 </h1>
                 <p className="text-text-secondary mt-0.5 truncate text-[11px] font-medium sm:text-xs">
-                  {startedCount} in session · {completedCount} completed
+                  {confirmedCount} confirmed · {completedCount} completed
                 </p>
               </div>
             </div>
@@ -145,7 +145,7 @@ export function BillingDashboard({
               {
                 icon: Clock,
                 label: "In Session",
-                value: `${startedCount} Active`,
+                value: `${confirmedCount} Active`,
               },
               {
                 icon: CheckCircle2,
@@ -176,7 +176,7 @@ export function BillingDashboard({
           <div className="border-primary/10 flex min-h-[70vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px] md:min-h-0">
             <div className="border-primary/5 flex shrink-0 flex-col gap-2.5 border-b p-3 sm:flex-row sm:items-center sm:gap-2 sm:p-4 md:px-6">
               <div className="scrollbar-hide flex items-center gap-1.5 overflow-x-auto sm:gap-2">
-                {(["All", "Started", "Completed"] as FilterStatus[]).map(
+                {(["All", "Confirmed", "Completed"] as FilterStatus[]).map(
                   (f) => (
                     <button
                       key={f}
@@ -226,7 +226,9 @@ export function BillingDashboard({
                   <div className="divide-primary/5 divide-y">
                     {billable.map((booking) => {
                       const total = getInvoiceSummary(booking, services).total;
-                      const isStarted = booking.status === "Started";
+                      const isActiveSession =
+                        booking.status === "Confirmed" ||
+                        booking.status === "Started";
 
                       return (
                         <div
@@ -253,7 +255,7 @@ export function BillingDashboard({
                                 </span>
                                 <span
                                   className={`text-[10px] font-bold tracking-wider uppercase lg:hidden ${
-                                    isStarted
+                                    isActiveSession
                                       ? "text-primary-dark"
                                       : "text-primary"
                                   }`}
@@ -279,7 +281,9 @@ export function BillingDashboard({
                           <div className="hidden text-center lg:block">
                             <span
                               className={`inline-block shrink-0 text-[10px] font-bold tracking-wider uppercase ${
-                                isStarted ? "text-primary-dark" : "text-primary"
+                                isActiveSession
+                                  ? "text-primary-dark"
+                                  : "text-primary"
                               }`}
                             >
                               {booking.status}
@@ -290,7 +294,7 @@ export function BillingDashboard({
                             className="flex flex-wrap items-center gap-2 pl-[3.25rem] lg:justify-end lg:pl-0"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {isStarted ? (
+                            {isActiveSession ? (
                               <button
                                 type="button"
                                 onClick={() => handleComplete(booking.id)}

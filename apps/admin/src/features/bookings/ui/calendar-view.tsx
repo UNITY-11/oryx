@@ -131,8 +131,6 @@ export function CalendarView({
         return "bg-background border-primary text-primary-dark shadow-sm";
       case "Completed":
         return "bg-primary-dark border-black/20 text-white shadow-sm";
-      case "Started":
-        return "bg-secondary border-primary-dark text-white shadow-sm";
       case "Cancelled":
         return "bg-surface border-background text-text-secondary shadow-sm opacity-90";
       default:

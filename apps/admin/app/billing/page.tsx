@@ -29,7 +29,7 @@ export default function BillingPage() {
     hasPrev,
     hasNext,
     totalRevenue,
-    startedCount,
+    confirmedCount,
     completedCount,
     selectedLines,
     selectedSummary,
@@ -61,7 +61,7 @@ export default function BillingPage() {
       hasPrev={hasPrev}
       hasNext={hasNext}
       totalRevenue={totalRevenue}
-      startedCount={startedCount}
+      confirmedCount={confirmedCount}
       completedCount={completedCount}
       selectedLines={selectedLines}
       selectedSummary={selectedSummary}

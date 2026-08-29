@@ -21,7 +21,6 @@ function statusBadgeClass(status: Booking["status"]) {
     return "bg-green-100 text-green-700";
   }
   if (status === "Cancelled") return "bg-red-100 text-red-600";
-  if (status === "Started") return "bg-blue-100 text-blue-700";
   return "bg-yellow-100 text-yellow-700";
 }
 
@@ -67,7 +66,12 @@ export function AdminDashboardClient({
   // No initial fetch on mount needed!
 
   const totalRevenue = bookings
-    .filter((b) => b.status === "Started" || b.status === "Completed")
+    .filter(
+      (b) =>
+        b.status === "Confirmed" ||
+        b.status === "Completed" ||
+        b.status === "Started"
+    )
     .reduce((sum, b) => sum + b.amount, 0);
 
   const stats = [

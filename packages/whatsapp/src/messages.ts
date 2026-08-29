@@ -112,6 +112,30 @@ export function formatAdminNewBookingMessage(
   );
 }
 
+/** Customer → business WhatsApp message after web booking (first-person request). */
+export function formatCustomerBookingRequestMessage(
+  booking: BookingWhatsAppPayload,
+  company?: CompanyWhatsAppContext
+): string {
+  const brand = company?.name?.trim() || "Oryx Spa";
+  const servicesText = formatServicesBlock(booking.services);
+  const firstName =
+    booking.customerName.trim().split(/\s+/)[0] || booking.customerName;
+
+  return (
+    `Hello! 👋\n\n` +
+    `This is *${firstName}*. I would like to book an appointment at *${brand}*.\n\n` +
+    `*My name:* ${booking.customerName}\n` +
+    `*My WhatsApp:* ${booking.phone}\n\n` +
+    `*Services:*\n${servicesText}\n\n` +
+    `*Date:* ${booking.date}\n` +
+    `*Time:* ${booking.time}\n` +
+    `*Estimated total:* QAR ${booking.amount}\n\n` +
+    `*Booking reference:* ${displayBookingRef(booking)}\n\n` +
+    `Please confirm my slot. Thank you! 🌸`
+  );
+}
+
 export function formatCustomerConfirmationMessage(
   booking: BookingWhatsAppPayload,
   company?: CompanyWhatsAppContext,
@@ -133,8 +157,7 @@ export function formatCustomerConfirmationMessage(
     `*Date:* ${booking.date}\n` +
     `*Time:* ${booking.time}\n` +
     `${amountBlock}\n\n` +
-    `We look forward to welcoming you.\n\n` +
-    `A confirmation PDF is attached below.`
+    `We look forward to welcoming you.`
   );
 }
 
@@ -157,7 +180,6 @@ export function formatInvoiceMessage(
     `*Client:* ${booking.customerName}\n\n` +
     `*Services:*\n${servicesText}\n\n` +
     `${formatAmountFooter(summary, "Total")}\n\n` +
-    `Thank you for choosing ${brand}! We look forward to seeing you again. 🌸\n\n` +
-    `Your invoice PDF is attached.`
+    `Thank you for choosing ${brand}! We look forward to seeing you again. 🌸`
   );
 }

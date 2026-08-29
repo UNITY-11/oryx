@@ -3,16 +3,17 @@
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
-import { getServiceLineItems } from "@features/billing/api/use-billing-data";
 import {
-  applyMembershipDiscountToBooking,
   getInvoiceSummary,
-} from "@features/billing/invoice-summary";
+  getInvoiceTotal,
+  getServiceLineItems,
+  openWhatsAppInvoice,
+} from "@features/billing/api/use-billing-data";
+import { applyMembershipDiscountToBooking } from "@features/billing/invoice-summary";
 import { PrintModal } from "@features/billing/ui/print-modal";
 import {
   deleteBooking,
   fetchBooking,
-  sendBookingInvoiceWhatsApp,
   updateBooking,
 } from "@features/bookings/api";
 import { filterServicesByQuery } from "@features/bookings/filter-services";
@@ -25,6 +26,13 @@ import {
 import { fetchCompany } from "@features/company/api";
 import { fetchServices } from "@features/services/api";
 import { Service } from "@features/services/types";
+import {
+  buildInvoiceSummaryPayload,
+  formatCustomerConfirmationMessage,
+  openWhatsAppChat,
+  toBookingWhatsAppPayload,
+  type CompanyWhatsAppContext,
+} from "@repo/whatsapp";
 import {
   AlertCircle,
   ArrowLeft,
@@ -57,7 +65,6 @@ export default function BookingDetailPage({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [whatsappSending, setWhatsappSending] = useState(false);
   const [whatsappSuccess, setWhatsappSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -67,6 +74,8 @@ export default function BookingDetailPage({
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [gymDiscountPercent, setGymDiscountPercent] = useState(0);
+  const [companyContext, setCompanyContext] =
+    useState<CompanyWhatsAppContext | null>(null);
   const [membershipInput, setMembershipInput] = useState("");
   const [membershipSaving, setMembershipSaving] = useState(false);
   const [isManagingServices, setIsManagingServices] = useState(false);
@@ -109,9 +118,20 @@ export default function BookingDetailPage({
 
   useEffect(() => {
     fetchCompany()
-      .then((company) =>
-        setGymDiscountPercent(company?.gymMembershipDiscountPercent ?? 0)
-      )
+      .then((company) => {
+        setGymDiscountPercent(company?.gymMembershipDiscountPercent ?? 0);
+        if (company) {
+          setCompanyContext({
+            name: company.name,
+            phone: company.phone,
+            whatsapp: company.whatsapp,
+            email: company.email,
+            addressLine1: company.addressLine1,
+            city: company.city,
+            country: company.country,
+          });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -340,23 +360,12 @@ export default function BookingDetailPage({
   };
 
   // Deep compare to detect changes
-  const handleSendWhatsAppInvoice = async () => {
-    setWhatsappSending(true);
+  const handleSendWhatsAppInvoice = () => {
     setSaveError(null);
     setWhatsappSuccess(false);
-    try {
-      await sendBookingInvoiceWhatsApp(id);
-      setWhatsappSuccess(true);
-      setTimeout(() => setWhatsappSuccess(false), 3000);
-    } catch (err) {
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : "Failed to send invoice via WhatsApp"
-      );
-    } finally {
-      setWhatsappSending(false);
-    }
+    openWhatsAppInvoice(booking, realServices, companyContext ?? undefined);
+    setWhatsappSuccess(true);
+    setTimeout(() => setWhatsappSuccess(false), 3000);
   };
 
   const handleDeleteSession = () => {
@@ -496,6 +505,18 @@ export default function BookingDetailPage({
         };
         setBooking(normalized);
         setSavedBooking(normalized);
+
+        if (nextStatus === "Confirmed" && previousStatus !== "Confirmed") {
+          const payload = toBookingWhatsAppPayload(normalized);
+          const catalogSubtotal = getInvoiceTotal(normalized, realServices);
+          const summary = buildInvoiceSummaryPayload(payload, catalogSubtotal);
+          const message = formatCustomerConfirmationMessage(
+            payload,
+            companyContext ?? undefined,
+            summary
+          );
+          openWhatsAppChat(normalized.phone, message);
+        }
       })
       .catch((err) => {
         setBooking((prev) =>
@@ -588,7 +609,6 @@ export default function BookingDetailPage({
                     [
                       "Pending",
                       "Confirmed",
-                      "Started",
                       "Completed",
                       "Cancelled",
                     ] as BookingStatus[]
@@ -641,7 +661,7 @@ export default function BookingDetailPage({
                     }
                     handleSendWhatsAppInvoice();
                   }}
-                  disabled={whatsappSending || !canPrintInvoice}
+                  disabled={!canPrintInvoice}
                   title={
                     !canPrintInvoice
                       ? (printValidation.message ??
@@ -650,19 +670,13 @@ export default function BookingDetailPage({
                   }
                   className="border-primary text-primary hover:bg-primary/5 inline-flex h-10 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
                 >
-                  {whatsappSending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : whatsappSuccess ? (
+                  {whatsappSuccess ? (
                     <Check className="h-4 w-4" />
                   ) : (
                     <MessageCircle className="h-4 w-4" />
                   )}
                   <span className="hidden sm:inline">
-                    {whatsappSending
-                      ? "Sending…"
-                      : whatsappSuccess
-                        ? "Sent!"
-                        : "Send"}
+                    {whatsappSuccess ? "Opened!" : "Send"}
                   </span>
                 </button>
               )}
@@ -1185,7 +1199,7 @@ export default function BookingDetailPage({
                           }
                           handleSendWhatsAppInvoice();
                         }}
-                        disabled={whatsappSending || !canPrintInvoice}
+                        disabled={!canPrintInvoice}
                         title={
                           !canPrintInvoice
                             ? (printValidation.message ??
@@ -1194,18 +1208,14 @@ export default function BookingDetailPage({
                         }
                         className="border-primary text-primary hover:bg-primary/5 inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        {whatsappSending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : whatsappSuccess ? (
+                        {whatsappSuccess ? (
                           <Check className="h-4 w-4" />
                         ) : (
                           <MessageCircle className="h-4 w-4" />
                         )}
-                        {whatsappSending
-                          ? "Sending…"
-                          : whatsappSuccess
-                            ? "Sent via WhatsApp!"
-                            : "Send via WhatsApp"}
+                        {whatsappSuccess
+                          ? "WhatsApp opened!"
+                          : "Send via WhatsApp"}
                       </button>
                     )}
                   </div>

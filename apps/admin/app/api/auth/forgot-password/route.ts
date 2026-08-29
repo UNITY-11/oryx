@@ -42,8 +42,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: genericMessage });
   } catch (error) {
     console.error("Forgot password failed:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to send reset email";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "We couldn't send the reset email right now. Please try again in a few minutes.",
+      },
+      { status: 500 }
+    );
   }
 }

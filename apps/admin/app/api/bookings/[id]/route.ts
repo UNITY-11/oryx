@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { getInvoiceTotal } from "@/features/billing/invoice-lines";
 import { BOOKING_BY_ID_QUERY } from "@/features/bookings/sanity-queries";
 import type { BookingService } from "@/features/bookings/types";
 import { SERVICES_LIST_QUERY } from "@/features/services/sanity-queries";
-import type { Service } from "@/features/services/types";
 import { sanityClient } from "@/shared/lib/sanity/client";
 import {
   normalizePhone,
@@ -11,56 +9,10 @@ import {
   validateBookingPatchFields,
   type CatalogService,
 } from "@repo/validation";
-import {
-  sendCustomerBookingConfirmed,
-  type BookingWhatsAppPayload,
-  type CompanyWhatsAppContext,
-} from "@repo/whatsapp";
 
 function withKeys(services: BookingService[] | undefined) {
   if (!services) return undefined;
   return services.map((svc, i) => ({ ...svc, _key: `svc-${i}-${svc.name}` }));
-}
-
-const COMPANY_CONTEXT_QUERY = `*[_type == "company" && _id == "companyDetails"][0]{
-  name,
-  phone,
-  whatsapp,
-  email,
-  addressLine1,
-  city,
-  country
-}`;
-
-function toWhatsAppPayload(booking: {
-  id: string;
-  bookingCode?: string;
-  customerName: string;
-  phone: string;
-  services?: BookingService[];
-  date: string;
-  time: string;
-  amount: number;
-  status?: string;
-}): BookingWhatsAppPayload {
-  return {
-    id: booking.id,
-    bookingCode: booking.bookingCode,
-    customerName: booking.customerName,
-    phone: booking.phone,
-    services: (booking.services ?? []).map((s) => ({
-      name: s.name,
-      options: s.options ?? [],
-    })),
-    date: booking.date,
-    time: booking.time,
-    amount: booking.amount ?? 0,
-    status: booking.status,
-    membershipId: (booking as BookingWhatsAppPayload).membershipId,
-    discountPercent: (booking as BookingWhatsAppPayload).discountPercent,
-    discountAmount: (booking as BookingWhatsAppPayload).discountAmount,
-    subtotal: (booking as BookingWhatsAppPayload).subtotal,
-  };
 }
 
 export async function GET(
@@ -179,31 +131,6 @@ export async function PATCH(
       fields.status !== undefined && fields.status !== previous?.status;
     if (statusChanged || fields.amount !== undefined) {
       await syncCustomerTotalSpent(updated?.phone || previous?.phone);
-    }
-
-    const becameConfirmed =
-      updated?.status === "Confirmed" && previous?.status !== "Confirmed";
-
-    if (becameConfirmed && updated) {
-      try {
-        const company = (await sanityClient.fetch(
-          COMPANY_CONTEXT_QUERY
-        )) as CompanyWhatsAppContext | null;
-        const catalog = (await sanityClient.fetch(
-          SERVICES_LIST_QUERY
-        )) as Service[];
-        const catalogSubtotal = getInvoiceTotal(updated, catalog);
-        await sendCustomerBookingConfirmed(
-          toWhatsAppPayload(updated),
-          company ?? undefined,
-          catalogSubtotal
-        );
-      } catch (whatsappErr) {
-        console.error(
-          "Failed to send customer WhatsApp confirmation:",
-          whatsappErr
-        );
-      }
     }
 
     return NextResponse.json(updated);

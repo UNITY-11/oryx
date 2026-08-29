@@ -6,13 +6,13 @@ import {
   isResetTokenValid,
   updateAdminPassword,
 } from "@/features/auth/admin-store";
-import { hashPassword } from "@/features/auth/password";
+import { hashPassword, normalizeResetToken } from "@/features/auth/password";
 import { validateResetPasswordInput } from "@repo/validation";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const token = String(body.token ?? "").trim();
+    const token = normalizeResetToken(String(body.token ?? ""));
     const password = String(body.password ?? "");
     const confirmPassword = String(body.confirmPassword ?? password);
 

@@ -1,3 +1,5 @@
+import { buildWhatsAppUrl } from "@repo/validation";
+
 import type { CompanyDetails } from "./types";
 
 function digitsOnly(value: string): string {
@@ -10,8 +12,7 @@ export function toTelLink(phone: string): string | null {
 }
 
 export function toWhatsAppLink(whatsapp: string): string | null {
-  const digits = digitsOnly(whatsapp);
-  return digits ? `https://wa.me/${digits}` : null;
+  return buildWhatsAppUrl(whatsapp);
 }
 
 export function toMailtoLink(email: string): string | null {

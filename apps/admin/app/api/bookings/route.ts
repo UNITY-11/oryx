@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
 
-    const { listQuery, countQuery, startedCountQuery, completedCountQuery } =
+    const { listQuery, countQuery, confirmedCountQuery, completedCountQuery } =
       buildBookingsListQueries({
         q,
         phoneDigits: phoneDigits.length >= 3 ? phoneDigits : "",
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
       sanityClient.fetch<number>(countQuery, queryParams),
     ];
     if (billable) {
-      fetches.push(sanityClient.fetch<number>(startedCountQuery));
+      fetches.push(sanityClient.fetch<number>(confirmedCountQuery));
       fetches.push(sanityClient.fetch<number>(completedCountQuery));
     }
 
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
 
     const meta = billable
       ? {
-          startedCount: results[2] as number,
+          confirmedCount: results[2] as number,
           completedCount: results[3] as number,
         }
       : undefined;

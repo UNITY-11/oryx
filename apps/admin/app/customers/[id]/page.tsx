@@ -23,6 +23,7 @@ import {
   type CustomerFieldErrors,
 } from "@features/customers/validation";
 import { fetchServices } from "@features/services/api";
+import { buildWhatsAppUrl } from "@repo/validation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -417,7 +418,7 @@ export default function CustomerDetailPage({
     }
   };
 
-  const phoneDigits = customer.phone.replace(/\D/g, "");
+  const customerWhatsAppUrl = buildWhatsAppUrl(customer.phone);
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden pt-4">
@@ -534,15 +535,17 @@ export default function CustomerDetailPage({
                   >
                     <MessageSquare className="h-4 w-4" />
                   </a>
-                  <a
-                    href={`https://wa.me/${phoneDigits}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
-                    title="WhatsApp"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </a>
+                  {customerWhatsAppUrl && (
+                    <a
+                      href={customerWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-primary/5 hover:bg-primary/10 text-primary flex flex-1 items-center justify-center rounded-full p-3 transition-colors"
+                      title="WhatsApp"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </a>
+                  )}
                 </div>
 
                 <div className="mt-1 w-full space-y-1 text-center">
@@ -693,8 +696,8 @@ export default function CustomerDetailPage({
                                 ? "border-green-200 bg-green-50 text-green-700"
                                 : session.status === "Cancelled"
                                   ? "border-red-200 bg-red-50 text-red-600"
-                                  : session.status === "Started"
-                                    ? "bg-primary-dark border-primary-dark text-white"
+                                  : session.status === "Confirmed"
+                                    ? "border-green-200 bg-green-50 text-green-700"
                                     : "border-amber-200 bg-amber-50 text-amber-600"
                             }`}
                           >

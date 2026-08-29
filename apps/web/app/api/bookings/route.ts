@@ -6,7 +6,8 @@ import {
   type CatalogService,
 } from "@repo/validation";
 import {
-  sendAdminNewBookingAlert,
+  buildWhatsAppUrl,
+  formatCustomerBookingRequestMessage,
   type BookingWhatsAppPayload,
   type CompanyWhatsAppContext,
 } from "@repo/whatsapp";
@@ -124,30 +125,42 @@ export async function POST(request: Request) {
       );
     }
 
-    try {
-      const company = (await sanityWriteClient.fetch(
-        COMPANY_CONTEXT_QUERY
-      )) as CompanyWhatsAppContext | null;
+    const company = (await sanityWriteClient.fetch(
+      COMPANY_CONTEXT_QUERY
+    )) as CompanyWhatsAppContext | null;
 
-      const whatsappPayload: BookingWhatsAppPayload = {
-        id: created._id,
-        bookingCode,
-        customerName: doc.customerName,
-        phone: doc.phone,
-        services,
-        date: doc.date,
-        time: doc.time,
-        amount: doc.amount,
-        status: "Pending",
-      };
+    const whatsappPayload: BookingWhatsAppPayload = {
+      id: created._id,
+      bookingCode,
+      customerName: doc.customerName,
+      phone: doc.phone,
+      services,
+      date: doc.date,
+      time: doc.time,
+      amount: doc.amount,
+      status: "Pending",
+    };
 
-      await sendAdminNewBookingAlert(whatsappPayload, company ?? undefined);
-    } catch (whatsappErr) {
-      console.error("Failed to send admin WhatsApp alert:", whatsappErr);
-    }
+    const adminWhatsAppRaw =
+      company?.whatsapp?.trim() ||
+      process.env.ADMIN_WHATSAPP_FALLBACK?.trim() ||
+      "";
+    const whatsappMessage = formatCustomerBookingRequestMessage(
+      whatsappPayload,
+      company ?? undefined
+    );
+    const whatsappRedirectUrl = adminWhatsAppRaw
+      ? buildWhatsAppUrl(adminWhatsAppRaw, whatsappMessage)
+      : null;
 
     return NextResponse.json(
-      { ...doc, id: created._id, bookingCode, createdAt: created._createdAt },
+      {
+        ...doc,
+        id: created._id,
+        bookingCode,
+        createdAt: created._createdAt,
+        whatsappRedirectUrl,
+      },
       { status: 201 }
     );
   } catch (error) {

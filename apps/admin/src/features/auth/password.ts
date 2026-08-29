@@ -22,3 +22,16 @@ export function generateResetToken(): string {
 export function hashResetToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
+
+export function normalizeResetToken(raw: string): string {
+  let token = String(raw ?? "").trim();
+  if (!token) return "";
+
+  try {
+    token = decodeURIComponent(token).trim();
+  } catch {
+    // keep original token if decoding fails
+  }
+
+  return token;
+}

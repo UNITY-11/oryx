@@ -349,6 +349,9 @@ importers:
 
   packages/whatsapp:
     dependencies:
+      "@repo/validation":
+        specifier: workspace:*
+        version: link:../validation
       pdfkit:
         specifier: ^0.17.2
         version: 0.17.2

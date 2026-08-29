@@ -1,14 +1,11 @@
 import { validatePhoneValue } from "@/shared/lib/phone";
+import { buildWhatsAppUrl } from "@repo/validation";
 
 import type { CompanyInput, SocialLink } from "./types";
 
 export type FieldErrors = Partial<Record<keyof CompanyInput, string>>;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const URL_RE = /^https?:\/\/.+/i;
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, "");
-}
 
 function isBlank(value: string | null | undefined): boolean {
   return !value || !String(value).trim();
@@ -108,8 +105,7 @@ export function hasFieldErrors(errors: FieldErrors): boolean {
   return Object.keys(errors).length > 0;
 }
 
-/** Normalize WhatsApp to digits for wa.me links */
+/** Normalize WhatsApp to wa.me link with correct country code */
 export function toWhatsAppLink(whatsapp: string): string {
-  const digits = digitsOnly(whatsapp);
-  return digits ? `https://wa.me/${digits}` : "";
+  return buildWhatsAppUrl(whatsapp) ?? "";
 }

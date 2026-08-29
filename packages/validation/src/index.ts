@@ -1,7 +1,9 @@
 export {
   DEFAULT_PHONE_COUNTRY,
+  buildWhatsAppUrl,
   isValidPhone,
   normalizePhone,
+  toWhatsAppDigits,
   validatePhoneValue,
   type CountryCode,
 } from "./phone";

@@ -9,13 +9,13 @@ import {
   validatePhoneValue,
   type CountryCode,
 } from "@/shared/lib/phone";
+import { redirectToWhatsApp } from "@/shared/lib/whatsapp-redirect";
 import { useBookingStore, useCartStore, useUserStore } from "@/shared/store";
 import { CartItem, Item, ItemVariant } from "@/shared/types";
 import { PhoneInput } from "@/shared/ui/phone-input";
 import { isBookingCustomerDetailsValid } from "@repo/validation";
 import {
   Calendar as CalendarIcon,
-  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -175,9 +175,9 @@ export function BookingFlow({
   isIntegrated?: boolean;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<
-    "services" | "date" | "time" | "auth" | "success"
-  >("services");
+  const [step, setStep] = useState<"services" | "date" | "time" | "auth">(
+    "services"
+  );
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   // Stores
@@ -327,10 +327,18 @@ export function BookingFlow({
       throw new Error(body?.error ?? "Failed to create booking");
     }
 
-    return res.json() as Promise<{ id: string; bookingCode?: string }>;
+    return res.json() as Promise<{
+      id: string;
+      bookingCode?: string;
+      whatsappRedirectUrl?: string | null;
+    }>;
   };
 
-  const completeLocalBooking = (createdId: string, bookingCode?: string) => {
+  const completeLocalBooking = (
+    createdId: string,
+    bookingCode?: string,
+    whatsappRedirectUrl?: string | null
+  ) => {
     addBooking({
       id: createdId,
       cartItems,
@@ -350,8 +358,13 @@ export function BookingFlow({
       status: "upcoming",
       bookingRef: bookingCode ?? createdId,
     });
-    setStep("success");
     clearCart();
+    if (!whatsappRedirectUrl) {
+      throw new Error(
+        "Booking saved but WhatsApp is unavailable. Please contact us on WhatsApp directly."
+      );
+    }
+    redirectToWhatsApp(whatsappRedirectUrl);
   };
 
   const handleCheckout = async () => {
@@ -371,7 +384,11 @@ export function BookingFlow({
     setBookingError(null);
     try {
       const created = await persistBookingToSanity(user.name, user.phone);
-      completeLocalBooking(created.id, created.bookingCode);
+      completeLocalBooking(
+        created.id,
+        created.bookingCode,
+        created.whatsappRedirectUrl
+      );
     } catch (err) {
       setBookingError(
         err instanceof Error ? err.message : "Failed to create booking"
@@ -406,7 +423,11 @@ export function BookingFlow({
     try {
       setUser({ id: "u1", name: name.trim(), phone: phone.trim(), channel });
       const created = await persistBookingToSanity(name.trim(), phone.trim());
-      completeLocalBooking(created.id, created.bookingCode);
+      completeLocalBooking(
+        created.id,
+        created.bookingCode,
+        created.whatsappRedirectUrl
+      );
     } catch (err) {
       setBookingError(
         err instanceof Error ? err.message : "Failed to create booking"
@@ -417,9 +438,7 @@ export function BookingFlow({
   };
 
   const handleBack = () => {
-    if (step === "success") {
-      router.back();
-    } else if (step === "auth") {
+    if (step === "auth") {
       setStep("time");
     } else if (step === "time") {
       setStep("date");
@@ -435,34 +454,30 @@ export function BookingFlow({
   return (
     <div className="bg-background relative flex h-full flex-col overflow-hidden md:flex-row md:bg-white">
       {/* LEFT COLUMN - MAIN FLOW */}
-      <div
-        className={`relative flex h-full min-h-0 flex-1 flex-col overflow-hidden ${step !== "success" ? "md:border-primary/10 md:border-r" : ""}`}
-      >
-        {step !== "success" && (
-          <>
-            {(!isIntegrated || step !== "services") && (
-              <div
-                className={`bg-background absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 md:bg-white`}
+      <div className="md:border-primary/10 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden md:border-r">
+        <>
+          {(!isIntegrated || step !== "services") && (
+            <div
+              className={`bg-background absolute top-0 right-0 left-0 z-40 flex w-full items-center justify-center px-6 pt-6 pb-4 md:bg-white`}
+            >
+              <button
+                onClick={handleBack}
+                className={`md:text-text-secondary absolute left-6 flex items-center justify-center rounded-full p-2 text-white transition-colors hover:bg-white/20 md:hover:bg-black/5`}
               >
-                <button
-                  onClick={handleBack}
-                  className={`md:text-text-secondary absolute left-6 flex items-center justify-center rounded-full p-2 text-white transition-colors hover:bg-white/20 md:hover:bg-black/5`}
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </button>
-                <h1
-                  className={`md:text-primary-dark text-center font-serif text-3xl font-medium text-white`}
-                >
-                  Book Session
-                </h1>
-              </div>
-            )}
-            {/* Spacer to push content below fixed header */}
-            {(!isIntegrated || step !== "services") && (
-              <div className="md:bg-background h-[76px] w-full shrink-0" />
-            )}
-          </>
-        )}
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <h1
+                className={`md:text-primary-dark text-center font-serif text-3xl font-medium text-white`}
+              >
+                Book Session
+              </h1>
+            </div>
+          )}
+          {/* Spacer to push content below fixed header */}
+          {(!isIntegrated || step !== "services") && (
+            <div className="md:bg-background h-[76px] w-full shrink-0" />
+          )}
+        </>
 
         {/* 1. SERVICES SELECTION */}
         {step === "services" && (
@@ -779,161 +794,137 @@ export function BookingFlow({
             </div>
           </div>
         )}
-
-        {/* 4. SUCCESS */}
-        {step === "success" && (
-          <div className="bg-background md:bg-background flex h-full w-full flex-1 flex-col items-center justify-center space-y-4 px-6 text-center">
-            <CheckCircle2 className="text-primary h-24 w-24" />
-            <h2 className="text-primary-dark mt-4 font-serif text-3xl md:text-4xl">
-              Booking Confirmed!
-            </h2>
-            <p className="text-text-secondary mx-auto max-w-md">
-              Your appointment has been successfully scheduled. We will contact
-              you shortly on your mobile number.
-            </p>
-            <Link
-              href="/"
-              className="bg-primary mt-8 inline-block rounded-xl px-8 py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90"
-            >
-              Return to Home
-            </Link>
-          </div>
-        )}
       </div>
 
       {/* RIGHT COLUMN - PERSISTENT DESKTOP ORDER SUMMARY */}
-      {step !== "success" && (
-        <div className="relative hidden w-[380px] flex-col bg-gray-50/50 md:flex lg:w-[420px]">
-          <div
-            className="scrollbar-hide flex-1 overflow-y-auto p-8"
-            data-lenis-prevent
-          >
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-primary-dark border-primary/10 mb-6 border-b pb-4 font-serif text-2xl">
-                  Order Summary
-                </h3>
+      <div className="relative hidden w-[380px] flex-col bg-gray-50/50 md:flex lg:w-[420px]">
+        <div
+          className="scrollbar-hide flex-1 overflow-y-auto p-8"
+          data-lenis-prevent
+        >
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-primary-dark border-primary/10 mb-6 border-b pb-4 font-serif text-2xl">
+                Order Summary
+              </h3>
 
-                <div
-                  className="scrollbar-hide max-h-[300px] space-y-4 overflow-y-auto pr-2"
-                  data-lenis-prevent
-                >
-                  {cartItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start justify-between text-sm"
-                    >
-                      <div className="flex flex-col pr-4">
-                        <span className="text-text-primary leading-tight font-medium">
-                          {item.item.name}
-                        </span>
-                        {item.selectedVariant && (
-                          <span className="text-text-secondary mt-1 text-xs">
-                            {item.selectedVariant.name}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-primary shrink-0 font-semibold">
-                        QAR {item.totalPrice}
+              <div
+                className="scrollbar-hide max-h-[300px] space-y-4 overflow-y-auto pr-2"
+                data-lenis-prevent
+              >
+                {cartItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-start justify-between text-sm"
+                  >
+                    <div className="flex flex-col pr-4">
+                      <span className="text-text-primary leading-tight font-medium">
+                        {item.item.name}
                       </span>
+                      {item.selectedVariant && (
+                        <span className="text-text-secondary mt-1 text-xs">
+                          {item.selectedVariant.name}
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
+                    <span className="text-primary shrink-0 font-semibold">
+                      QAR {item.totalPrice}
+                    </span>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <div className="border-primary/5 space-y-4 rounded-2xl border bg-white p-6 shadow-sm">
-                <h4 className="text-primary-dark mb-2 font-serif text-lg">
-                  Billing Details
-                </h4>
-                <div className="text-text-secondary flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>QAR {total}</span>
-                </div>
-                <div className="text-text-secondary flex justify-between text-sm">
-                  <span>Taxes & Fees</span>
-                  <span>QAR 0.00</span>
-                </div>
-                <div className="text-text-primary border-primary/10 flex justify-between border-t pt-4 text-lg font-medium">
-                  <span>Total</span>
-                  <span className="text-primary-dark font-bold">
-                    QAR {total}
-                  </span>
-                </div>
+            <div className="border-primary/5 space-y-4 rounded-2xl border bg-white p-6 shadow-sm">
+              <h4 className="text-primary-dark mb-2 font-serif text-lg">
+                Billing Details
+              </h4>
+              <div className="text-text-secondary flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>QAR {total}</span>
+              </div>
+              <div className="text-text-secondary flex justify-between text-sm">
+                <span>Taxes & Fees</span>
+                <span>QAR 0.00</span>
+              </div>
+              <div className="text-text-primary border-primary/10 flex justify-between border-t pt-4 text-lg font-medium">
+                <span>Total</span>
+                <span className="text-primary-dark font-bold">QAR {total}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Desktop Action Button */}
-          <div className="border-primary/5 z-10 shrink-0 border-t bg-gray-50/50 p-8 pt-4">
-            {step === "services" ? (
+        {/* Desktop Action Button */}
+        <div className="border-primary/5 z-10 shrink-0 border-t bg-gray-50/50 p-8 pt-4">
+          {step === "services" ? (
+            <button
+              onClick={() => setStep("date")}
+              disabled={cartItems.length === 0}
+              className="bg-background flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+            >
+              Choose Date <ChevronRight className="ml-2 h-5 w-5" />
+            </button>
+          ) : step === "date" ? (
+            <button
+              onClick={() => setStep("time")}
+              disabled={!selectedDate}
+              className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+            >
+              Choose Time <ChevronRight className="ml-2 h-5 w-5" />
+            </button>
+          ) : step === "time" ? (
+            <>
+              {bookingError && (
+                <p className="mb-3 text-center text-sm text-red-500">
+                  {bookingError}
+                </p>
+              )}
               <button
-                onClick={() => setStep("date")}
-                disabled={cartItems.length === 0}
-                className="bg-background flex w-full items-center justify-center rounded-full py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
-              >
-                Choose Date <ChevronRight className="ml-2 h-5 w-5" />
-              </button>
-            ) : step === "date" ? (
-              <button
-                onClick={() => setStep("time")}
-                disabled={!selectedDate}
+                disabled={!selectedTime || bookingSubmitting}
+                onClick={handleCheckout}
                 className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
               >
-                Choose Time <ChevronRight className="ml-2 h-5 w-5" />
+                {bookingSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Checkout <ChevronRight className="ml-2 h-5 w-5" />
+                  </>
+                )}
               </button>
-            ) : step === "time" ? (
-              <>
-                {bookingError && (
-                  <p className="mb-3 text-center text-sm text-red-500">
-                    {bookingError}
-                  </p>
+            </>
+          ) : step === "auth" ? (
+            <>
+              {bookingError && (
+                <p className="mb-3 text-center text-sm text-red-500">
+                  {bookingError}
+                </p>
+              )}
+              <button
+                type="submit"
+                form="auth-form"
+                disabled={bookingSubmitting || !isAuthDetailsValid}
+                className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
+              >
+                {bookingSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  <>
+                    Verify & Confirm <ChevronRight className="ml-2 h-5 w-5" />
+                  </>
                 )}
-                <button
-                  disabled={!selectedTime || bookingSubmitting}
-                  onClick={handleCheckout}
-                  className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
-                >
-                  {bookingSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      Checkout <ChevronRight className="ml-2 h-5 w-5" />
-                    </>
-                  )}
-                </button>
-              </>
-            ) : step === "auth" ? (
-              <>
-                {bookingError && (
-                  <p className="mb-3 text-center text-sm text-red-500">
-                    {bookingError}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  form="auth-form"
-                  disabled={bookingSubmitting || !isAuthDetailsValid}
-                  className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
-                >
-                  {bookingSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Confirming...
-                    </>
-                  ) : (
-                    <>
-                      Verify & Confirm <ChevronRight className="ml-2 h-5 w-5" />
-                    </>
-                  )}
-                </button>
-              </>
-            ) : null}
-          </div>
+              </button>
+            </>
+          ) : null}
         </div>
-      )}
+      </div>
 
       {/* CART FLOATING ACTION (Mobile Only) */}
       {cartItems.length > 0 &&

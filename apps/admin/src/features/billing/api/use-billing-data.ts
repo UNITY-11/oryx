@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
+import {
+  formatInvoiceMessage,
+  openWhatsAppChat,
+  toBookingWhatsAppPayload,
+  type CompanyWhatsAppContext,
+} from "@repo/whatsapp";
 import { useSanityListener } from "@shared/hooks/use-sanity-listener";
 
 import {
@@ -17,7 +23,7 @@ import {
 } from "../invoice-lines";
 import { getInvoiceSummary, type InvoiceSummary } from "../invoice-summary";
 
-export type FilterStatus = "All" | "Started" | "Completed";
+export type FilterStatus = "All" | "Confirmed" | "Completed";
 export type BillingBooking = Booking;
 export type ThermalSize = "58mm" | "80mm" | "110mm";
 
@@ -30,35 +36,18 @@ export function getTotal(booking: BillingBooking, catalog: Service[]) {
 
 export function openWhatsAppInvoice(
   booking: BillingBooking,
-  catalog: Service[]
+  catalog: Service[],
+  company?: CompanyWhatsAppContext
 ) {
   const lines = getServiceLineItems(booking, catalog);
-  const servicesText = lines
-    .map((s) => {
-      if (s.options.length > 0) {
-        const optionsText = s.options
-          .map((a) => `• ${a.name}: QAR ${a.price}`)
-          .join("\n");
-        return `*${s.name}*\n${optionsText}`;
-      }
-      return `• ${s.name}`;
-    })
-    .join("\n\n");
-  const total = getTotal(booking, catalog);
-  const bill =
-    `*🌿 Oryx Spa — Invoice*\n\n` +
-    `Invoice #: ${getBookingDisplayId(booking)}\n` +
-    `Date: ${booking.date}  |  Time: ${booking.time}\n` +
-    `Client: ${booking.customerName}\n\n` +
-    `*Services:*\n${servicesText}\n\n` +
-    `*Total: QAR ${total}*\n\n` +
-    `Thank you for choosing Oryx Spa! We look forward to seeing you again. 🌸`;
-  const phone = booking.phone.replace(/\D/g, "");
-  if (!phone) return;
-  window.open(
-    `https://wa.me/${phone}?text=${encodeURIComponent(bill)}`,
-    "_blank"
+  const summary = getInvoiceSummary(booking, catalog);
+  const message = formatInvoiceMessage(
+    toBookingWhatsAppPayload(booking),
+    lines,
+    summary,
+    company
   );
+  openWhatsAppChat(booking.phone, message);
 }
 
 export function buildInvoiceHTML(
@@ -229,11 +218,17 @@ export function useBillingData() {
   };
 
   const totalRevenue = bookings
-    .filter((b) => b.status === "Started" || b.status === "Completed")
+    .filter(
+      (b) =>
+        b.status === "Confirmed" ||
+        b.status === "Completed" ||
+        b.status === "Started"
+    )
     .reduce((s, b) => s + getInvoiceSummary(b, services).total, 0);
-  const startedCount =
-    list.meta?.startedCount ??
-    bookings.filter((b) => b.status === "Started").length;
+  const confirmedCount =
+    list.meta?.confirmedCount ??
+    bookings.filter((b) => b.status === "Confirmed" || b.status === "Started")
+      .length;
   const completedCount =
     list.meta?.completedCount ??
     bookings.filter((b) => b.status === "Completed").length;
@@ -274,7 +269,7 @@ export function useBillingData() {
     hasPrev: list.hasPrev,
     hasNext: list.hasNext,
     totalRevenue,
-    startedCount,
+    confirmedCount,
     completedCount,
     selectedLines,
     selectedSummary,

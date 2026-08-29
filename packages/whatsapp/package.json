@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
   },
   "dependencies": {
+    "@repo/validation": "workspace:*",
     "pdfkit": "^0.17.2"
   },
   "devDependencies": {

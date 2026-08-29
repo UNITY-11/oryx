@@ -1,5 +1,4 @@
-export type BookingStatus =
-  "Confirmed" | "Pending" | "Completed" | "Cancelled" | "Started";
+export type BookingStatus = "Confirmed" | "Pending" | "Completed" | "Cancelled";
 
 export interface BookingService {
   name: string;
@@ -15,7 +14,8 @@ export interface Booking {
   services: BookingService[];
   date: string;
   time: string;
-  status: BookingStatus;
+  /** Legacy "Started" may exist on old records; not selectable in UI */
+  status: BookingStatus | "Started";
   amount: number;
   membershipId?: string;
   discountPercent?: number;

@@ -6,6 +6,7 @@ import {
   normalizeServiceInput,
   validateService,
 } from "@/features/services/validation";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 function withKeys<T extends { id: string }>(
@@ -70,6 +71,7 @@ export async function PATCH(
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(SERVICE_BY_ID_QUERY, { id });
+    await revalidateWebSite();
     return NextResponse.json(updated);
   } catch (error) {
     console.error(`Failed to update service ${id}:`, error);
@@ -87,6 +89,7 @@ export async function DELETE(
   const { id } = await params;
   try {
     await sanityClient.delete(id);
+    await revalidateWebSite();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(`Failed to delete service ${id}:`, error);

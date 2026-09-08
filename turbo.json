@@ -1,6 +1,15 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "WEB_APP_URL",
+    "REVALIDATE_SECRET",
+    "NODE_ENV",
+    "SANITY_API_TOKEN",
+    "NEXT_PUBLIC_SANITY_PROJECT_ID",
+    "NEXT_PUBLIC_SANITY_DATASET",
+    "SANITY_API_VERSION"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

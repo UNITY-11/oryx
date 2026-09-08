@@ -9,6 +9,7 @@ import {
   hasFieldErrors,
   validatePromotionalBanner,
 } from "@/features/promotional-banner/validation";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -101,6 +102,7 @@ export async function PUT(request: Request) {
 
     await sanityClient.createOrReplace(doc);
     const saved = await sanityClient.fetch(PROMOTIONAL_BANNER_QUERY);
+    await revalidateWebSite();
 
     return NextResponse.json(saved);
   } catch (error) {

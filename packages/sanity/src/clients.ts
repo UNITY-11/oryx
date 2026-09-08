@@ -1,6 +1,6 @@
 import { createClient } from "@sanity/client";
-import { sanityConfig } from "./config";
 
+import { sanityConfig } from "./config";
 
 /**
  * Public read client — safe for server components and CDN-cached fetches.
@@ -10,6 +10,17 @@ export function createReadClient() {
   return createClient({
     ...sanityConfig,
     useCdn: true,
+  });
+}
+
+/**
+ * Public read client with CDN disabled — use when admin updates must appear
+ * immediately (e.g. after on-demand ISR revalidation).
+ */
+export function createFreshReadClient() {
+  return createClient({
+    ...sanityConfig,
+    useCdn: false,
   });
 }
 

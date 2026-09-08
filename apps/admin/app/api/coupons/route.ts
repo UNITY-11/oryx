@@ -12,6 +12,7 @@ import {
   parsePaginationSearchParams,
   toGroqSearchPattern,
 } from "@/shared/lib/pagination";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
     const created = await sanityClient.create(doc);
+    await revalidateWebSite();
     return NextResponse.json(created);
   } catch (error) {
     console.error("Failed to create coupon:", error);

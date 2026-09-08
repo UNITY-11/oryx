@@ -14,6 +14,7 @@ import {
   parsePaginationSearchParams,
   toGroqSearchPattern,
 } from "@/shared/lib/pagination";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
     };
 
     const created = await sanityClient.create(doc);
+    await revalidateWebSite();
     return NextResponse.json({ ...doc, id: created._id }, { status: 201 });
   } catch (error) {
     console.error("Failed to create service:", error);

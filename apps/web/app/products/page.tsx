@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { fetchProducts } from "@/features/catalog/sanity";
 
-export const revalidate = 3600;
+export const revalidate = 60; // ISR fallback; admin triggers on-demand revalidation
 
 export default async function ProductsPage() {
   let products: Awaited<ReturnType<typeof fetchProducts>> = [];

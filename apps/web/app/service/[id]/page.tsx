@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { fetchItemById } from "@/features/catalog/sanity";
 import { ServiceDetailClient } from "@/features/catalog/service-detail-client";
 
-export const revalidate = 3600;
+export const revalidate = 60; // ISR fallback; admin triggers on-demand revalidation
 
 export default async function ServiceDetailPage({
   params,

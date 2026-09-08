@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { HERO_BY_ID_QUERY } from "@/features/hero/sanity-queries";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export async function GET(
@@ -10,7 +11,10 @@ export async function GET(
     const { id } = await params;
     const item = await sanityClient.fetch(HERO_BY_ID_QUERY, { id });
     if (!item) {
-      return NextResponse.json({ error: "Hero item not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Hero item not found" },
+        { status: 404 }
+      );
     }
     return NextResponse.json(item);
   } catch (error) {
@@ -37,6 +41,7 @@ export async function PATCH(
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(HERO_BY_ID_QUERY, { id });
+    await revalidateWebSite();
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -55,6 +60,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     await sanityClient.delete(id);
+    await revalidateWebSite();
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("Failed to delete hero item:", error);

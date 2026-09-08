@@ -1,6 +1,7 @@
 export { sanityConfig } from "./config";
 export {
   createReadClient,
+  createFreshReadClient,
   createWriteClient,
   createPublicListenerClient,
 } from "./clients";

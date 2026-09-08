@@ -1,7 +1,10 @@
-import { createReadClient, createWriteClient } from "@repo/sanity";
+import { createFreshReadClient, createWriteClient } from "@repo/sanity";
 
-/** Public read client — safe for server components and CDN-cached fetches. */
-export const sanityClient = createReadClient();
+/**
+ * Fresh public reads (CDN off) so CMS updates show immediately after
+ * on-demand revalidation.
+ */
+export const sanityClient = createFreshReadClient();
 
 /**
  * Write-capable client for booking creation from the public site.

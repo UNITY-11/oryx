@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export async function POST(request: Request) {
   try {
     const { updates } = await request.json();
     if (!Array.isArray(updates)) {
-      return NextResponse.json({ error: "Invalid updates array" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid updates array" },
+        { status: 400 }
+      );
     }
 
     const transaction = sanityClient.transaction();
@@ -16,6 +20,7 @@ export async function POST(request: Request) {
     }
 
     await transaction.commit();
+    await revalidateWebSite();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to reorder hero items:", error);

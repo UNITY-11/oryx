@@ -1,7 +1,7 @@
 import { fetchCompany } from "@/features/company/sanity";
 import { ContactView } from "@/features/contact/contact-view";
 
-export const revalidate = 3600;
+export const revalidate = 60; // ISR fallback; admin triggers on-demand revalidation
 
 export default async function ContactPage() {
   let company: Awaited<ReturnType<typeof fetchCompany>> = null;

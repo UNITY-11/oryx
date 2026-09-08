@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { sanityClient } from "@/shared/lib/sanity/client";
 import { REVIEW_BY_ID_QUERY } from "@/features/reviews/sanity-queries";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
+import { sanityClient } from "@/shared/lib/sanity/client";
 
 export async function GET(
   request: Request,
@@ -11,15 +12,18 @@ export async function GET(
     const review = await sanityClient.fetch(REVIEW_BY_ID_QUERY, {
       id,
     });
-    
+
     if (!review) {
       return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json(review);
   } catch (error) {
     console.error("Failed to fetch review:", error);
-    return NextResponse.json({ error: "Failed to fetch review" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch review" },
+      { status: 500 }
+    );
   }
 }
 
@@ -30,7 +34,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    
+
     // Auto-generate initials if not provided but name is changing
     if (body.name && !body.initials) {
       body.initials = body.name
@@ -41,15 +45,16 @@ export async function PATCH(
         .slice(0, 2);
     }
 
-    const updated = await sanityClient
-      .patch(id)
-      .set(body)
-      .commit();
-      
+    const updated = await sanityClient.patch(id).set(body).commit();
+    await revalidateWebSite();
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Failed to update review:", error);
-    return NextResponse.json({ error: "Failed to update review" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update review" },
+      { status: 500 }
+    );
   }
 }
 
@@ -60,9 +65,13 @@ export async function DELETE(
   try {
     const { id } = await params;
     await sanityClient.delete(id);
+    await revalidateWebSite();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete review:", error);
-    return NextResponse.json({ error: "Failed to delete review" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete review" },
+      { status: 500 }
+    );
   }
 }

@@ -8,6 +8,7 @@ import {
   type SocialPlatform,
 } from "@/features/company/types";
 import { hasFieldErrors, validateCompany } from "@/features/company/validation";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 import { normalizePhone } from "@repo/validation";
 
@@ -118,6 +119,7 @@ export async function PUT(request: Request) {
 
     await sanityClient.createOrReplace(doc);
     const saved = await sanityClient.fetch(COMPANY_QUERY);
+    await revalidateWebSite();
 
     return NextResponse.json(saved);
   } catch (error) {

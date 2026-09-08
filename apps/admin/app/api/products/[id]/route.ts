@@ -9,6 +9,7 @@ import {
   productToFormData,
   validateProduct,
 } from "@/features/products/validation";
+import { revalidateWebSite } from "@/shared/lib/revalidate-web";
 import { sanityClient } from "@/shared/lib/sanity/client";
 
 export async function GET(
@@ -119,6 +120,7 @@ export async function PATCH(
 
     await sanityClient.patch(id).set(patch).commit();
     const updated = await sanityClient.fetch(PRODUCT_BY_ID_QUERY, { id });
+    await revalidateWebSite();
     return NextResponse.json(updated);
   } catch (error) {
     console.error(`Failed to update product ${id}:`, error);
@@ -136,6 +138,7 @@ export async function DELETE(
   const { id } = await params;
   try {
     await sanityClient.delete(id);
+    await revalidateWebSite();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(`Failed to delete product ${id}:`, error);

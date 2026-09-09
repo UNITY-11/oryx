@@ -44,48 +44,53 @@ function formatFriendlyTime(time: string): string {
   return time;
 }
 
-/** Bold service/option lines for confirmation (e.g. *Lash Tint*). */
-function formatConfirmationServiceLines(
+/** Strip bullets/dots/icons that sometimes leak into catalog names. */
+function cleanLabel(value: string): string {
+  return value
+    .replace(/^[\s.•·‣▪◦●○★☆✦✧*‧∙\-–—]+/u, "")
+    .replace(/[\s.•·‣▪◦●○★☆✦✧*‧∙\-–—]+$/u, "")
+    .replace(/\s*[.•·‣▪◦●○‧∙]\s*/gu, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/** Numbered services with dashed options, e.g. "1- Eyebrow Services\n- Eyebrow shaping". */
+function formatServicesBlock(
   services: BookingWhatsAppPayload["services"]
 ): string {
-  if (!services.length) return "*Service*";
+  if (!services.length) return "None";
 
   return services
-    .flatMap((service) => {
-      const options = (service.options ?? []).filter(Boolean);
-      if (options.length === 0) return [`*${service.name}*`];
-      return options.map((opt) => `*${opt}*`);
+    .map((service, index) => {
+      const name = cleanLabel(service.name) || service.name.trim();
+      const options = (service.options ?? [])
+        .map((opt) => cleanLabel(opt) || opt.trim())
+        .filter(Boolean);
+      const header = `${index + 1}- ${name}`;
+      if (options.length === 0) return header;
+      const optionLines = options.map((opt) => `- ${opt}`).join("\n");
+      return `${header}\n${optionLines}`;
     })
     .join("\n");
 }
 
 function formatPricedServicesBlock(lineItems: InvoiceLineItem[]): string {
-  if (!lineItems.length) return "—";
+  if (!lineItems.length) return "None";
 
   return lineItems
-    .map((line) => {
-      if (line.options.length === 0) return `• ${line.name}`;
+    .map((line, index) => {
+      const name = cleanLabel(line.name) || line.name.trim();
+      const header = `${index + 1}- ${name}`;
+      if (line.options.length === 0) return header;
       const optionLines = line.options
-        .map((opt) => `  - ${opt.name}: QAR ${opt.price}`)
+        .map((opt) => {
+          const optName = cleanLabel(opt.name) || opt.name.trim();
+          return `- ${optName}: QAR ${opt.price}`;
+        })
         .join("\n");
-      return `• ${line.name}\n${optionLines}`;
+      return `${header}\n${optionLines}`;
     })
     .join("\n\n");
-}
-
-function formatServicesBlock(
-  services: BookingWhatsAppPayload["services"]
-): string {
-  if (!services.length) return "—";
-
-  return services
-    .map((service) => {
-      const options = (service.options ?? []).filter(Boolean);
-      if (options.length === 0) return `• ${service.name}`;
-      const optionLines = options.map((opt) => `  - ${opt}`).join("\n");
-      return `• ${service.name}\n${optionLines}`;
-    })
-    .join("\n");
 }
 
 function formatAmountFooter(
@@ -93,13 +98,13 @@ function formatAmountFooter(
   label = "Total"
 ): string {
   if (!summary.hasDiscount) {
-    return `*${label}: QAR ${summary.total}*`;
+    return `${label}: QAR ${summary.total}`;
   }
   return (
-    `*Subtotal:* QAR ${summary.subtotal}\n` +
-    `*Gym discount (${summary.discountPercent}%):* −QAR ${summary.discountAmount}\n` +
-    `*Membership ID:* ${summary.membershipId ?? "—"}\n` +
-    `*${label}: QAR ${summary.total}*`
+    `Subtotal: QAR ${summary.subtotal}\n` +
+    `Gym discount (${summary.discountPercent}%): −QAR ${summary.discountAmount}\n` +
+    `Membership ID: ${summary.membershipId ?? "—"}\n` +
+    `${label}: QAR ${summary.total}`
   );
 }
 
@@ -147,18 +152,18 @@ export function formatAdminNewBookingMessage(
   const servicesText = formatServicesBlock(booking.services);
   const amountBlock = summary
     ? formatAmountFooter(summary, "Amount")
-    : `*Amount:* QAR ${booking.amount}`;
+    : `Amount: QAR ${booking.amount}`;
 
   return (
-    `🌿 *New Booking — ${brand}*\n\n` +
-    `*Ref:* ${displayBookingRef(booking)}\n` +
-    `*Customer:* ${booking.customerName}\n` +
-    `*Phone:* ${booking.phone}\n\n` +
-    `*Services:*\n${servicesText}\n\n` +
-    `*Date:* ${booking.date}\n` +
-    `*Time:* ${booking.time}\n` +
+    `🌿 New Booking — ${brand}\n\n` +
+    `Ref: ${displayBookingRef(booking)}\n` +
+    `Customer: ${booking.customerName}\n` +
+    `Phone: ${booking.phone}\n\n` +
+    `Services:\n${servicesText}\n\n` +
+    `Date: ${booking.date}\n` +
+    `Time: ${booking.time}\n` +
     `${amountBlock}\n` +
-    `*Status:* ${booking.status ?? "Pending"}`
+    `Status: ${booking.status ?? "Pending"}`
   );
 }
 
@@ -174,14 +179,14 @@ export function formatCustomerBookingRequestMessage(
 
   return (
     `Hello! 👋\n\n` +
-    `This is *${firstName}*. I would like to book an appointment at *${brand}*.\n\n` +
-    `*My name:* ${booking.customerName}\n` +
-    `*My WhatsApp:* ${booking.phone}\n\n` +
-    `*Services:*\n${servicesText}\n\n` +
-    `*Date:* ${booking.date}\n` +
-    `*Time:* ${booking.time}\n` +
-    `*Estimated total:* QAR ${booking.amount}\n\n` +
-    `*Booking reference:* ${displayBookingRef(booking)}\n\n` +
+    `This is ${firstName}. I would like to book an appointment at ${brand}.\n\n` +
+    `My name: ${booking.customerName}\n` +
+    `My WhatsApp: ${booking.phone}\n\n` +
+    `Services:\n${servicesText}\n\n` +
+    `Date: ${booking.date}\n` +
+    `Time: ${booking.time}\n` +
+    `Estimated total: QAR ${booking.amount}\n\n` +
+    `Booking reference: ${displayBookingRef(booking)}\n\n` +
     `Please confirm my slot. Thank you! 🌸`
   );
 }
@@ -194,20 +199,20 @@ export function formatCustomerConfirmationMessage(
   const brand = company?.name?.trim() || "ORYX Beauty Spa & Salon";
   const firstName =
     booking.customerName.trim().split(/\s+/)[0] || booking.customerName;
-  const serviceLines = formatConfirmationServiceLines(booking.services);
+  const serviceLines = formatServicesBlock(booking.services);
   const total = summary?.total ?? booking.amount;
 
   return (
-    `*APPOINTMENT CONFIRMED*\n\n` +
+    `APPOINTMENT CONFIRMED\n\n` +
     `Hello ${firstName},\n\n` +
-    `Your appointment at *${brand}* is confirmed.\n\n` +
+    `Your appointment at ${brand} is confirmed.\n\n` +
     `${serviceLines}\n` +
-    `*Date:* ${formatFriendlyDate(booking.date)}\n` +
-    `*Time:* ${formatFriendlyTime(booking.time)}\n` +
-    `*Total:* QAR ${total}\n` +
-    `*Reference:* ${displayBookingRef(booking)}\n\n` +
+    `Date: ${formatFriendlyDate(booking.date)}\n` +
+    `Time: ${formatFriendlyTime(booking.time)}\n` +
+    `Total: QAR ${total}\n` +
+    `Reference: ${displayBookingRef(booking)}\n\n` +
     `We look forward to welcoming you.\n\n` +
-    `*Your beauty. Your ORYX experience.*`
+    `Your beauty. Your ORYX experience.`
   );
 }
 
@@ -224,11 +229,11 @@ export function formatInvoiceMessage(
 
   return (
     `Hello ${firstName},\n\n` +
-    `Here is your invoice from *${brand}*. 🌿\n\n` +
-    `*Invoice #:* ${displayBookingRef(booking)}\n` +
-    `*Date:* ${booking.date}  |  *Time:* ${booking.time}\n` +
-    `*Client:* ${booking.customerName}\n\n` +
-    `*Services:*\n${servicesText}\n\n` +
+    `Here is your invoice from ${brand}. 🌿\n\n` +
+    `Invoice #: ${displayBookingRef(booking)}\n` +
+    `Date: ${booking.date}  |  Time: ${booking.time}\n` +
+    `Client: ${booking.customerName}\n\n` +
+    `Services:\n${servicesText}\n\n` +
     `${formatAmountFooter(summary, "Total")}\n\n` +
     `Thank you for choosing ${brand}! We look forward to seeing you again. 🌸`
   );

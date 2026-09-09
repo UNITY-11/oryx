@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
@@ -85,6 +87,7 @@ export function ProductsGrid({
 }: ProductsGridProps) {
   const router = useRouter();
   const selection = useBulkSelection(filtered.map((p) => p.id));
+  const select = useBulkSelectMode(selection);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [quantityProduct, setQuantityProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
@@ -141,6 +144,15 @@ export function ProductsGrid({
                 className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
               />
             </div>
+
+            {!loading && filtered.length > 0 && (
+              <BulkSelectControls
+                selectMode={select.selectMode}
+                allSelected={selection.allSelected}
+                onSelectToggle={select.toggleSelect}
+                onSelectAll={select.selectAll}
+              />
+            )}
 
             <div className="relative z-40 w-full shrink-0 sm:w-48">
               <button
@@ -220,6 +232,7 @@ export function ProductsGrid({
                   message: `Deleted ${ids.length} product(s)`,
                 });
               }}
+              onClear={select.exit}
               onError={(msg) => setToast({ type: "error", message: msg })}
             />
           )}
@@ -322,21 +335,28 @@ export function ProductsGrid({
                       )}
                     </div>
 
-                    <div
-                      className="absolute bottom-2 left-2 z-20 sm:bottom-3 sm:left-3"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
-                        <BulkSelectCheckbox
-                          selection={selection}
-                          id={product.id}
-                          label={`Select ${product.name}`}
-                          className="border-white/50"
-                        />
+                    {select.showCheckboxes && (
+                      <div
+                        className="absolute top-2 left-2 z-20 sm:top-3 sm:left-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="rounded-md bg-white/95 p-1 shadow-sm backdrop-blur-sm">
+                          <BulkSelectCheckbox
+                            selection={selection}
+                            id={product.id}
+                            label={`Select ${product.name}`}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1 sm:top-3 sm:left-3">
+                    <div
+                      className={`absolute z-20 flex flex-col items-start gap-1 ${
+                        select.showCheckboxes
+                          ? "top-2 left-10 sm:top-3 sm:left-12"
+                          : "top-2 left-2 sm:top-3 sm:left-3"
+                      }`}
+                    >
                       {product.status === "Inactive" && (
                         <span className="rounded-full bg-gray-800/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px]">
                           Inactive

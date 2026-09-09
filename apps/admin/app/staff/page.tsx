@@ -4,11 +4,13 @@ import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
 import { deleteStaff, fetchStaffPage } from "@/features/staff/api";
 import { addAttendance } from "@/features/staff/api/use-staff";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
@@ -214,6 +216,7 @@ function StaffList() {
 
   const filteredStaff = staffList;
   const selection = useBulkSelection(filteredStaff.map((s) => s.id));
+  const select = useBulkSelectMode(selection);
 
   const openModal = (
     staffId: string,
@@ -304,18 +307,30 @@ function StaffList() {
 
       <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto pt-2 sm:pt-4">
         <div className="mb-4 flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between sm:px-0">
-          <div className="relative max-w-sm">
-            <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search staff by name, role or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-white py-2.5 pr-4 pl-10 text-sm shadow-sm focus:ring-1 focus:outline-none"
-            />
+          <div className="flex w-full flex-col gap-2 sm:max-w-xl sm:flex-row sm:items-center sm:gap-3">
+            <div className="relative min-w-0 flex-1">
+              <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search staff by name, role or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-white py-2.5 pr-4 pl-10 text-sm shadow-sm focus:ring-1 focus:outline-none"
+              />
+            </div>
+            {!loading && filteredStaff.length > 0 && (
+              <BulkSelectControls
+                selectMode={select.selectMode}
+                allSelected={selection.allSelected}
+                onSelectToggle={select.toggleSelect}
+                onSelectAll={select.selectAll}
+              />
+            )}
           </div>
+        </div>
 
-          {!loading && filteredStaff.length > 0 && (
+        {!loading && filteredStaff.length > 0 && (
+          <div className="mb-3 px-1 sm:px-0">
             <BulkDeleteToolbar
               selection={selection}
               itemIds={filteredStaff.map((s) => s.id)}
@@ -328,10 +343,11 @@ function StaffList() {
                   message: `Deleted ${ids.length} staff member(s)`,
                 });
               }}
+              onClear={select.exit}
               onError={(msg) => setToast({ type: "error", message: msg })}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-text-secondary flex h-56 flex-col items-center justify-center px-4 text-center">
@@ -385,11 +401,13 @@ function StaffList() {
                   className="absolute top-3 left-3 z-10"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <BulkSelectCheckbox
-                    selection={selection}
-                    id={staff.id}
-                    label={`Select ${staff.name}`}
-                  />
+                  {select.showCheckboxes && (
+                    <BulkSelectCheckbox
+                      selection={selection}
+                      id={staff.id}
+                      label={`Select ${staff.name}`}
+                    />
+                  )}
                 </div>
                 <Link
                   href={`/staff/${staff.id}`}

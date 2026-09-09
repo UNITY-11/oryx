@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
-import { deleteMany } from "@/shared/lib/bulk-delete";
-import { BulkSelectCheckbox } from "@/shared/ui/bulk-delete-actions";
-import { BulkDeleteModal } from "@/shared/ui/bulk-delete-modal";
+import {
+  BulkDeleteToolbar,
+  BulkSelectCheckbox,
+  BulkSelectControls,
+} from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -33,8 +36,6 @@ import {
   Loader2,
   Search,
   Star,
-  Trash2,
-  X,
 } from "lucide-react";
 
 import { deleteService, reorderServices } from "../api";
@@ -210,13 +211,12 @@ export function ServicesGrid({
   const router = useRouter();
   const [items, setItems] = useState(filtered);
   const [saving, setSaving] = useState(false);
-  const [selectMode, setSelectMode] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
   const selection = useBulkSelection(items.map((s) => s.id));
-  const canDrag = !searchQuery.trim() && !selectMode && selection.count === 0;
+  const select = useBulkSelectMode(selection);
+  const canDrag =
+    !searchQuery.trim() && !select.selectMode && selection.count === 0;
 
   useEffect(() => {
     setItems(filtered);
@@ -232,60 +232,6 @@ export function ServicesGrid({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  const exitSelectMode = () => {
-    selection.clear();
-    setSelectMode(false);
-  };
-
-  const handleSelectToggle = () => {
-    if (selectMode) {
-      exitSelectMode();
-    } else {
-      setSelectMode(true);
-    }
-  };
-
-  const handleSelectAll = () => {
-    setSelectMode(true);
-    selection.selectAll();
-  };
-
-  const handleConfirmDelete = async () => {
-    const ids = selection.selectedArray;
-    if (ids.length === 0) return;
-    setDeleting(true);
-    try {
-      const { deleted, failed } = await deleteMany(ids, deleteService);
-      if (deleted.length > 0) {
-        setItems((prev) => prev.filter((s) => !deleted.includes(s.id)));
-        onItemsDeleted?.(deleted);
-        selection.clear();
-        setSelectMode(false);
-        setDeleteOpen(false);
-        setToast({
-          type: "success",
-          message: `Deleted ${deleted.length} service(s)`,
-        });
-      }
-      if (failed.length > 0) {
-        setToast({
-          type: "error",
-          message: `Deleted ${deleted.length}. Failed ${failed.length}.`,
-        });
-      }
-    } catch (err) {
-      setToast({
-        type: "error",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Failed to delete selected items",
-      });
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -345,64 +291,41 @@ export function ServicesGrid({
             </div>
 
             {hasItems && (
-              <div className="border-primary/15 flex shrink-0 items-center gap-1 rounded-full border bg-[#fcf4f0]/80 p-1">
-                <button
-                  type="button"
-                  onClick={handleSelectToggle}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm ${
-                    selectMode
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-text-secondary hover:text-primary-dark hover:bg-white/80"
-                  }`}
-                >
-                  Select
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSelectAll}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm ${
-                    selection.allSelected
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-text-secondary hover:text-primary-dark hover:bg-white/80"
-                  }`}
-                >
-                  Select all
-                </button>
-              </div>
+              <BulkSelectControls
+                selectMode={select.selectMode}
+                allSelected={selection.allSelected}
+                onSelectToggle={select.toggleSelect}
+                onSelectAll={select.selectAll}
+              />
             )}
 
             <p className="text-text-secondary hidden items-center gap-2 text-xs lg:flex lg:text-sm">
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {canDrag
                 ? "Drag to reorder · tap to edit"
-                : selectMode || selection.count > 0
+                : select.showCheckboxes
                   ? "Tap checkboxes to select"
                   : "Clear search to reorder"}
             </p>
           </div>
 
-          {selection.count > 0 && (
-            <div className="border-primary/20 bg-primary/8 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 sm:gap-3">
-              <span className="text-primary-dark text-sm font-semibold tabular-nums">
-                {selection.count} selected
-              </span>
-              <button
-                type="button"
-                onClick={() => setDeleteOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete
-              </button>
-              <button
-                type="button"
-                onClick={exitSelectMode}
-                className="text-text-secondary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium"
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </button>
-            </div>
+          {hasItems && (
+            <BulkDeleteToolbar
+              selection={selection}
+              itemIds={items.map((s) => s.id)}
+              entityLabel="services"
+              deleteOne={deleteService}
+              onDeleted={(ids) => {
+                setItems((prev) => prev.filter((s) => !ids.includes(s.id)));
+                onItemsDeleted?.(ids);
+                setToast({
+                  type: "success",
+                  message: `Deleted ${ids.length} service(s)`,
+                });
+              }}
+              onClear={select.exit}
+              onError={(msg) => setToast({ type: "error", message: msg })}
+            />
           )}
         </div>
 
@@ -455,7 +378,7 @@ export function ServicesGrid({
                       service={service}
                       selection={selection}
                       canDrag={canDrag}
-                      selectMode={selectMode || selection.count > 0}
+                      selectMode={select.showCheckboxes}
                       onOpen={() => router.push(`/services/${service.id}`)}
                     />
                   ))}
@@ -485,15 +408,6 @@ export function ServicesGrid({
           <span className="ml-auto">{totalItems} shown</span>
         </div>
       </div>
-
-      <BulkDeleteModal
-        open={deleteOpen}
-        count={selection.count}
-        entityLabel="services"
-        deleting={deleting}
-        onCancel={() => setDeleteOpen(false)}
-        onConfirm={handleConfirmDelete}
-      />
     </div>
   );
 }

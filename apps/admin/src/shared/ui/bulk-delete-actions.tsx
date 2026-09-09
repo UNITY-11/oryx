@@ -9,6 +9,49 @@ import { Trash2, X } from "lucide-react";
 
 type BulkSelection = ReturnType<typeof useBulkSelection>;
 
+export function BulkSelectControls({
+  selectMode,
+  allSelected,
+  onSelectToggle,
+  onSelectAll,
+  className = "",
+}: {
+  selectMode: boolean;
+  allSelected: boolean;
+  onSelectToggle: () => void;
+  onSelectAll: () => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`border-primary/15 flex shrink-0 items-center gap-1 rounded-full border bg-[#fcf4f0]/80 p-1 ${className}`}
+    >
+      <button
+        type="button"
+        onClick={onSelectToggle}
+        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm ${
+          selectMode
+            ? "bg-primary text-white shadow-sm"
+            : "text-text-secondary hover:text-primary-dark hover:bg-white/80"
+        }`}
+      >
+        Select
+      </button>
+      <button
+        type="button"
+        onClick={onSelectAll}
+        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm ${
+          allSelected
+            ? "bg-primary text-white shadow-sm"
+            : "text-text-secondary hover:text-primary-dark hover:bg-white/80"
+        }`}
+      >
+        Select all
+      </button>
+    </div>
+  );
+}
+
 type BulkDeleteToolbarProps = {
   selection: BulkSelection;
   itemIds: string[];
@@ -16,9 +59,11 @@ type BulkDeleteToolbarProps = {
   deleteOne: (id: string) => Promise<void>;
   onDeleted: (deletedIds: string[]) => void;
   onError?: (message: string) => void;
+  onClear?: () => void;
   className?: string;
 };
 
+/** Compact delete/clear bar — only renders when items are selected. */
 export function BulkDeleteToolbar({
   selection,
   itemIds,
@@ -26,14 +71,13 @@ export function BulkDeleteToolbar({
   deleteOne,
   onDeleted,
   onError,
+  onClear,
   className = "",
 }: BulkDeleteToolbarProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  if (itemIds.length === 0) return null;
-
-  const hasSelection = selection.count > 0;
+  if (itemIds.length === 0 || selection.count === 0) return null;
 
   const handleConfirm = async () => {
     const ids = selection.selectedArray;
@@ -43,7 +87,8 @@ export function BulkDeleteToolbar({
       const { deleted, failed } = await deleteMany(ids, deleteOne);
       if (deleted.length > 0) {
         onDeleted(deleted);
-        selection.clear();
+        if (onClear) onClear();
+        else selection.clear();
         setModalOpen(false);
       }
       if (failed.length > 0) {
@@ -60,51 +105,36 @@ export function BulkDeleteToolbar({
     }
   };
 
+  const handleClear = () => {
+    if (onClear) onClear();
+    else selection.clear();
+  };
+
   return (
     <>
       <div
-        className={`border-primary/10 flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors sm:px-4 sm:py-3 ${
-          hasSelection
-            ? "border-primary/25 bg-primary/8 shadow-sm"
-            : "bg-[#fcf4f0]/70"
-        } ${className}`}
+        className={`border-primary/20 bg-primary/8 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 sm:gap-3 ${className}`}
       >
-        <label className="text-text-secondary flex cursor-pointer items-center gap-2.5 text-sm">
-          <RowSelectCheckbox
-            checked={selection.allSelected}
-            indeterminate={selection.isIndeterminate}
-            onChange={() =>
-              selection.allSelected ? selection.clear() : selection.selectAll()
-            }
-            aria-label="Select all on this page"
-          />
-          <span className="font-medium">Select all on this page</span>
-        </label>
-
-        {hasSelection && (
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <span className="text-primary-dark text-sm font-semibold tabular-nums">
-              {selection.count} selected
-            </span>
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </button>
-            <button
-              type="button"
-              onClick={selection.clear}
-              className="text-text-secondary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
-              aria-label="Clear selection"
-            >
-              <X className="h-4 w-4" />
-              <span className="hidden sm:inline">Clear</span>
-            </button>
-          </div>
-        )}
+        <span className="text-primary-dark text-sm font-semibold tabular-nums">
+          {selection.count} selected
+        </span>
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </button>
+        <button
+          type="button"
+          onClick={handleClear}
+          className="text-text-secondary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
+          aria-label="Clear selection"
+        >
+          <X className="h-3.5 w-3.5" />
+          Clear
+        </button>
       </div>
 
       <BulkDeleteModal

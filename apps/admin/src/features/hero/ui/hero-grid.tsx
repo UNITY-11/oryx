@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import {
@@ -47,9 +49,13 @@ interface HeroGridProps {
 function SortableHeroCard({
   item,
   selection,
+  showCheckboxes,
+  canDrag,
 }: {
   item: HeroItem;
   selection: ReturnType<typeof useBulkSelection>;
+  showCheckboxes: boolean;
+  canDrag: boolean;
 }) {
   const {
     attributes,
@@ -60,6 +66,7 @@ function SortableHeroCard({
     isDragging,
   } = useSortable({
     id: item.id,
+    disabled: !canDrag,
   });
 
   const style = {
@@ -76,29 +83,32 @@ function SortableHeroCard({
         isDragging ? "scale-105 shadow-lg" : "hover:shadow-md"
       }`}
     >
-      <div
-        className="absolute bottom-2 left-2 z-20 sm:bottom-3 sm:left-3"
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
-          <BulkSelectCheckbox
-            selection={selection}
-            id={item.id}
-            label={`Select ${item.title || "slide"}`}
-            className="border-white/50"
-          />
+      {showCheckboxes && (
+        <div
+          className="absolute top-2 left-2 z-20 sm:top-3 sm:left-3"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="rounded-md bg-white/95 p-1 shadow-sm backdrop-blur-sm">
+            <BulkSelectCheckbox
+              selection={selection}
+              id={item.id}
+              label={`Select ${item.title || "slide"}`}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      <div
-        {...attributes}
-        {...listeners}
-        className="absolute top-2 right-2 z-20 cursor-grab rounded-lg bg-white/30 p-2.5 opacity-70 backdrop-blur-sm transition-opacity active:cursor-grabbing md:opacity-0 md:group-hover:opacity-100"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="h-5 w-5 text-white drop-shadow" />
-      </div>
+      {canDrag && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 right-2 z-20 cursor-grab rounded-lg bg-white/30 p-2.5 opacity-70 backdrop-blur-sm transition-opacity active:cursor-grabbing md:opacity-0 md:group-hover:opacity-100"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-5 w-5 text-white drop-shadow" />
+        </div>
+      )}
 
       <Link href={`/hero/${item.id}`} className="block h-full w-full">
         {item.type === "video" ? (
@@ -158,6 +168,8 @@ export function HeroGrid({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const selection = useBulkSelection(items.map((i) => i.id));
+  const select = useBulkSelectMode(selection);
+  const canDrag = !select.selectMode && selection.count === 0;
 
   const closeToast = useCallback(() => setToast(null), []);
 
@@ -179,34 +191,35 @@ export function HeroGrid({
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-      const oldIndex = items.findIndex((i) => i.id === active.id);
-      const newIndex = items.findIndex((i) => i.id === over.id);
+    if (!canDrag || !over || active.id === over.id) return;
 
-      const newItems = arrayMove(items, oldIndex, newIndex);
-      const reorderedItems = newItems.map((item, idx) => ({
-        ...item,
-        order: idx + 1,
-      }));
-      const previousItems = items;
-      setItems(reorderedItems);
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
 
-      setSaving(true);
-      try {
-        await reorderHeroItems(
-          reorderedItems.map((i) => ({ id: i.id, order: i.order }))
-        );
-        setToast({ type: "success", message: "Slide order saved" });
-      } catch (err) {
-        setItems(previousItems);
-        setToast({
-          type: "error",
-          message:
-            err instanceof Error ? err.message : "Failed to save slide order",
-        });
-      } finally {
-        setSaving(false);
-      }
+    const newItems = arrayMove(items, oldIndex, newIndex);
+    const reorderedItems = newItems.map((item, idx) => ({
+      ...item,
+      order: idx + 1,
+    }));
+    const previousItems = items;
+    setItems(reorderedItems);
+
+    setSaving(true);
+    try {
+      await reorderHeroItems(
+        reorderedItems.map((i) => ({ id: i.id, order: i.order }))
+      );
+      setToast({ type: "success", message: "Slide order saved" });
+    } catch (err) {
+      setItems(previousItems);
+      setToast({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Failed to save slide order",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -215,17 +228,30 @@ export function HeroGrid({
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white shadow-sm sm:rounded-[32px]">
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div>
-            <h2 className="text-primary flex items-center gap-2 text-lg font-medium sm:text-xl">
-              Hero Slides
-              {saving && (
-                <Loader2 className="text-text-secondary h-4 w-4 animate-spin" />
-              )}
-            </h2>
-            <p className="text-text-secondary text-xs sm:text-sm">
-              Drag slides to reorder · tap to edit
-            </p>
+        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-4 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-primary flex items-center gap-2 text-lg font-medium sm:text-xl">
+                Hero Slides
+                {saving && (
+                  <Loader2 className="text-text-secondary h-4 w-4 animate-spin" />
+                )}
+              </h2>
+              <p className="text-text-secondary text-xs sm:text-sm">
+                {select.showCheckboxes
+                  ? "Tap checkboxes to select"
+                  : "Drag slides to reorder · tap to edit"}
+              </p>
+            </div>
+
+            {!loading && items.length > 0 && (
+              <BulkSelectControls
+                selectMode={select.selectMode}
+                allSelected={selection.allSelected}
+                onSelectToggle={select.toggleSelect}
+                onSelectAll={select.selectAll}
+              />
+            )}
           </div>
 
           {!loading && items.length > 0 && (
@@ -241,6 +267,7 @@ export function HeroGrid({
                   message: `Deleted ${ids.length} slide(s)`,
                 });
               }}
+              onClear={select.exit}
               onError={(msg) => setToast({ type: "error", message: msg })}
             />
           )}
@@ -302,6 +329,8 @@ export function HeroGrid({
                         key={item.id}
                         item={item}
                         selection={selection}
+                        showCheckboxes={select.showCheckboxes}
+                        canDrag={canDrag}
                       />
                     ))}
                   </SortableContext>

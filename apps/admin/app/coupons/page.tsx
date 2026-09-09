@@ -4,12 +4,14 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { deleteCoupon, fetchCouponsPage } from "@/features/coupons/api";
 import { Coupon } from "@/features/coupons/types";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import { usePaginatedList } from "@/shared/hooks/use-paginated-list";
 import { useSanityListener } from "@/shared/hooks/use-sanity-listener";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
@@ -85,6 +87,7 @@ export default function CouponsPage() {
   useSanityListener('*[_type == "coupon"]', loadCoupons);
 
   const selection = useBulkSelection(coupons.map((c) => c.id));
+  const select = useBulkSelectMode(selection);
   const hasSearch = Boolean(searchQuery.trim());
 
   const handleConfirmDelete = async () => {
@@ -121,15 +124,25 @@ export default function CouponsPage() {
               </p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-56">
-                <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search coupons..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none"
-                />
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+                <div className="relative w-full sm:w-56">
+                  <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search coupons..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none"
+                  />
+                </div>
+                {!loading && coupons.length > 0 && (
+                  <BulkSelectControls
+                    selectMode={select.selectMode}
+                    allSelected={selection.allSelected}
+                    onSelectToggle={select.toggleSelect}
+                    onSelectAll={select.selectAll}
+                  />
+                )}
               </div>
               <Link
                 href="/coupons/new"
@@ -153,6 +166,7 @@ export default function CouponsPage() {
                   message: `Deleted ${ids.length} coupon(s)`,
                 });
               }}
+              onClear={select.exit}
               onError={(msg) => setToast({ type: "error", message: msg })}
             />
           )}
@@ -210,11 +224,13 @@ export default function CouponsPage() {
                   className="border-primary/15 relative w-full overflow-hidden rounded-2xl border bg-white shadow-sm"
                 >
                   <div className="absolute top-2 right-14 z-20 sm:top-2 sm:right-16">
-                    <BulkSelectCheckbox
-                      selection={selection}
-                      id={coupon.id}
-                      label={`Select ${coupon.title}`}
-                    />
+                    {select.showCheckboxes && (
+                      <BulkSelectCheckbox
+                        selection={selection}
+                        id={coupon.id}
+                        label={`Select ${coupon.title}`}
+                      />
+                    )}
                   </div>
                   <div className="absolute top-2 right-2 z-20 flex gap-1.5 rounded-full bg-white/90 p-1 shadow-sm backdrop-blur-sm">
                     <Link

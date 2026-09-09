@@ -2,10 +2,12 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { Toast, type ToastState } from "@/shared/ui/toast";
 import { buildWhatsAppUrl } from "@repo/validation";
@@ -287,6 +289,7 @@ export function NotificationsPanel({
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
   const selection = useBulkSelection(filtered.map((n) => n.id));
+  const select = useBulkSelectMode(selection);
   const showMobileDetail = Boolean(selectedNotif);
 
   return (
@@ -333,6 +336,15 @@ export function NotificationsPanel({
                   {type}
                 </button>
               ))}
+              {!loading && filtered.length > 0 && (
+                <BulkSelectControls
+                  selectMode={select.selectMode}
+                  allSelected={selection.allSelected}
+                  onSelectToggle={select.toggleSelect}
+                  onSelectAll={select.selectAll}
+                  className="ml-auto"
+                />
+              )}
             </div>
 
             {!loading && filtered.length > 0 && (
@@ -348,6 +360,7 @@ export function NotificationsPanel({
                     message: `Deleted ${ids.length} notification(s)`,
                   });
                 }}
+                onClear={select.exit}
                 onError={(msg) => setToast({ type: "error", message: msg })}
                 className="mt-3"
               />
@@ -422,11 +435,13 @@ export function NotificationsPanel({
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => e.stopPropagation()}
                   >
-                    <BulkSelectCheckbox
-                      selection={selection}
-                      id={notification.id}
-                      label={`Select ${notification.title}`}
-                    />
+                    {select.showCheckboxes && (
+                      <BulkSelectCheckbox
+                        selection={selection}
+                        id={notification.id}
+                        label={`Select ${notification.title}`}
+                      />
+                    )}
                   </div>
 
                   <div className="border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-white">

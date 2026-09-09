@@ -3,10 +3,12 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
@@ -79,6 +81,7 @@ export function CustomersList({
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
   const selection = useBulkSelection(filtered.map((c) => c.id));
+  const select = useBulkSelectMode(selection);
   const hasFilters = Boolean(searchQuery.trim()) || tierFilter !== "All";
 
   return (
@@ -87,15 +90,25 @@ export function CustomersList({
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
         <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="relative w-full md:max-w-sm md:shrink-0">
-              <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
-              <input
-                type="text"
-                placeholder="Search by name, email or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
-              />
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 md:max-w-xl md:flex-1">
+              <div className="relative w-full min-w-0 md:max-w-sm md:shrink-0">
+                <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email or phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
+                />
+              </div>
+              {!loading && filtered.length > 0 && (
+                <BulkSelectControls
+                  selectMode={select.selectMode}
+                  allSelected={selection.allSelected}
+                  onSelectToggle={select.toggleSelect}
+                  onSelectAll={select.selectAll}
+                />
+              )}
             </div>
 
             <div className="-mx-3 w-[calc(100%+1.5rem)] overflow-x-auto px-3 sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
@@ -131,6 +144,7 @@ export function CustomersList({
                   message: `Deleted ${ids.length} customer(s)`,
                 });
               }}
+              onClear={select.exit}
               onError={(msg) => setToast({ type: "error", message: msg })}
             />
           )}
@@ -185,7 +199,7 @@ export function CustomersList({
           ) : (
             <div className="border-primary/10 overflow-hidden rounded-2xl border">
               <div className="text-text-secondary border-primary/10 sticky top-0 z-10 hidden grid-cols-[auto_1fr_1fr_100px_100px] items-center gap-4 border-b bg-[#fcf4f0] px-6 py-4 text-[10px] tracking-wider uppercase lg:grid">
-                <span className="w-6" />
+                {select.showCheckboxes ? <span className="w-6" /> : <span />}
                 <span>Customer</span>
                 <span>Contact</span>
                 <span>Tier</span>
@@ -199,13 +213,17 @@ export function CustomersList({
                     onClick={() => router.push(`/customers/${customer.id}`)}
                     className="hover:bg-primary/5 group flex cursor-pointer gap-3 px-3.5 py-4 transition-colors sm:gap-4 sm:px-5 md:px-6 lg:grid lg:grid-cols-[auto_1fr_1fr_100px_100px] lg:items-center lg:gap-4"
                   >
-                    <div className="flex shrink-0 items-start pt-0.5 lg:items-center">
-                      <BulkSelectCheckbox
-                        selection={selection}
-                        id={customer.id}
-                        label={`Select ${customer.name}`}
-                      />
-                    </div>
+                    {select.showCheckboxes ? (
+                      <div className="flex shrink-0 items-start pt-0.5 lg:items-center">
+                        <BulkSelectCheckbox
+                          selection={selection}
+                          id={customer.id}
+                          label={`Select ${customer.name}`}
+                        />
+                      </div>
+                    ) : (
+                      <span className="hidden lg:block" />
+                    )}
                     <div className="flex min-w-0 flex-1 items-center gap-3 lg:col-start-2">
                       <div className="bg-primary/10 border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border font-serif">
                         {customer.avatar ? (

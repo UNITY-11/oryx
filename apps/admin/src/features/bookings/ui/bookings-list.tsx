@@ -1,9 +1,11 @@
 import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBulkSelectMode } from "@/shared/hooks/use-bulk-select-mode";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import {
   BulkDeleteToolbar,
   BulkSelectCheckbox,
+  BulkSelectControls,
 } from "@/shared/ui/bulk-delete-actions";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
@@ -98,6 +100,7 @@ export function BookingsList({
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
   const selection = useBulkSelection(bookings.map((b) => b.id));
+  const select = useBulkSelectMode(selection);
   const isAdding = searchParams.get("action") === "add";
   const step = Number(searchParams.get("step")) || 1;
   const setStep = (newStep: number) => {
@@ -122,15 +125,25 @@ export function BookingsList({
         ) : (
           <>
             <div className="border-primary/10 z-10 flex shrink-0 flex-col gap-4 border-b p-4 md:p-6">
-              <div className="relative w-full md:max-w-md">
-                <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
-                <input
-                  type="search"
-                  placeholder="Search name, phone, service, or ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/60 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 transition-colors focus:ring-1 focus:outline-none"
-                />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <div className="relative w-full min-w-0 md:max-w-md">
+                  <Search className="text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2" />
+                  <input
+                    type="search"
+                    placeholder="Search name, phone, service, or ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/60 w-full rounded-full border bg-transparent py-3 pr-4 pl-12 transition-colors focus:ring-1 focus:outline-none"
+                  />
+                </div>
+                {!loading && bookings.length > 0 && (
+                  <BulkSelectControls
+                    selectMode={select.selectMode}
+                    allSelected={selection.allSelected}
+                    onSelectToggle={select.toggleSelect}
+                    onSelectAll={select.selectAll}
+                  />
+                )}
               </div>
 
               <div className="scrollbar-hide flex w-full items-center gap-2 overflow-x-auto pb-1">
@@ -167,6 +180,7 @@ export function BookingsList({
                       message: `Deleted ${ids.length} booking(s)`,
                     });
                   }}
+                  onClear={select.exit}
                   onError={(msg) => setToast({ type: "error", message: msg })}
                 />
               )}
@@ -193,11 +207,13 @@ export function BookingsList({
                     key={booking.id}
                     className="border-primary/10 hover:border-primary/25 flex w-full gap-3 rounded-2xl border bg-[#fcf4f0] p-4 text-left transition-colors"
                   >
-                    <BulkSelectCheckbox
-                      selection={selection}
-                      id={booking.id}
-                      label={`Select ${booking.customerName}`}
-                    />
+                    {select.showCheckboxes && (
+                      <BulkSelectCheckbox
+                        selection={selection}
+                        id={booking.id}
+                        label={`Select ${booking.customerName}`}
+                      />
+                    )}
                     <button
                       type="button"
                       onClick={() => router.push(`/bookings/${booking.id}`)}
@@ -242,9 +258,13 @@ export function BookingsList({
               <table className="w-full min-w-[900px] border-collapse text-left">
                 <thead className="sticky top-0 z-10 bg-[#fcf4f0]">
                   <tr className="border-primary/10 text-text-secondary border-b text-xs tracking-wider uppercase">
-                    <th className="w-10 py-4 pl-4 font-medium md:pl-6" />
+                    {select.showCheckboxes && (
+                      <th className="w-10 py-4 pl-4 font-medium md:pl-6" />
+                    )}
                     <th
-                      className="group cursor-pointer py-4 pl-6 font-medium md:pl-8"
+                      className={`group cursor-pointer py-4 font-medium ${
+                        select.showCheckboxes ? "pl-2" : "pl-6 md:pl-8"
+                      }`}
                       onClick={() => toggleSort("customerName")}
                     >
                       <div className="flex items-center">
@@ -284,7 +304,7 @@ export function BookingsList({
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={select.showCheckboxes ? 6 : 5}
                         className="text-text-secondary py-12 text-center"
                       >
                         <div className="flex items-center justify-center gap-2">
@@ -296,7 +316,7 @@ export function BookingsList({
                   ) : error ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={select.showCheckboxes ? 6 : 5}
                         className="py-12 text-center text-red-500"
                       >
                         <div className="flex items-center justify-center gap-2">
@@ -307,7 +327,7 @@ export function BookingsList({
                   ) : totalItems === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={select.showCheckboxes ? 6 : 5}
                         className="text-text-secondary py-12 text-center"
                       >
                         No bookings found matching your filters.
@@ -320,16 +340,20 @@ export function BookingsList({
                         onClick={() => router.push(`/bookings/${booking.id}`)}
                         className="hover:bg-primary/5 group cursor-pointer transition-colors"
                       >
+                        {select.showCheckboxes && (
+                          <td
+                            className="py-5 pl-4 md:pl-6"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <BulkSelectCheckbox
+                              selection={selection}
+                              id={booking.id}
+                            />
+                          </td>
+                        )}
                         <td
-                          className="py-5 pl-4 md:pl-6"
-                          onClick={(e) => e.stopPropagation()}
+                          className={`py-5 ${select.showCheckboxes ? "pl-2" : "pl-6 md:pl-8"}`}
                         >
-                          <BulkSelectCheckbox
-                            selection={selection}
-                            id={booking.id}
-                          />
-                        </td>
-                        <td className="py-5 pl-2">
                           <p className="text-primary-dark font-medium">
                             {booking.customerName}
                           </p>

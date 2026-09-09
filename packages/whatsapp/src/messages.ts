@@ -9,6 +9,56 @@ function displayBookingRef(booking: BookingWhatsAppPayload): string {
   return booking.bookingCode ?? booking.id;
 }
 
+function formatFriendlyDate(isoDate: string): string {
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match?.[1] || !match[2] || !match[3]) return isoDate;
+  const date = new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3])
+  );
+  return date.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatFriendlyTime(time: string): string {
+  const match24 = time.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24?.[1] && match24[2]) {
+    let hours = Number(match24[1]);
+    const minutes = match24[2];
+    const period = hours >= 12 ? "PM" : "AM";
+    if (hours === 0) hours = 12;
+    else if (hours > 12) hours -= 12;
+    return `${hours}:${minutes} ${period}`;
+  }
+
+  const match12 = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (match12?.[1] && match12[2] && match12[3]) {
+    return `${Number(match12[1])}:${match12[2]} ${match12[3].toUpperCase()}`;
+  }
+
+  return time;
+}
+
+/** Bold service/option lines for confirmation (e.g. *Lash Tint*). */
+function formatConfirmationServiceLines(
+  services: BookingWhatsAppPayload["services"]
+): string {
+  if (!services.length) return "*Service*";
+
+  return services
+    .flatMap((service) => {
+      const options = (service.options ?? []).filter(Boolean);
+      if (options.length === 0) return [`*${service.name}*`];
+      return options.map((opt) => `*${opt}*`);
+    })
+    .join("\n");
+}
+
 function formatPricedServicesBlock(lineItems: InvoiceLineItem[]): string {
   if (!lineItems.length) return "—";
 
@@ -141,23 +191,23 @@ export function formatCustomerConfirmationMessage(
   company?: CompanyWhatsAppContext,
   summary?: InvoiceSummaryPayload
 ): string {
-  const brand = company?.name?.trim() || "Oryx Spa";
-  const servicesText = formatServicesBlock(booking.services);
+  const brand = company?.name?.trim() || "ORYX Beauty Spa & Salon";
   const firstName =
     booking.customerName.trim().split(/\s+/)[0] || booking.customerName;
-  const amountBlock = summary
-    ? formatAmountFooter(summary, "Total")
-    : `*Amount:* QAR ${booking.amount}`;
+  const serviceLines = formatConfirmationServiceLines(booking.services);
+  const total = summary?.total ?? booking.amount;
 
   return (
+    `*APPOINTMENT CONFIRMED*\n\n` +
     `Hello ${firstName},\n\n` +
-    `Your booking at *${brand}* has been *confirmed*! ✅\n\n` +
-    `*Ref:* ${displayBookingRef(booking)}\n` +
-    `*Services:*\n${servicesText}\n\n` +
-    `*Date:* ${booking.date}\n` +
-    `*Time:* ${booking.time}\n` +
-    `${amountBlock}\n\n` +
-    `We look forward to welcoming you.`
+    `Your appointment at *${brand}* is confirmed.\n\n` +
+    `${serviceLines}\n` +
+    `*Date:* ${formatFriendlyDate(booking.date)}\n` +
+    `*Time:* ${formatFriendlyTime(booking.time)}\n` +
+    `*Total:* QAR ${total}\n` +
+    `*Reference:* ${displayBookingRef(booking)}\n\n` +
+    `We look forward to welcoming you.\n\n` +
+    `*Your beauty. Your ORYX experience.*`
   );
 }
 

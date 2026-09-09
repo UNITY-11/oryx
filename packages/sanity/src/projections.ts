@@ -21,7 +21,8 @@ export const SERVICE_PROJECTION = `{
   maxCapacity,
   tags,
   createdAt,
-  featured
+  featured,
+  order
 }`;
 
 export const PRODUCT_PROJECTION = `{

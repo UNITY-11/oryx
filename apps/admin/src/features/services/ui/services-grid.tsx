@@ -1,18 +1,43 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
-import {
-  BulkDeleteToolbar,
-  BulkSelectCheckbox,
-} from "@/shared/ui/bulk-delete-actions";
+import { deleteMany } from "@/shared/lib/bulk-delete";
+import { BulkSelectCheckbox } from "@/shared/ui/bulk-delete-actions";
+import { BulkDeleteModal } from "@/shared/ui/bulk-delete-modal";
 import { ListPagination } from "@/shared/ui/list-pagination";
 import { Toast, type ToastState } from "@/shared/ui/toast";
-import { AlertCircle, ImageIcon, Loader2, Search, Star } from "lucide-react";
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  AlertCircle,
+  GripVertical,
+  ImageIcon,
+  Loader2,
+  Search,
+  Star,
+  Trash2,
+  X,
+} from "lucide-react";
 
-import { deleteService } from "../api";
+import { deleteService, reorderServices } from "../api";
 import { Service } from "../types";
 
 interface ServicesGridProps {
@@ -32,6 +57,135 @@ interface ServicesGridProps {
   hasPrev: boolean;
   hasNext: boolean;
   onItemsDeleted?: (ids: string[]) => void;
+  onItemsReordered?: (items: Service[]) => void;
+}
+
+function SortableServiceCard({
+  service,
+  selection,
+  canDrag,
+  selectMode,
+  onOpen,
+}: {
+  service: Service;
+  selection: ReturnType<typeof useBulkSelection>;
+  canDrag: boolean;
+  selectMode: boolean;
+  onOpen: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: service.id,
+    disabled: !canDrag,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  const isSelected = selection.isSelected(service.id);
+  const showCheckbox = selectMode || selection.count > 0;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group from-primary/10 to-primary/5 relative aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br shadow-sm transition-all sm:rounded-3xl ${
+        isDragging ? "scale-105 shadow-lg" : "hover:shadow-md"
+      } ${isSelected ? "ring-primary ring-2 ring-offset-1" : ""}`}
+    >
+      <button
+        type="button"
+        onClick={onOpen}
+        className="absolute inset-0 z-0 cursor-pointer"
+        aria-label={`Edit ${service.name}`}
+      />
+
+      {service.image ? (
+        <img
+          src={service.image}
+          alt={service.name}
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <ImageIcon className="text-primary/20 h-8 w-8 sm:h-10 sm:w-10" />
+        </div>
+      )}
+
+      <div className="from-primary-dark/80 via-primary-dark/20 pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 opacity-100 transition-opacity duration-300 sm:p-4 md:via-transparent md:opacity-0 md:group-hover:opacity-100">
+        <p className="line-clamp-2 text-xs leading-tight font-semibold text-white sm:text-sm">
+          {service.name}
+        </p>
+        {service.options.length > 0 && (
+          <p className="mt-0.5 text-[10px] font-medium text-white/80 sm:text-xs">
+            {service.options.length} option
+            {service.options.length === 1 ? "" : "s"}
+          </p>
+        )}
+      </div>
+
+      {service.status === "Inactive" && (
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-white/50 backdrop-blur-[1px]" />
+          <span
+            className={`absolute z-10 rounded-full bg-gray-800/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px] ${
+              showCheckbox ? "top-2 left-10 sm:left-11" : "top-2 left-2"
+            }`}
+          >
+            Inactive
+          </span>
+        </>
+      )}
+
+      {service.featured && service.status !== "Inactive" && (
+        <span
+          className={`absolute z-10 inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px] ${
+            showCheckbox ? "top-2 left-10 sm:left-11" : "top-2 left-2"
+          }`}
+        >
+          <Star className="h-2.5 w-2.5 fill-current" />
+          Featured
+        </span>
+      )}
+
+      {canDrag && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 right-2 z-20 cursor-grab rounded-lg bg-white/30 p-2 opacity-80 backdrop-blur-sm transition-opacity active:cursor-grabbing md:opacity-0 md:group-hover:opacity-100"
+          aria-label={`Drag to reorder ${service.name}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-4 w-4 text-white drop-shadow sm:h-5 sm:w-5" />
+        </div>
+      )}
+
+      {showCheckbox && (
+        <div
+          className="absolute top-2 left-2 z-20"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="rounded-md bg-white/95 p-1 shadow-sm backdrop-blur-sm">
+            <BulkSelectCheckbox
+              selection={selection}
+              id={service.id}
+              label={`Select ${service.name}`}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ServicesGrid({
@@ -51,49 +205,207 @@ export function ServicesGrid({
   hasPrev,
   hasNext,
   onItemsDeleted,
+  onItemsReordered,
 }: ServicesGridProps) {
   const router = useRouter();
+  const [items, setItems] = useState(filtered);
+  const [saving, setSaving] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const closeToast = useCallback(() => setToast(null), []);
-  const selection = useBulkSelection(filtered.map((s) => s.id));
+  const selection = useBulkSelection(items.map((s) => s.id));
+  const canDrag = !searchQuery.trim() && !selectMode && selection.count === 0;
+
+  useEffect(() => {
+    setItems(filtered);
+  }, [filtered]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const exitSelectMode = () => {
+    selection.clear();
+    setSelectMode(false);
+  };
+
+  const handleSelectToggle = () => {
+    if (selectMode) {
+      exitSelectMode();
+    } else {
+      setSelectMode(true);
+    }
+  };
+
+  const handleSelectAll = () => {
+    setSelectMode(true);
+    selection.selectAll();
+  };
+
+  const handleConfirmDelete = async () => {
+    const ids = selection.selectedArray;
+    if (ids.length === 0) return;
+    setDeleting(true);
+    try {
+      const { deleted, failed } = await deleteMany(ids, deleteService);
+      if (deleted.length > 0) {
+        setItems((prev) => prev.filter((s) => !deleted.includes(s.id)));
+        onItemsDeleted?.(deleted);
+        selection.clear();
+        setSelectMode(false);
+        setDeleteOpen(false);
+        setToast({
+          type: "success",
+          message: `Deleted ${deleted.length} service(s)`,
+        });
+      }
+      if (failed.length > 0) {
+        setToast({
+          type: "error",
+          message: `Deleted ${deleted.length}. Failed ${failed.length}.`,
+        });
+      }
+    } catch (err) {
+      setToast({
+        type: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Failed to delete selected items",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!canDrag || !over || active.id === over.id) return;
+
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const newItems = arrayMove(items, oldIndex, newIndex);
+    const orderBase = from > 0 ? from : 1;
+    const reorderedItems = newItems.map((item, idx) => ({
+      ...item,
+      order: orderBase + idx,
+    }));
+    const previousItems = items;
+    setItems(reorderedItems);
+    onItemsReordered?.(reorderedItems);
+
+    setSaving(true);
+    try {
+      await reorderServices(
+        reorderedItems.map((i) => ({ id: i.id, order: i.order }))
+      );
+      setToast({ type: "success", message: "Service order saved" });
+    } catch (err) {
+      setItems(previousItems);
+      onItemsReordered?.(previousItems);
+      setToast({
+        type: "error",
+        message:
+          err instanceof Error ? err.message : "Failed to save service order",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasItems = !loading && items.length > 0;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Toast toast={toast} onClose={closeToast} />
 
       <div className="border-primary/10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border bg-white shadow-sm sm:rounded-[32px]">
-        {/* Toolbar */}
-        <div className="border-primary/10 flex shrink-0 flex-col gap-3 border-b p-3 sm:gap-4 sm:p-4 md:p-6">
-          <div className="relative w-full md:max-w-sm">
-            <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
-            />
+        <div className="border-primary/10 flex shrink-0 flex-col gap-2 border-b p-3 sm:gap-3 sm:p-4 md:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="relative min-w-0 flex-1 md:max-w-sm">
+              <Search className="text-primary absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" />
+              <input
+                type="text"
+                placeholder="Search services..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-primary focus:ring-primary text-primary-dark placeholder:text-primary/70 w-full rounded-full border bg-transparent py-2.5 pr-4 pl-10 text-sm focus:ring-1 focus:outline-none sm:py-3 sm:pl-12"
+              />
+            </div>
+
+            {hasItems && (
+              <div className="border-primary/15 flex shrink-0 items-center gap-1 rounded-full border bg-[#fcf4f0]/80 p-1">
+                <button
+                  type="button"
+                  onClick={handleSelectToggle}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm ${
+                    selectMode
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-text-secondary hover:text-primary-dark hover:bg-white/80"
+                  }`}
+                >
+                  Select
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-3.5 sm:text-sm ${
+                    selection.allSelected
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-text-secondary hover:text-primary-dark hover:bg-white/80"
+                  }`}
+                >
+                  Select all
+                </button>
+              </div>
+            )}
+
+            <p className="text-text-secondary hidden items-center gap-2 text-xs lg:flex lg:text-sm">
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {canDrag
+                ? "Drag to reorder · tap to edit"
+                : selectMode || selection.count > 0
+                  ? "Tap checkboxes to select"
+                  : "Clear search to reorder"}
+            </p>
           </div>
 
-          {!loading && filtered.length > 0 && (
-            <BulkDeleteToolbar
-              selection={selection}
-              itemIds={filtered.map((s) => s.id)}
-              entityLabel="services"
-              deleteOne={deleteService}
-              onDeleted={(ids) => {
-                onItemsDeleted?.(ids);
-                setToast({
-                  type: "success",
-                  message: `Deleted ${ids.length} service(s)`,
-                });
-              }}
-              onError={(msg) => setToast({ type: "error", message: msg })}
-            />
+          {selection.count > 0 && (
+            <div className="border-primary/20 bg-primary/8 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 sm:gap-3">
+              <span className="text-primary-dark text-sm font-semibold tabular-nums">
+                {selection.count} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
+              <button
+                type="button"
+                onClick={exitSelectMode}
+                className="text-text-secondary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Grid */}
         <div className="scrollbar-hide flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           {loading ? (
             <div className="text-text-secondary flex h-48 flex-col items-center justify-center px-4 text-center">
@@ -128,67 +440,27 @@ export function ServicesGrid({
                 </span>
               </Link>
 
-              {filtered.map((service) => (
-                <div
-                  key={service.id}
-                  onClick={() => router.push(`/services/${service.id}`)}
-                  className="group from-primary/10 to-primary/5 relative aspect-[3/4] cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-br shadow-sm transition-all hover:shadow-md sm:rounded-3xl"
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={items.map((i) => i.id)}
+                  strategy={rectSortingStrategy}
                 >
-                  {service.image ? (
-                    <img
-                      src={service.image}
-                      alt={service.name}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  {items.map((service) => (
+                    <SortableServiceCard
+                      key={service.id}
+                      service={service}
+                      selection={selection}
+                      canDrag={canDrag}
+                      selectMode={selectMode || selection.count > 0}
+                      onOpen={() => router.push(`/services/${service.id}`)}
                     />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <ImageIcon className="text-primary/20 h-8 w-8 sm:h-10 sm:w-10" />
-                    </div>
-                  )}
-
-                  <div className="from-primary-dark/80 via-primary-dark/20 absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 opacity-100 transition-opacity duration-300 sm:p-4 md:via-transparent md:opacity-0 md:group-hover:opacity-100">
-                    <p className="line-clamp-2 text-xs leading-tight font-semibold text-white sm:text-sm">
-                      {service.name}
-                    </p>
-                    {service.options.length > 0 && (
-                      <p className="mt-0.5 text-[10px] font-medium text-white/80 sm:text-xs">
-                        {service.options.length} option
-                        {service.options.length === 1 ? "" : "s"}
-                      </p>
-                    )}
-                  </div>
-
-                  {service.status === "Inactive" && (
-                    <>
-                      <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]" />
-                      <span className="absolute top-2 right-2 rounded-full bg-gray-800/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px]">
-                        Inactive
-                      </span>
-                    </>
-                  )}
-
-                  {service.featured && service.status !== "Inactive" && (
-                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase sm:text-[10px]">
-                      <Star className="h-2.5 w-2.5 fill-current" />
-                      Featured
-                    </span>
-                  )}
-
-                  <div
-                    className="absolute bottom-2 left-2 z-20 sm:bottom-3 sm:left-3"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
-                      <BulkSelectCheckbox
-                        selection={selection}
-                        id={service.id}
-                        label={`Select ${service.name}`}
-                        className="border-white/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
           )}
         </div>
@@ -204,7 +476,6 @@ export function ServicesGrid({
           onPageChange={setPage}
         />
 
-        {/* Footer stats */}
         <div className="border-primary/5 text-text-secondary flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t px-3 py-2.5 text-[11px] sm:gap-4 sm:px-6 sm:py-3 sm:text-xs">
           <span className="flex items-center gap-1">
             <Star className="text-primary h-3 w-3" />
@@ -214,6 +485,15 @@ export function ServicesGrid({
           <span className="ml-auto">{totalItems} shown</span>
         </div>
       </div>
+
+      <BulkDeleteModal
+        open={deleteOpen}
+        count={selection.count}
+        entityLabel="services"
+        deleting={deleting}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

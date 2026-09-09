@@ -80,6 +80,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const maxOrder = await sanityClient.fetch<number | null>(
+      `math::max(*[_type == "service" && defined(order)].order)`
+    );
+
     const doc = {
       _type: "service",
       name: input.name,
@@ -96,6 +100,7 @@ export async function POST(request: Request) {
       tags: input.tags ?? [],
       createdAt: new Date().toISOString().slice(0, 10),
       featured: Boolean(input.featured),
+      order: (maxOrder ?? 0) + 1,
     };
 
     const created = await sanityClient.create(doc);

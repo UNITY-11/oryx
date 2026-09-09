@@ -1,6 +1,9 @@
 import { SERVICE_PROJECTION } from "@repo/sanity";
 
-export const SERVICES_LIST_QUERY = `*[_type == "service"] | order(createdAt desc) ${SERVICE_PROJECTION}`;
+/** Prefer explicit order; fall back so legacy docs without order still sort stably. */
+const SERVICE_SORT = "order(coalesce(order, 1000000) asc, name asc)";
+
+export const SERVICES_LIST_QUERY = `*[_type == "service"] | ${SERVICE_SORT} ${SERVICE_PROJECTION}`;
 
 export const SERVICE_BY_ID_QUERY = `*[_type == "service" && _id == $id][0] ${SERVICE_PROJECTION}`;
 
@@ -23,7 +26,7 @@ function buildServicesFilterClause(): string {
 
 export function buildServicesListQueries(input: ServicesListQueryInput) {
   const filter = buildServicesFilterClause();
-  const listQuery = `*[${filter}] | order(createdAt desc) [${input.start}...${input.end}] ${SERVICE_PROJECTION}`;
+  const listQuery = `*[${filter}] | ${SERVICE_SORT} [${input.start}...${input.end}] ${SERVICE_PROJECTION}`;
   const countQuery = `count(*[${filter}])`;
   const activeCountQuery = `count(*[_type == "service" && status == "Active"])`;
   const inactiveCountQuery = `count(*[_type == "service" && status == "Inactive"])`;

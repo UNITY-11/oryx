@@ -47,7 +47,7 @@ type SanityProduct = {
   status?: string;
 };
 
-export const ACTIVE_SERVICES_QUERY = `*[_type == "service" && status == "Active"] | order(name asc) ${SERVICE_PROJECTION}`;
+export const ACTIVE_SERVICES_QUERY = `*[_type == "service" && status == "Active"] | order(coalesce(order, 1000000) asc, name asc) ${SERVICE_PROJECTION}`;
 export const ACTIVE_PRODUCTS_QUERY = `*[_type == "product" && status == "Active"] | order(name asc) ${PRODUCT_PROJECTION}`;
 export const SERVICE_BY_ID_QUERY = `*[_type == "service" && _id == $id][0] ${SERVICE_PROJECTION}`;
 export const PRODUCT_BY_ID_QUERY = `*[_type == "product" && _id == $id][0] ${PRODUCT_PROJECTION}`;

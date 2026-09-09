@@ -81,4 +81,17 @@ export async function deleteService(id: string): Promise<void> {
   await parseOrThrow<{ success: boolean }>(res, "Failed to delete service");
 }
 
+export async function reorderServices(
+  updates: { id: string; order: number }[]
+): Promise<void> {
+  const res = await fetch("/api/services/reorder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ updates }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to reorder services");
+  }
+}
+
 export { uploadImage as uploadServiceImage };

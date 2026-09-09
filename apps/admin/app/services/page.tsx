@@ -33,6 +33,7 @@ export default function ServicesPage() {
       onItemsDeleted={(ids) =>
         setFiltered((prev) => prev.filter((s) => !ids.includes(s.id)))
       }
+      onItemsReordered={(items) => setFiltered(items)}
       activeCount={activeCount}
       inactiveCount={inactiveCount}
       page={page}

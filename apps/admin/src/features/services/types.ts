@@ -23,4 +23,5 @@ export interface Service {
   tags: string[];
   createdAt: string;
   featured: boolean;
+  order?: number;
 }

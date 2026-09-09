@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ADMIN_PIN_LENGTH } from "@/features/pin/constants";
 import { PinCodeInput, PinCodeStatus } from "@/shared/ui/pin-code-input";
 import { Lock, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export function ActionPinModal({
   onSuccess,
@@ -12,8 +13,21 @@ export function ActionPinModal({
   onSuccess: () => void;
   onCancel: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const verifyPin = async (currentPin: string) => {
     setLoading(true);
@@ -36,16 +50,20 @@ export function ActionPinModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-transparent p-4 backdrop-blur-md">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md">
       <div
         className={`relative flex w-full max-w-md flex-col items-center rounded-[2rem] border border-gray-100 bg-white p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 sm:p-10 ${error ? "scale-105 shadow-red-500/10" : ""}`}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onCancel}
           className="absolute top-6 right-6 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-800"
           type="button"
           aria-label="Cancel"
+          disabled={loading}
         >
           <X className="h-5 w-5" />
         </button>
@@ -75,6 +93,7 @@ export function ActionPinModal({
           <PinCodeStatus loading={loading} error={error} />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

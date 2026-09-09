@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { useBulkSelection } from "@/shared/hooks/use-bulk-selection";
 import { deleteMany } from "@/shared/lib/bulk-delete";
+import { ActionPinModal } from "@/shared/ui/action-pin-modal";
 import { BulkDeleteModal } from "@/shared/ui/bulk-delete-modal";
 import { RowSelectCheckbox } from "@/shared/ui/row-select-checkbox";
 import { Trash2, X } from "lucide-react";
@@ -60,6 +61,8 @@ type BulkDeleteToolbarProps = {
   onDeleted: (deletedIds: string[]) => void;
   onError?: (message: string) => void;
   onClear?: () => void;
+  /** When true, require admin PIN after confirm before deleting. */
+  requirePin?: boolean;
   className?: string;
 };
 
@@ -72,9 +75,11 @@ export function BulkDeleteToolbar({
   onDeleted,
   onError,
   onClear,
+  requirePin = false,
   className = "",
 }: BulkDeleteToolbarProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   if (itemIds.length === 0 || selection.count === 0) return null;
@@ -90,6 +95,7 @@ export function BulkDeleteToolbar({
         if (onClear) onClear();
         else selection.clear();
         setModalOpen(false);
+        setPinOpen(false);
       }
       if (failed.length > 0) {
         onError?.(
@@ -108,6 +114,15 @@ export function BulkDeleteToolbar({
   const handleClear = () => {
     if (onClear) onClear();
     else selection.clear();
+  };
+
+  const handleModalConfirm = () => {
+    if (requirePin) {
+      setModalOpen(false);
+      setPinOpen(true);
+      return;
+    }
+    void handleConfirm();
   };
 
   return (
@@ -143,8 +158,17 @@ export function BulkDeleteToolbar({
         entityLabel={entityLabel}
         deleting={deleting}
         onCancel={() => setModalOpen(false)}
-        onConfirm={handleConfirm}
+        onConfirm={handleModalConfirm}
       />
+
+      {pinOpen && (
+        <ActionPinModal
+          onSuccess={() => {
+            void handleConfirm();
+          }}
+          onCancel={() => setPinOpen(false)}
+        />
+      )}
     </>
   );
 }

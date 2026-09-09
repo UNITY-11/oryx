@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ActionPinModal } from "@/shared/ui/action-pin-modal";
 import { MobileMenuButton } from "@/shared/ui/sidebar-context";
 import {
   getInvoiceSummary,
@@ -67,6 +68,7 @@ export default function BookingDetailPage({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [whatsappSuccess, setWhatsappSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeletePin, setShowDeletePin] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
@@ -372,9 +374,15 @@ export default function BookingDetailPage({
     setShowDeleteConfirm(true);
   };
 
+  const requestDeletePin = () => {
+    setShowDeleteConfirm(false);
+    setShowDeletePin(true);
+  };
+
   const confirmDeleteSession = async () => {
     try {
       setSaving(true);
+      setShowDeletePin(false);
       await deleteBooking(id);
       router.push("/bookings");
     } catch (err) {
@@ -383,6 +391,7 @@ export default function BookingDetailPage({
       );
       setSaving(false);
       setShowDeleteConfirm(false);
+      setShowDeletePin(false);
     }
   };
 
@@ -1261,22 +1270,24 @@ export default function BookingDetailPage({
               </button>
               <button
                 type="button"
-                onClick={confirmDeleteSession}
+                onClick={requestDeletePin}
                 disabled={saving}
                 className="bg-primary flex h-11 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Deleting
-                  </>
-                ) : (
-                  "Delete"
-                )}
+                Delete
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {showDeletePin && (
+        <ActionPinModal
+          onSuccess={() => {
+            void confirmDeleteSession();
+          }}
+          onCancel={() => setShowDeletePin(false)}
+        />
       )}
     </div>
   );

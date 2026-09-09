@@ -173,6 +173,7 @@ export function BookingsList({
                   itemIds={bookings.map((b) => b.id)}
                   entityLabel="bookings"
                   deleteOne={deleteBooking}
+                  requirePin
                   onDeleted={(ids) => {
                     onItemsDeleted?.(ids);
                     setToast({

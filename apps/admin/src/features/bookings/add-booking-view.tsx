@@ -23,7 +23,7 @@ import {
   canProceedFromServicesStep,
   getSelectedServicesMissingOptions,
 } from "./service-validation";
-import { getTimeSlotsForDate } from "./time-slots";
+import { getTimeSlotsForDate, isPastTimeSlot } from "./time-slots";
 import { Booking } from "./types";
 import {
   BookingCustomerStep,
@@ -509,15 +509,19 @@ export function AddBookingView({
                   <div className="grid grid-cols-3 gap-3 md:grid-cols-4">
                     {dynamicTimeSlots.map((t) => {
                       const isSelected = selectedTime === t;
+                      const isPast = isPastTimeSlot(t, selectedDate);
                       return (
                         <button
                           type="button"
                           key={t}
+                          disabled={isPast}
                           onClick={() => setSelectedTime(t)}
                           className={`rounded-2xl border py-2 text-sm font-medium transition-colors ${
-                            isSelected
-                              ? "border-primary bg-primary text-white shadow-md"
-                              : "bg-surface text-text-primary border-primary/30 hover:border-primary hover:shadow-sm"
+                            isPast
+                              ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+                              : isSelected
+                                ? "border-primary bg-primary text-white shadow-md"
+                                : "bg-surface text-text-primary border-primary/30 hover:border-primary hover:shadow-sm"
                           }`}
                         >
                           {t}

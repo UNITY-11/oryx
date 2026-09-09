@@ -43,8 +43,6 @@ interface NotificationsPanelProps {
   selectedNotif: Notification | null;
   markAllAsRead: () => void;
   handleSelect: (id: string) => void;
-  confirmBooking: (id: string) => void;
-  declineBooking: (id: string) => void;
   toggleStar: (e: React.MouseEvent, id: string) => void;
   onRetry?: () => void;
   onBack?: () => void;
@@ -65,16 +63,15 @@ function getNotificationIcon(type: NotificationType) {
 function NotificationDetail({
   selectedNotif,
   toggleStar,
-  confirmBooking,
-  declineBooking,
   onBack,
 }: {
   selectedNotif: Notification;
   toggleStar: (e: React.MouseEvent, id: string) => void;
-  confirmBooking: (id: string) => void;
-  declineBooking: (id: string) => void;
   onBack?: () => void;
 }) {
+  const bookingDetailsHref = selectedNotif.actionUrl?.includes("/bookings/")
+    ? selectedNotif.actionUrl
+    : null;
   return (
     <div className="scrollbar-hide flex flex-1 flex-col overflow-auto">
       <div className="border-primary/10 relative flex items-start gap-3 border-b bg-white p-4 sm:gap-5 sm:p-6 md:p-10">
@@ -233,22 +230,15 @@ function NotificationDetail({
                 </div>
               </div>
 
-              {selectedNotif.bookingData.status === "Pending" && (
-                <div className="border-primary/10 mt-5 flex flex-col gap-2.5 border-t pt-5 sm:mt-6 sm:flex-row sm:gap-3 sm:pt-6">
-                  <button
-                    type="button"
-                    onClick={() => confirmBooking(selectedNotif.id)}
-                    className="bg-primary hover:bg-primary/90 shadow-primary/20 flex h-11 w-full shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-md transition-all sm:h-12 sm:flex-1"
+              {bookingDetailsHref && (
+                <div className="border-primary/10 mt-5 border-t pt-5 sm:mt-6 sm:pt-6">
+                  <Link
+                    href={bookingDetailsHref}
+                    className="bg-primary hover:bg-primary/90 shadow-primary/20 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold text-white shadow-md transition-all sm:h-12"
                   >
-                    Confirm Booking
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => declineBooking(selectedNotif.id)}
-                    className="text-primary border-primary/30 hover:bg-primary/5 flex h-11 w-full shrink-0 items-center justify-center rounded-full border bg-white text-sm font-semibold transition-colors sm:h-12 sm:w-auto sm:min-w-[7.5rem] sm:px-6"
-                  >
-                    Decline
-                  </button>
+                    Go to booking details
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               )}
             </div>
@@ -279,8 +269,6 @@ export function NotificationsPanel({
   selectedNotif,
   markAllAsRead,
   handleSelect,
-  confirmBooking,
-  declineBooking,
   toggleStar,
   onRetry,
   onBack,
@@ -499,8 +487,6 @@ export function NotificationsPanel({
             <NotificationDetail
               selectedNotif={selectedNotif}
               toggleStar={toggleStar}
-              confirmBooking={confirmBooking}
-              declineBooking={declineBooking}
               onBack={onBack}
             />
           ) : (

@@ -254,31 +254,39 @@ export function BookingFlow({
 
   const dynamicTimeSlots = (() => {
     if (!selectedDate) return [];
-    return [
-      "10:00 AM",
-      "10:30 AM",
-      "11:00 AM",
-      "11:30 AM",
-      "12:00 PM",
-      "12:30 PM",
-      "01:00 PM",
-      "01:30 PM",
-      "02:00 PM",
-      "02:30 PM",
-      "03:00 PM",
-      "03:30 PM",
-      "04:00 PM",
-      "04:30 PM",
-      "05:00 PM",
-      "05:30 PM",
-      "06:00 PM",
-      "06:30 PM",
-      "07:00 PM",
-      "07:30 PM",
-      "08:00 PM",
-      "08:30 PM",
-    ];
+    const isFriday = selectedDate.getDay() === 5;
+    const startMin = isFriday ? 15 * 60 : 9 * 60;
+    const endMin = isFriday ? 21 * 60 : 21 * 60 + 30;
+    const slots: string[] = [];
+    for (let m = startMin; m <= endMin; m += 30) {
+      let hours = Math.floor(m / 60);
+      const minutes = m % 60;
+      const period = hours >= 12 ? "PM" : "AM";
+      if (hours === 0) hours = 12;
+      else if (hours > 12) hours -= 12;
+      slots.push(
+        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`
+      );
+    }
+    return slots;
   })();
+
+  const isPastTimeSlot = (slotLabel: string, date: Date | null) => {
+    if (!date) return true;
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (day < today) return true;
+    if (day.getTime() !== today.getTime()) return false;
+    const match = slotLabel.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match?.[1] || !match[2] || !match[3]) return false;
+    let hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    const period = match[3].toUpperCase();
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+    return hours * 60 + minutes <= now.getHours() * 60 + now.getMinutes();
+  };
 
   const toIsoDate = (date: Date | null) => {
     const d = date || new Date();
@@ -685,14 +693,19 @@ export function BookingFlow({
               <div className="grid grid-cols-3 gap-3 pb-24 md:grid-cols-4 lg:grid-cols-5">
                 {dynamicTimeSlots.map((time) => {
                   const isSelected = selectedTime === time;
+                  const isPast = isPastTimeSlot(time, selectedDate);
                   return (
                     <button
                       key={time}
+                      type="button"
+                      disabled={isPast}
                       onClick={() => setSelectedTime(time)}
                       className={`rounded-soft border py-2.5 text-sm font-medium transition-colors ${
-                        isSelected
-                          ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
-                          : "bg-surface border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark hover:shadow-sm"
+                        isPast
+                          ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+                          : isSelected
+                            ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
+                            : "bg-surface border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark hover:shadow-sm"
                       }`}
                     >
                       {time}

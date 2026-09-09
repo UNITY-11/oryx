@@ -20,6 +20,12 @@ import {
 import { filterServicesByQuery } from "@features/bookings/filter-services";
 import { canPrintBookingInvoice } from "@features/bookings/service-validation";
 import {
+  getTimeSlotsForDate,
+  isPastTimeSlot,
+  parseIsoDateLocal,
+  todayIsoDate,
+} from "@features/bookings/time-slots";
+import {
   Booking,
   BookingStatus,
   getBookingDisplayId,
@@ -45,12 +51,36 @@ import {
   Clock,
   Loader2,
   MessageCircle,
+  Pencil,
   Plus,
   Printer,
   Search,
   Trash2,
   User,
 } from "lucide-react";
+
+function to24Hour(timeLabel: string): string {
+  if (!timeLabel) return "10:00";
+  const match = timeLabel.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match?.[1] || !match[2] || !match[3]) return timeLabel;
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  return `${String(hours).padStart(2, "0")}:${minutes}`;
+}
+
+function to12HourLabel(time24: string): string {
+  const match = time24.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match?.[1] || !match[2]) return time24;
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const period = hours >= 12 ? "PM" : "AM";
+  if (hours === 0) hours = 12;
+  else if (hours > 12) hours -= 12;
+  return `${String(hours).padStart(2, "0")}:${minutes} ${period}`;
+}
 
 export default function BookingDetailPage({
   params,
@@ -70,6 +100,10 @@ export default function BookingDetailPage({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeletePin, setShowDeletePin] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showDateTimeEdit, setShowDateTimeEdit] = useState(false);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [dateTimeSaving, setDateTimeSaving] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
   const [realServices, setRealServices] = useState<Service[]>([]);
@@ -372,6 +406,60 @@ export default function BookingDetailPage({
 
   const handleDeleteSession = () => {
     setShowDeleteConfirm(true);
+  };
+
+  const openDateTimeEdit = () => {
+    if (!booking) return;
+    const today = todayIsoDate();
+    const nextDate = booking.date < today ? today : booking.date;
+    const dateObj = parseIsoDateLocal(nextDate);
+    const label = to12HourLabel(booking.time);
+    setEditDate(nextDate);
+    setEditTime(dateObj && !isPastTimeSlot(label, dateObj) ? label : "");
+    setSaveError(null);
+    setShowDateTimeEdit(true);
+  };
+
+  const saveDateTime = async () => {
+    if (!booking || !editDate || !editTime) {
+      setSaveError("Please select both date and time.");
+      return;
+    }
+    const dateObj = parseIsoDateLocal(editDate);
+    if (!dateObj || isPastTimeSlot(editTime, dateObj)) {
+      setSaveError("Please choose a date and time from now onward.");
+      return;
+    }
+    const nextTime = to24Hour(editTime);
+    if (editDate === booking.date && nextTime === booking.time) {
+      setShowDateTimeEdit(false);
+      return;
+    }
+
+    setDateTimeSaving(true);
+    setSaveError(null);
+    try {
+      const result = await updateBooking(id, {
+        date: editDate,
+        time: nextTime,
+      });
+      const normalized: Booking = {
+        ...result,
+        services: (result.services ?? []).map((svc) => ({
+          ...svc,
+          options: svc.options ?? [],
+        })),
+      };
+      setBooking(normalized);
+      setSavedBooking(normalized);
+      setShowDateTimeEdit(false);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to update date & time"
+      );
+    } finally {
+      setDateTimeSaving(false);
+    }
   };
 
   const requestDeletePin = () => {
@@ -735,17 +823,27 @@ export default function BookingDetailPage({
                 </div>
               </div>
 
-              <div className="border-primary/10 flex flex-col justify-center gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:gap-4 sm:rounded-3xl sm:p-6">
-                <div className="text-text-secondary flex items-center gap-3 text-sm">
+              <div className="border-primary/10 relative flex flex-col justify-center gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:gap-4 sm:rounded-3xl sm:p-6">
+                {!isCompleted && (
+                  <button
+                    type="button"
+                    onClick={openDateTimeEdit}
+                    className="border-primary/20 text-primary hover:bg-primary/5 absolute top-3 right-3 inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold transition-colors sm:top-4 sm:right-4 sm:h-9 sm:px-3 sm:text-xs"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit
+                  </button>
+                )}
+                <div className="text-text-secondary flex items-center gap-3 pr-16 text-sm">
                   <Calendar className="text-primary h-4 w-4 shrink-0" />
                   <span className="text-primary-dark font-medium">
                     {booking.date}
                   </span>
                 </div>
-                <div className="text-text-secondary flex items-center gap-3 text-sm">
+                <div className="text-text-secondary flex items-center gap-3 pr-16 text-sm">
                   <Clock className="text-primary h-4 w-4 shrink-0" />
                   <span className="text-primary-dark font-medium">
-                    {booking.time}
+                    {to12HourLabel(booking.time)}
                   </span>
                 </div>
                 <div className="text-text-secondary flex items-center gap-3 text-sm">
@@ -1275,6 +1373,102 @@ export default function BookingDetailPage({
                 className="bg-primary flex h-11 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDateTimeEdit && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="border-primary/10 w-full max-w-md rounded-t-[28px] border bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="bg-primary/10 text-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-primary-dark font-serif text-lg font-semibold">
+                  Edit date & time
+                </h3>
+                <p className="text-text-secondary text-xs sm:text-sm">
+                  Update this appointment schedule.
+                </p>
+              </div>
+            </div>
+
+            <label className="text-text-secondary mb-1.5 block text-xs font-semibold tracking-wider uppercase">
+              Date
+            </label>
+            <input
+              type="date"
+              min={todayIsoDate()}
+              value={editDate}
+              onChange={(e) => {
+                const next = e.target.value;
+                const today = todayIsoDate();
+                const safeDate = next && next < today ? today : next;
+                setEditDate(safeDate);
+                const dateObj = parseIsoDateLocal(safeDate);
+                if (editTime && dateObj && isPastTimeSlot(editTime, dateObj)) {
+                  setEditTime("");
+                }
+              }}
+              className="border-primary/20 text-primary-dark focus:ring-primary mb-4 w-full rounded-xl border bg-[#fcf4f0]/60 px-3 py-2.5 text-sm focus:ring-1 focus:outline-none"
+            />
+
+            <p className="text-text-secondary mb-2 text-xs font-semibold tracking-wider uppercase">
+              Time
+            </p>
+            <div className="scrollbar-hide mb-5 grid max-h-48 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
+              {getTimeSlotsForDate(
+                parseIsoDateLocal(editDate) ?? new Date()
+              ).map((slot) => {
+                const dateObj = parseIsoDateLocal(editDate);
+                const isPast = isPastTimeSlot(slot, dateObj);
+                const isSelected = editTime === slot;
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    disabled={isPast}
+                    onClick={() => setEditTime(slot)}
+                    className={`rounded-xl border py-2 text-xs font-medium transition-colors sm:text-sm ${
+                      isPast
+                        ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+                        : isSelected
+                          ? "border-primary bg-primary text-white shadow-sm"
+                          : "border-primary/20 text-primary-dark hover:border-primary hover:bg-primary/5 bg-white"
+                    }`}
+                  >
+                    {slot}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowDateTimeEdit(false)}
+                disabled={dateTimeSaving}
+                className="border-primary/20 text-primary hover:bg-primary/5 h-11 flex-1 rounded-full border text-sm font-semibold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void saveDateTime()}
+                disabled={dateTimeSaving || !editDate || !editTime}
+                className="bg-primary flex h-11 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {dateTimeSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving
+                  </>
+                ) : (
+                  "Save"
+                )}
               </button>
             </div>
           </div>

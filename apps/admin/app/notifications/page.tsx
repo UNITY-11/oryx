@@ -20,8 +20,6 @@ export default function NotificationsPage() {
     setNotifications,
     markAllAsRead,
     handleSelect,
-    confirmBooking,
-    declineBooking,
     toggleStar,
   } = useNotifications();
 
@@ -34,24 +32,6 @@ export default function NotificationsPage() {
       ok
         ? { type: "success", message: "All notifications marked as read" }
         : { type: "error", message: "Failed to mark all as read" }
-    );
-  };
-
-  const handleConfirmBooking = async (id: string) => {
-    const ok = await confirmBooking(id);
-    setToast(
-      ok
-        ? { type: "success", message: "Booking confirmed" }
-        : { type: "error", message: "Failed to confirm booking" }
-    );
-  };
-
-  const handleDeclineBooking = async (id: string) => {
-    const ok = await declineBooking(id);
-    setToast(
-      ok
-        ? { type: "success", message: "Booking declined" }
-        : { type: "error", message: "Failed to decline booking" }
     );
   };
 
@@ -83,8 +63,6 @@ export default function NotificationsPage() {
         selectedNotif={selectedNotif}
         markAllAsRead={handleMarkAllAsRead}
         handleSelect={handleSelect}
-        confirmBooking={handleConfirmBooking}
-        declineBooking={handleDeclineBooking}
         toggleStar={handleToggleStar}
         onRetry={reload}
         onBack={clearSelection}

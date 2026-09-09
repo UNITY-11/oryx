@@ -8,15 +8,14 @@ import {
   type CountryCode,
 } from "@/shared/lib/phone";
 import { redirectToWhatsApp } from "@/shared/lib/whatsapp-redirect";
-import { Item, ItemVariant } from "@/shared/types";
+import type { DraftService } from "@/shared/store/booking-draft";
 import { PhoneInput } from "@/shared/ui/phone-input";
 import { ChevronLeft, ChevronRight, Clock, Loader2 } from "lucide-react";
 
 type Step = "date" | "time" | "details";
 
 interface ServiceBookingWizardProps {
-  item: Item;
-  selectedOptions: ItemVariant[];
+  services: DraftService[];
   total: number;
   open: boolean;
   onClose: () => void;
@@ -31,34 +30,56 @@ function getFirstDayOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 }
 
-const ALL_TIME_SLOTS = [
-  "10:00 AM",
-  "10:30 AM",
-  "11:00 AM",
-  "11:30 AM",
-  "12:00 PM",
-  "12:30 PM",
-  "01:00 PM",
-  "01:30 PM",
-  "02:00 PM",
-  "02:30 PM",
-  "03:00 PM",
-  "03:30 PM",
-  "04:00 PM",
-  "04:30 PM",
-  "05:00 PM",
-  "05:30 PM",
-  "06:00 PM",
-  "06:30 PM",
-  "07:00 PM",
-  "07:30 PM",
-  "08:00 PM",
-  "08:30 PM",
-];
+function formatSlotLabel(totalMinutes: number): string {
+  let hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const period = hours >= 12 ? "PM" : "AM";
+  if (hours === 0) hours = 12;
+  else if (hours > 12) hours -= 12;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;
+}
 
+function buildTimeSlots(startMin: number, endMin: number): string[] {
+  const slots: string[] = [];
+  for (let m = startMin; m <= endMin; m += 30) {
+    slots.push(formatSlotLabel(m));
+  }
+  return slots;
+}
+
+/** Default: 9:00 AM – 9:30 PM. Friday: 3:00 PM – 9:00 PM. */
 function generateTimeSlots(date: Date | null) {
   if (!date) return [];
-  return ALL_TIME_SLOTS;
+  if (date.getDay() === 5) {
+    return buildTimeSlots(15 * 60, 21 * 60);
+  }
+  return buildTimeSlots(9 * 60, 21 * 60 + 30);
+}
+
+function slotLabelToMinutes(label: string): number | null {
+  const match = label.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match?.[1] || !match[2] || !match[3]) return null;
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+function isPastTimeSlot(
+  slotLabel: string,
+  date: Date | null,
+  now = new Date()
+) {
+  if (!date) return true;
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (day < today) return true;
+  if (day.getTime() !== today.getTime()) return false;
+  const slotMinutes = slotLabelToMinutes(slotLabel);
+  if (slotMinutes == null) return false;
+  return slotMinutes <= now.getHours() * 60 + now.getMinutes();
 }
 
 function toIsoDate(date: Date | null) {
@@ -82,8 +103,7 @@ function to24Hour(timeLabel: string) {
 }
 
 export function ServiceBookingWizard({
-  item,
-  selectedOptions,
+  services,
   total,
   open,
   onClose,
@@ -188,13 +208,20 @@ export function ServiceBookingWizard({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      item.options &&
-      item.options.length > 0 &&
-      selectedOptions.length === 0
-    ) {
-      setBookingError("Select at least one service option.");
+    if (services.length === 0) {
+      setBookingError("Add at least one service.");
       return;
+    }
+
+    for (const entry of services) {
+      if (
+        entry.item.options &&
+        entry.item.options.length > 0 &&
+        entry.selectedOptions.length === 0
+      ) {
+        setBookingError(`Select options for ${entry.item.name}.`);
+        return;
+      }
     }
 
     const nextNameError = validateName(name);
@@ -217,14 +244,12 @@ export function ServiceBookingWizard({
         body: JSON.stringify({
           customerName: name.trim(),
           phone: phone.trim(),
-          services: [
-            {
-              name: item.name,
-              options: selectedOptions.map((o) => o.name),
-            },
-          ],
+          services: services.map((entry) => ({
+            name: entry.item.name,
+            options: entry.selectedOptions.map((o) => o.name),
+          })),
           date: toIsoDate(selectedDate),
-          time: to24Hour(selectedTime || "10:00 AM"),
+          time: to24Hour(selectedTime || "09:00 AM"),
           amount: total,
         }),
       });
@@ -294,22 +319,21 @@ export function ServiceBookingWizard({
             <div className="lg:grid lg:grid-cols-5 lg:items-start lg:gap-10">
               <div className="border-primary/10 mb-6 rounded-2xl border bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:col-span-2 lg:mb-0 lg:rounded-3xl lg:p-6">
                 <p className="text-text-secondary mb-1 text-xs font-medium tracking-wider uppercase">
-                  Service
+                  Services
                 </p>
-                <p className="text-primary-dark font-medium">{item.name}</p>
-                {selectedOptions.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {selectedOptions.map((opt) => (
-                      <div
-                        key={opt.id}
-                        className="text-text-secondary flex justify-between text-sm"
-                      >
-                        <span>{opt.name}</span>
-                        <span className="font-medium">QAR {opt.price}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-2">
+                  {services.map((entry) => (
+                    <p
+                      key={entry.item.id}
+                      className="text-primary-dark font-medium"
+                    >
+                      {entry.item.name}
+                      {entry.selectedOptions.length > 0
+                        ? ` · ${entry.selectedOptions.map((o) => o.name).join(", ")}`
+                        : ""}
+                    </p>
+                  ))}
+                </div>
                 <div className="border-primary/10 mt-3 flex justify-between border-t pt-3 font-semibold">
                   <span>Total</span>
                   <span className="text-primary">QAR {total}</span>
@@ -435,22 +459,32 @@ export function ServiceBookingWizard({
             <div className="lg:grid lg:grid-cols-5 lg:items-start lg:gap-10">
               <div className="border-primary/10 mb-6 rounded-2xl border bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:col-span-2 lg:mb-0 lg:rounded-3xl lg:p-6">
                 <p className="text-text-secondary mb-1 text-xs font-medium tracking-wider uppercase">
-                  Service
+                  Services
                 </p>
-                <p className="text-primary-dark font-medium">{item.name}</p>
-                {selectedOptions.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {selectedOptions.map((opt) => (
-                      <div
-                        key={opt.id}
-                        className="text-text-secondary flex justify-between text-sm"
-                      >
-                        <span>{opt.name}</span>
-                        <span className="font-medium">QAR {opt.price}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-3">
+                  {services.map((entry) => (
+                    <div key={entry.item.id}>
+                      <p className="text-primary-dark font-medium">
+                        {entry.item.name}
+                      </p>
+                      {entry.selectedOptions.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {entry.selectedOptions.map((opt) => (
+                            <div
+                              key={opt.id}
+                              className="text-text-secondary flex justify-between text-sm"
+                            >
+                              <span>{opt.name}</span>
+                              <span className="font-medium">
+                                QAR {opt.price}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
                 <div className="border-primary/10 mt-3 flex justify-between border-t pt-3 font-semibold">
                   <span>Total</span>
                   <span className="text-primary">QAR {total}</span>
@@ -487,11 +521,20 @@ export function ServiceBookingWizard({
                   <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-4 lg:gap-3 xl:grid-cols-5">
                     {dynamicTimeSlots.map((time) => {
                       const isSelected = selectedTime === time;
+                      const isPast = isPastTimeSlot(time, selectedDate);
                       return (
                         <button
                           key={time}
+                          type="button"
+                          disabled={isPast}
                           onClick={() => setSelectedTime(time)}
-                          className={`rounded-xl border py-2.5 text-sm font-medium transition-colors lg:py-3 lg:text-base ${isSelected ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white" : "border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark bg-white"}`}
+                          className={`rounded-xl border py-2.5 text-sm font-medium transition-colors lg:py-3 lg:text-base ${
+                            isPast
+                              ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+                              : isSelected
+                                ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
+                                : "border-primary/20 text-text-primary hover:border-primary hover:bg-primary/20 hover:text-primary-dark bg-white"
+                          }`}
                         >
                           {time}
                         </button>
@@ -523,9 +566,16 @@ export function ServiceBookingWizard({
                   })}{" "}
                   at {selectedTime}
                 </p>
-                <p className="text-primary-dark mt-1 font-medium">
-                  {item.name}
-                </p>
+                <div className="mt-2 space-y-1">
+                  {services.map((entry) => (
+                    <p
+                      key={entry.item.id}
+                      className="text-primary-dark font-medium"
+                    >
+                      {entry.item.name}
+                    </p>
+                  ))}
+                </div>
                 <p className="text-primary mt-2 font-semibold">QAR {total}</p>
               </div>
 

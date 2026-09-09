@@ -11,8 +11,8 @@ import {
 
 import { Booking } from "../types";
 
-const START_HOUR = 8;
-const END_HOUR = 20; // 8:00 PM
+const START_HOUR = 9;
+const END_HOUR = 22; // through 10 PM visual range; last bookable slot is 9:30 PM
 const HOUR_WIDTH = 240; // px per hour to give horizontal space
 const ROW_HEIGHT = 90; // px per booking row
 

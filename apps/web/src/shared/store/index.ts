@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Item, User, CartItem, ItemVariant, Booking } from "../types";
+
+import { Booking, CartItem, Item, ItemVariant, User } from "../types";
 
 // User Store
 interface UserState {
@@ -25,7 +26,11 @@ export const useUserStore = create<UserState>()(
 // Cart Store
 interface CartState {
   items: CartItem[];
-  addItem: (item: Item, selectedVariant?: ItemVariant, selectedOptions?: ItemVariant[]) => void;
+  addItem: (
+    item: Item,
+    selectedVariant?: ItemVariant,
+    selectedOptions?: ItemVariant[]
+  ) => void;
   removeItem: (cartItemId: string) => void;
   clearCart: () => void;
   getTotal: () => number;
@@ -37,30 +42,41 @@ export const useCartStore = create<CartState>()(
       items: [],
       addItem: (item, selectedVariant, selectedOptions = []) =>
         set((state) => {
-          // Calculate total price for this configured item
-          let totalPrice = selectedVariant 
-            ? selectedVariant.price 
-            : (item.isProduct ? item.price : 0);
-          selectedOptions.forEach((option) => { totalPrice += option.price; });
+          let totalPrice = 0;
+          if (selectedVariant) {
+            totalPrice = selectedVariant.price;
+          } else if (selectedOptions.length > 0) {
+            selectedOptions.forEach((option) => {
+              totalPrice += option.price;
+            });
+          } else {
+            totalPrice = item.price;
+          }
 
-          // Create a unique hash for this configuration to group identical items
-          const optionIds = selectedOptions.map(a => a.id).sort().join('-');
-          const cartItemId = `${item.id}-${selectedVariant?.id || 'base'}-${optionIds}`;
+          const optionIds = selectedOptions
+            .map((a) => a.id)
+            .sort()
+            .join("-");
+          const cartItemId = `${item.id}-${selectedVariant?.id || "base"}-${optionIds}`;
 
-          const existingIndex = state.items.findIndex((i) => i.item.id === item.id);
+          const nextItem = {
+            id: cartItemId,
+            item,
+            quantity: 1,
+            selectedVariant,
+            selectedOptions,
+            totalPrice,
+          };
+
+          const existingIndex = state.items.findIndex(
+            (i) => i.item.id === item.id
+          );
           if (existingIndex >= 0) {
             const newItems = [...state.items];
-            newItems[existingIndex] = {
-              id: cartItemId,
-              item,
-              quantity: 1,
-              selectedVariant,
-              selectedOptions,
-              totalPrice
-            };
+            newItems[existingIndex] = nextItem;
             return { items: newItems };
           }
-          return { items: [...state.items, { id: cartItemId, item, quantity: 1, selectedVariant, selectedOptions, totalPrice }] };
+          return { items: [...state.items, nextItem] };
         }),
       removeItem: (cartItemId) =>
         set((state) => ({
@@ -68,7 +84,10 @@ export const useCartStore = create<CartState>()(
         })),
       clearCart: () => set({ items: [] }),
       getTotal: () => {
-        return get().items.reduce((total, i) => total + i.totalPrice * i.quantity, 0);
+        return get().items.reduce(
+          (total, i) => total + i.totalPrice * i.quantity,
+          0
+        );
       },
     }),
     {
@@ -76,8 +95,6 @@ export const useCartStore = create<CartState>()(
     }
   )
 );
-
-
 
 // Booking Store
 interface BookingState {
@@ -93,7 +110,9 @@ export const useBookingStore = create<BookingState>()(
       addBooking: (booking) =>
         set((state) => ({ bookings: [booking, ...state.bookings] })),
       removeBooking: (id) =>
-        set((state) => ({ bookings: state.bookings.filter((b) => b.id !== id) })),
+        set((state) => ({
+          bookings: state.bookings.filter((b) => b.id !== id),
+        })),
     }),
     {
       name: "booking-storage",

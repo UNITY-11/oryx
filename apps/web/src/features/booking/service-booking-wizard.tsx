@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_PHONE_COUNTRY,
   validateName,
@@ -11,6 +11,12 @@ import { redirectToWhatsApp } from "@/shared/lib/whatsapp-redirect";
 import type { DraftService } from "@/shared/store/booking-draft";
 import { PhoneInput } from "@/shared/ui/phone-input";
 import { ChevronLeft, ChevronRight, Clock, Loader2 } from "lucide-react";
+
+import {
+  fetchBookedTimes,
+  normalizeTo24Hour,
+  toIsoDate as toIsoDateShared,
+} from "./availability";
 
 type Step = "date" | "time" | "details";
 
@@ -83,23 +89,11 @@ function isPastTimeSlot(
 }
 
 function toIsoDate(date: Date | null) {
-  const d = date || new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return toIsoDateShared(date || new Date());
 }
 
 function to24Hour(timeLabel: string) {
-  if (!timeLabel) return "10:00";
-  const match = timeLabel.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!match?.[1] || !match[2] || !match[3]) return timeLabel;
-  let hours = Number(match[1]);
-  const minutes = match[2];
-  const period = match[3].toUpperCase();
-  if (period === "PM" && hours !== 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
-  return `${String(hours).padStart(2, "0")}:${minutes}`;
+  return normalizeTo24Hour(timeLabel || "10:00 AM");
 }
 
 export function ServiceBookingWizard({
@@ -123,6 +117,45 @@ export function ServiceBookingWizard({
   const [touched, setTouched] = useState({ name: false, phone: false });
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookedTimes, setBookedTimes] = useState<Set<string>>(new Set());
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+
+  const serviceNames = useMemo(
+    () => services.map((entry) => entry.item.name).filter(Boolean),
+    [services]
+  );
+  const serviceNamesKey = serviceNames.join("\0");
+
+  useEffect(() => {
+    if (!open || !selectedDate || serviceNames.length === 0) {
+      setBookedTimes(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    setAvailabilityLoading(true);
+    fetchBookedTimes(toIsoDate(selectedDate), serviceNames)
+      .then((times) => {
+        if (cancelled) return;
+        const next = new Set(times);
+        setBookedTimes(next);
+        setSelectedTime((prev) =>
+          prev && next.has(to24Hour(prev)) ? null : prev
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setBookedTimes(new Set());
+      })
+      .finally(() => {
+        if (!cancelled) setAvailabilityLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // serviceNamesKey tracks service name list changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, selectedDate, serviceNamesKey]);
 
   const handlePhoneCountryChange = useCallback(
     (country: CountryCode) => {
@@ -522,14 +555,17 @@ export function ServiceBookingWizard({
                     {dynamicTimeSlots.map((time) => {
                       const isSelected = selectedTime === time;
                       const isPast = isPastTimeSlot(time, selectedDate);
+                      const isBooked = bookedTimes.has(to24Hour(time));
+                      const isDisabled = isPast || isBooked;
                       return (
                         <button
                           key={time}
                           type="button"
-                          disabled={isPast}
+                          disabled={isDisabled}
+                          title={isBooked ? "Already booked" : undefined}
                           onClick={() => setSelectedTime(time)}
                           className={`rounded-xl border py-2.5 text-sm font-medium transition-colors lg:py-3 lg:text-base ${
-                            isPast
+                            isDisabled
                               ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
                               : isSelected
                                 ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
@@ -544,6 +580,12 @@ export function ServiceBookingWizard({
                 ) : (
                   <p className="text-text-secondary py-8 text-center text-sm lg:text-base">
                     Please select a date first.
+                  </p>
+                )}
+                {availabilityLoading && (
+                  <p className="text-text-secondary mt-3 flex items-center gap-2 text-xs">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Checking availability…
                   </p>
                 )}
               </div>
@@ -660,7 +702,7 @@ export function ServiceBookingWizard({
             style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
           >
             <button
-              disabled={!selectedTime}
+              disabled={!selectedTime || availabilityLoading}
               onClick={handleTimeContinue}
               className="bg-primary mx-auto flex w-full max-w-none items-center justify-center rounded-xl py-3.5 font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50 lg:max-w-md lg:py-4 lg:text-base"
             >

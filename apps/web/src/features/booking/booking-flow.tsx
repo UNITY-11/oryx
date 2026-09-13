@@ -27,6 +27,12 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  fetchBookedTimes,
+  normalizeTo24Hour,
+  toIsoDate as toIsoDateShared,
+} from "./availability";
+
 function CartItemCard({
   cartItem,
   setItemToDelete,
@@ -219,10 +225,48 @@ export function BookingFlow({
   const [isMounted, setIsMounted] = useState(false);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookedTimes, setBookedTimes] = useState<Set<string>>(new Set());
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+
+  const serviceNames = useMemo(
+    () => cartItems.map((ci) => ci.item.name).filter(Boolean),
+    [cartItems]
+  );
+  const serviceNamesKey = serviceNames.join("\0");
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!selectedDate || serviceNames.length === 0) {
+      setBookedTimes(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    setAvailabilityLoading(true);
+    fetchBookedTimes(toIsoDateShared(selectedDate), serviceNames)
+      .then((times) => {
+        if (cancelled) return;
+        const next = new Set(times);
+        setBookedTimes(next);
+        setSelectedTime((prev) =>
+          prev && next.has(normalizeTo24Hour(prev)) ? null : prev
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setBookedTimes(new Set());
+      })
+      .finally(() => {
+        if (!cancelled) setAvailabilityLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, serviceNamesKey]);
 
   // Calendar Helpers
   const getDaysInMonth = (date: Date) =>
@@ -289,23 +333,11 @@ export function BookingFlow({
   };
 
   const toIsoDate = (date: Date | null) => {
-    const d = date || new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
+    return toIsoDateShared(date || new Date());
   };
 
   const to24Hour = (timeLabel: string) => {
-    if (!timeLabel) return "10:00";
-    const match = timeLabel.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (!match || !match[1] || !match[2] || !match[3]) return timeLabel;
-    let hours = Number(match[1]);
-    const minutes = match[2];
-    const period = match[3].toUpperCase();
-    if (period === "PM" && hours !== 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
-    return `${String(hours).padStart(2, "0")}:${minutes}`;
+    return normalizeTo24Hour(timeLabel || "10:00 AM");
   };
 
   const persistBookingToSanity = async (
@@ -689,19 +721,29 @@ export function BookingFlow({
               )}
             </div>
 
+            {availabilityLoading && (
+              <p className="text-text-secondary mb-3 flex items-center gap-2 text-xs">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Checking availability…
+              </p>
+            )}
+
             {dynamicTimeSlots.length > 0 ? (
               <div className="grid grid-cols-3 gap-3 pb-24 md:grid-cols-4 lg:grid-cols-5">
                 {dynamicTimeSlots.map((time) => {
                   const isSelected = selectedTime === time;
                   const isPast = isPastTimeSlot(time, selectedDate);
+                  const isBooked = bookedTimes.has(to24Hour(time));
+                  const isDisabled = isPast || isBooked;
                   return (
                     <button
                       key={time}
                       type="button"
-                      disabled={isPast}
+                      disabled={isDisabled}
+                      title={isBooked ? "Already booked" : undefined}
                       onClick={() => setSelectedTime(time)}
                       className={`rounded-soft border py-2.5 text-sm font-medium transition-colors ${
-                        isPast
+                        isDisabled
                           ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
                           : isSelected
                             ? "bg-primary border-primary hover:bg-primary-dark text-white shadow-md hover:text-white"
@@ -894,7 +936,9 @@ export function BookingFlow({
                 </p>
               )}
               <button
-                disabled={!selectedTime || bookingSubmitting}
+                disabled={
+                  !selectedTime || bookingSubmitting || availabilityLoading
+                }
                 onClick={handleCheckout}
                 className="bg-primary flex w-full items-center justify-center rounded-xl py-4 text-lg font-medium text-white shadow-md transition-all hover:opacity-90 disabled:opacity-50"
               >
@@ -970,7 +1014,9 @@ export function BookingFlow({
                 </button>
               ) : (
                 <button
-                  disabled={!selectedTime || bookingSubmitting}
+                  disabled={
+                    !selectedTime || bookingSubmitting || availabilityLoading
+                  }
                   onClick={handleCheckout}
                   className="bg-primary border-surface/20 flex items-center rounded-full border px-6 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
                 >

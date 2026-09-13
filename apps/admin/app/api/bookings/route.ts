@@ -20,10 +20,16 @@ import {
 export const dynamic = "force-dynamic";
 
 function withKeys(services: BookingService[] | undefined) {
-  return (services ?? []).map((svc, i) => ({
-    ...svc,
-    _key: `svc-${i}-${svc.name}`,
-  }));
+  return (services ?? []).map((svc, i) => {
+    const staffId = svc.staffId?.trim();
+    const staffName = svc.staffName?.trim();
+    return {
+      _key: `svc-${i}-${svc.name}`,
+      name: svc.name,
+      options: svc.options ?? [],
+      ...(staffId ? { staffId, staffName: staffName || undefined } : {}),
+    };
+  });
 }
 
 function digitsOnly(value: string) {

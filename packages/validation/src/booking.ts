@@ -4,6 +4,8 @@ import { isValidPhone, normalizePhone, validatePhoneValue } from "./phone";
 export type BookingServiceInput = {
   name: string;
   options?: string[];
+  staffId?: string;
+  staffName?: string;
 };
 
 export type CatalogService = {
@@ -28,6 +30,11 @@ export type BookingValidationOptions = {
   /** Reject dates before today (customer-facing bookings). */
   rejectPastDates?: boolean;
   catalog?: CatalogService[];
+  /**
+   * When true (default if catalog is set), reject services that still need options.
+   * Set false for admin patches that only assign staff / partial edits.
+   */
+  requireServiceOptions?: boolean;
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -141,14 +148,16 @@ export function validateBookingCreateInput(
     return { error: "Amount must be 0 or greater" };
   }
 
-  if (body.discountPercent !== undefined) {
+  // Sanity/GROQ returns null (not undefined) for unset numeric fields, so
+  // treat null the same as "not provided" rather than an invalid value.
+  if (body.discountPercent !== undefined && body.discountPercent !== null) {
     const pct = body.discountPercent;
     if (typeof pct !== "number" || Number.isNaN(pct) || pct < 0 || pct > 100) {
       return { error: "Discount percent must be between 0 and 100" };
     }
   }
 
-  if (body.discountAmount !== undefined) {
+  if (body.discountAmount !== undefined && body.discountAmount !== null) {
     const amt = body.discountAmount;
     if (typeof amt !== "number" || Number.isNaN(amt) || amt < 0) {
       return { error: "Discount amount must be 0 or greater" };
@@ -198,7 +207,7 @@ export function validateBookingPatchFields(
     for (const svc of fields.services) {
       if (!svc.name?.trim()) return "Each service must have a name";
     }
-    if (opts?.catalog) {
+    if (opts?.catalog && opts.requireServiceOptions !== false) {
       const missing = getServicesMissingOptionsFromCatalog(
         fields.services,
         opts.catalog
@@ -231,14 +240,16 @@ export function validateBookingPatchFields(
     }
   }
 
-  if (fields.discountPercent !== undefined) {
+  // Sanity/GROQ returns null (not undefined) for unset numeric fields, so
+  // treat null the same as "not provided" rather than an invalid value.
+  if (fields.discountPercent !== undefined && fields.discountPercent !== null) {
     const pct = fields.discountPercent;
     if (typeof pct !== "number" || Number.isNaN(pct) || pct < 0 || pct > 100) {
       return "Discount percent must be between 0 and 100";
     }
   }
 
-  if (fields.discountAmount !== undefined) {
+  if (fields.discountAmount !== undefined && fields.discountAmount !== null) {
     const amt = fields.discountAmount;
     if (typeof amt !== "number" || Number.isNaN(amt) || amt < 0) {
       return "Discount amount must be 0 or greater";

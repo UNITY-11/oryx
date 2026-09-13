@@ -34,6 +34,28 @@ export function parseIsoDateLocal(iso: string): Date | null {
   return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
 }
 
+export function formatTime24Hour(now = new Date()): string {
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+/** Current clock time as a 12h label (e.g. "03:30 PM"). */
+export function formatTime12HourLabel(now = new Date()): string {
+  return formatSlotLabel(now.getHours() * 60 + now.getMinutes());
+}
+
+/** Today's date + current time for walk-in bookings. */
+export function applyWalkInDateTime(now = new Date()): {
+  date: Date;
+  timeLabel: string;
+  time24: string;
+} {
+  return {
+    date: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    timeLabel: formatTime12HourLabel(now),
+    time24: formatTime24Hour(now),
+  };
+}
+
 export function todayIsoDate(now = new Date()): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");

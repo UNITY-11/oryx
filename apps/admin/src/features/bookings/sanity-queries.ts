@@ -12,7 +12,9 @@ export const BOOKING_PROJECTION = `{
   customerId,
   "services": services[]{
     name,
-    "options": coalesce(options, addons, [])
+    "options": coalesce(options, addons, []),
+    staffId,
+    staffName
   },
   date,
   time,

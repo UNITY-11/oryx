@@ -18,7 +18,6 @@ import {
   Briefcase,
   Calendar,
   ChevronDown,
-  DollarSign,
   Loader2,
   Mail,
   Save,
@@ -213,7 +212,7 @@ export default function NewStaffPage() {
 
           <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             <div>
-              <label className={labelClass}>Job Title *</label>
+              <label className={labelClass}>Designation *</label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
                   <Briefcase className="text-primary/40 h-5 w-5" />
@@ -245,29 +244,6 @@ export default function NewStaffPage() {
                 />
               </div>
               <FieldError message={fieldErrors.joinedDate} />
-            </div>
-
-            <div>
-              <label className={labelClass}>Monthly Salary (QAR)</label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-                  <DollarSign className="text-primary/40 h-5 w-5" />
-                </div>
-                <input
-                  type="number"
-                  min={0}
-                  disabled={saving}
-                  value={formData.baseSalary}
-                  onChange={(e) =>
-                    update(
-                      "baseSalary",
-                      Math.max(0, Number(e.target.value) || 0)
-                    )
-                  }
-                  className={`${inputClass} ${fieldErrors.baseSalary ? inputErrorClass : ""}`}
-                />
-              </div>
-              <FieldError message={fieldErrors.baseSalary} />
             </div>
 
             <div>

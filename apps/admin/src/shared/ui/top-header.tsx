@@ -22,8 +22,7 @@ export function TopHeader() {
     pathname === "/company" ||
     pathname === "/promotional-banner" ||
     (pathname.startsWith("/services/") && pathname !== "/services") ||
-    // Staff disabled for now
-    // (pathname.startsWith("/staff/") && pathname !== "/staff") ||
+    (pathname.startsWith("/staff/") && pathname !== "/staff") ||
     (pathname.startsWith("/products/") && pathname !== "/products") ||
     (pathname.startsWith("/customers/") && pathname !== "/customers") ||
     (pathname.startsWith("/hero/") && pathname !== "/hero") ||
@@ -48,9 +47,8 @@ export function TopHeader() {
         return "Customers Directory";
       case "/reviews":
         return "Reviews Management";
-      // Staff disabled for now
-      // case "/staff":
-      //   return "Staff Management";
+      case "/staff":
+        return "Staff Management";
       // Settings disabled for now
       // case "/settings":
       //   return "Admin Settings";
@@ -185,17 +183,15 @@ export function TopHeader() {
                 </Link>
               )}
 
-              {/* Staff disabled for now
-            {pathname === "/staff" && (
-              <Link
-                href="/staff/new"
-                className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Staff Member</span>
-              </Link>
-            )}
-            */}
+              {pathname === "/staff" && (
+                <Link
+                  href="/staff/new"
+                  className="bg-primary flex items-center space-x-2 rounded-full px-6 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Staff Member</span>
+                </Link>
+              )}
 
               {pathname === "/hero" && (
                 <Link

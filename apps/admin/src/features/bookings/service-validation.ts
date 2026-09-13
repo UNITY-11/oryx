@@ -14,6 +14,18 @@ export function getServicesMissingOptions(
     .map((svc) => svc.name);
 }
 
+export function getServicesMissingStaff(booking: Booking): string[] {
+  return booking.services
+    .filter((svc) => !svc.staffId?.trim())
+    .map((svc) => svc.name);
+}
+
+export function getMissingStaffMessage(booking: Booking): string | null {
+  const missing = getServicesMissingStaff(booking);
+  if (missing.length === 0) return null;
+  return `Assign staff for: ${missing.join(", ")}.`;
+}
+
 /** Selected services in add-booking wizard must each have options when the catalog defines them. */
 export function getSelectedServicesMissingOptions(
   selectedServiceIds: string[],
@@ -61,6 +73,14 @@ export function canPrintBookingInvoice(
     return {
       allowed: false,
       message: `Select service options for: ${missingOptions.join(", ")} before printing the invoice.`,
+    };
+  }
+
+  const missingStaff = getServicesMissingStaff(booking);
+  if (missingStaff.length > 0) {
+    return {
+      allowed: false,
+      message: `Assign staff for: ${missingStaff.join(", ")} before printing the invoice.`,
     };
   }
 

@@ -370,10 +370,15 @@ export function HomePageClient({
                 </Link>
               </div>
 
-              <p className="mt-4 text-[10px] text-white md:text-xs">
-                © {new Date().getFullYear()} ORYX Beauty Spa. All rights
-                reserved.
-              </p>
+              <div className="mt-4 space-y-1 text-center text-[10px] text-white md:text-xs">
+                <p>
+                  © {new Date().getFullYear()} ORYX Beauty Spa. All rights
+                  reserved.
+                </p>
+                <p className="text-white/70">
+                  Developed by AdLoom Marketing Agency
+                </p>
+              </div>
             </div>
           </section>
         )}

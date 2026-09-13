@@ -23,7 +23,11 @@ import {
   canProceedFromServicesStep,
   getSelectedServicesMissingOptions,
 } from "./service-validation";
-import { getTimeSlotsForDate, isPastTimeSlot } from "./time-slots";
+import {
+  applyWalkInDateTime,
+  getTimeSlotsForDate,
+  isPastTimeSlot,
+} from "./time-slots";
 import { Booking } from "./types";
 import {
   BookingCustomerStep,
@@ -60,19 +64,25 @@ export function BookingWizard({
   const [serviceSearchQuery, setServiceSearchQuery] = useState("");
 
   // Date & Time
-  const [selectedDate, setSelectedDate] = useState<Date | null>(
-    initialData?.date ? new Date(initialData.date) : new Date()
-  );
+  const [isWalkIn, setIsWalkIn] = useState(!initialData);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    if (initialData?.date) return new Date(initialData.date);
+    return applyWalkInDateTime().date;
+  });
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string | null>(
-    initialData?.time ?? null
-  );
+  const [selectedTime, setSelectedTime] = useState<string | null>(() => {
+    if (initialData?.time) return initialData.time;
+    return applyWalkInDateTime().timeLabel;
+  });
 
   const [services, setServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitErrorAction, setSubmitErrorAction] = useState<
+    "date-time" | null
+  >(null);
   const [customerStepState, setCustomerStepState] =
     useState<BookingCustomerStepState>({
       mode: "existing",
@@ -129,6 +139,33 @@ export function BookingWizard({
       .finally(() => setServicesLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Walk-in skips date/time steps — jump past them if URL lands on 2 or 3.
+  useEffect(() => {
+    if (isWalkIn && (step === 2 || step === 3)) {
+      setStep(4);
+    }
+  }, [isWalkIn, step, setStep]);
+
+  const applyWalkInNow = useCallback(() => {
+    const walkIn = applyWalkInDateTime();
+    setSelectedDate(walkIn.date);
+    setSelectedTime(walkIn.timeLabel);
+    setCurrentMonth(walkIn.date);
+    return walkIn;
+  }, []);
+
+  const handleWalkInToggle = (next: boolean) => {
+    setIsWalkIn(next);
+    setSubmitError(null);
+    setSubmitErrorAction(null);
+    if (next) {
+      applyWalkInNow();
+      if (step === 2 || step === 3) setStep(4);
+    } else if (!initialData) {
+      setSelectedTime(null);
+    }
+  };
 
   const selectedServicesList = services.filter((s) =>
     selectedServiceIds.includes(s.id)
@@ -199,6 +236,7 @@ export function BookingWizard({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitErrorAction(null);
     if (selectedServiceIds.length === 0) {
       setSubmitError("Please select at least one service.");
       return;
@@ -214,8 +252,14 @@ export function BookingWizard({
       );
       return;
     }
-    if (!selectedTime) {
-      setSubmitError("Please select a time slot.");
+
+    const walkIn = isWalkIn ? applyWalkInNow() : null;
+    const effectiveTime = walkIn?.timeLabel ?? selectedTime;
+    const effectiveDate = walkIn?.date ?? selectedDate;
+
+    if (!effectiveDate || !effectiveTime) {
+      setSubmitError("Please select a date and time.");
+      setSubmitErrorAction("date-time");
       return;
     }
     if (!canConfirmCustomer) {
@@ -243,13 +287,14 @@ export function BookingWizard({
     }, 0);
     setSubmitting(true);
     setSubmitError(null);
+    setSubmitErrorAction(null);
     try {
       await onSubmit({
         customerName,
         phone,
         services: servicesPayload,
-        date: toIsoDate(selectedDate),
-        time: to24Hour(selectedTime),
+        date: toIsoDate(effectiveDate),
+        time: walkIn ? walkIn.time24 : to24Hour(effectiveTime),
         status: "Confirmed",
         amount,
         ...(initialData ? { id: initialData.id } : {}),
@@ -281,6 +326,33 @@ export function BookingWizard({
             onSubmit={handleSubmit}
             className="space-y-6 p-4 sm:space-y-8 sm:p-6 md:p-8"
           >
+            {!initialData && (
+              <div className="border-primary/10 flex rounded-2xl border bg-gray-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => handleWalkInToggle(true)}
+                  className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isWalkIn
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-text-secondary hover:text-primary-dark"
+                  }`}
+                >
+                  Walk-in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleWalkInToggle(false)}
+                  className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                    !isWalkIn
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-text-secondary hover:text-primary-dark"
+                  }`}
+                >
+                  Schedule
+                </button>
+              </div>
+            )}
+
             {/* STEP 1: Services */}
             {step === 1 && (
               <div className="animate-in fade-in slide-in-from-right-4 flex h-full flex-col duration-300">
@@ -435,7 +507,7 @@ export function BookingWizard({
               </div>
             )}
             {/* STEP 2: Date */}
-            {step === 2 && (
+            {step === 2 && !isWalkIn && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="bg-surface border-primary/10 overflow-hidden rounded-2xl border shadow-sm sm:rounded-3xl">
                   <div className="bg-primary/5 border-primary/10 flex items-center justify-between border-b p-3.5 sm:p-5">
@@ -531,7 +603,7 @@ export function BookingWizard({
               </div>
             )}
             {/* STEP 3: Time */}
-            {step === 3 && (
+            {step === 3 && !isWalkIn && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-primary-dark font-serif text-lg">
@@ -603,11 +675,16 @@ export function BookingWizard({
             {selectedTime && selectedDate && (
               <div className="border-primary/10 shrink-0 rounded-2xl border bg-white p-4 shadow-sm">
                 <p className="text-text-secondary mb-1 text-xs font-semibold tracking-wider uppercase">
-                  Date & Time
+                  {isWalkIn ? "Walk-in · Date & Time" : "Date & Time"}
                 </p>
                 <p className="text-primary-dark text-sm font-medium">
                   {selectedDate.toDateString()} at {selectedTime}
                 </p>
+                {isWalkIn && (
+                  <p className="text-text-secondary mt-1 text-xs">
+                    Auto-filled to now — no schedule needed.
+                  </p>
+                )}
               </div>
             )}
             {selectedServicesList.length > 0 ? (
@@ -662,10 +739,27 @@ export function BookingWizard({
           <div className="border-primary/10 mt-auto border-t bg-white p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] sm:p-6">
             <div className="mb-3 sm:mb-4">
               {submitError ? (
-                <p className="flex items-start gap-1.5 rounded-lg bg-red-50 p-2 text-sm text-red-500">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{" "}
-                  {submitError}
-                </p>
+                <div className="space-y-2 rounded-lg bg-red-50 p-2">
+                  <p className="flex items-start gap-1.5 text-sm text-red-500">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{submitError}</span>
+                  </p>
+                  {submitErrorAction === "date-time" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWalkIn(false);
+                        setSubmitError(null);
+                        setSubmitErrorAction(null);
+                        setStep(selectedDate ? 3 : 2);
+                      }}
+                      className="border-primary/20 text-primary hover:bg-primary/5 ml-5 inline-flex items-center gap-1 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold transition-colors"
+                    >
+                      Select date & time
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="flex items-end justify-between gap-3">
                   <div className="min-w-0">
@@ -679,7 +773,11 @@ export function BookingWizard({
                   <p className="text-text-secondary shrink-0 text-xs md:hidden">
                     {selectedServiceIds.length} service
                     {selectedServiceIds.length === 1 ? "" : "s"}
-                    {selectedTime ? ` · ${selectedTime}` : ""}
+                    {isWalkIn
+                      ? " · Walk-in"
+                      : selectedTime
+                        ? ` · ${selectedTime}`
+                        : ""}
                   </p>
                 </div>
               )}
@@ -694,6 +792,12 @@ export function BookingWizard({
                 }
                 onClick={() => {
                   setSubmitError(null);
+                  setSubmitErrorAction(null);
+                  if (isWalkIn && step === 1) {
+                    applyWalkInNow();
+                    setStep(4);
+                    return;
+                  }
                   setStep(step + 1);
                 }}
                 className="bg-primary flex h-11 w-full items-center justify-center space-x-2 rounded-full px-6 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:px-8 sm:py-3.5 sm:text-base"

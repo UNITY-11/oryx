@@ -7,44 +7,33 @@ export const STAFF_PROJECTION = `{
   baseSalary,
   status,
   "imageUrl": image.asset->url,
-  joinedDate,
-  "todayAttendance": *[_type == "attendance" && staff._ref == ^._id && date == $today][0] {
-    "id": _id,
-    "staffId": staff._ref,
-    date,
-    checkIn,
-    checkOut,
-    totalHours,
-    status
-  }
-}`;
-
-export const STAFF_QUERY = `*[_type == "staff"] | order(_createdAt desc) ${STAFF_PROJECTION}`;
-
-export const STAFF_BY_ID_QUERY = `*[_type == "staff" && _id == $id][0] {
-  "id": _id,
-  name,
-  role,
-  phone,
-  email,
-  baseSalary,
-  status,
-  "imageUrl": image.asset->url,
   joinedDate
 }`;
 
-export const ATTENDANCE_BY_STAFF_QUERY = `*[_type == "attendance" && staff._ref == $staffId && date match $month + "*"] | order(date desc) {
-  "id": _id,
-  "staffId": staff._ref,
-  date,
-  checkIn,
-  checkOut,
-  totalHours,
-  status
-}`;
+export const STAFF_QUERY = `*[_type == "staff"] | order(name asc) ${STAFF_PROJECTION}`;
 
-export const ATTENDANCE_REASON_QUERY = `*[_type == "attendance" && _id == $id][0] {
-  reason
+export const STAFF_ACTIVE_QUERY = `*[_type == "staff" && status == "Active"] | order(name asc) ${STAFF_PROJECTION}`;
+
+export const STAFF_BY_ID_QUERY = `*[_type == "staff" && _id == $id][0] ${STAFF_PROJECTION}`;
+
+export const STAFF_SERVICE_HISTORY_QUERY = `*[
+  _type == "booking"
+  && date >= $from
+  && date <= $to
+  && status == "Completed"
+  && count(services[staffId == $staffId]) > 0
+] | order(date desc, time desc) {
+  "id": _id,
+  bookingCode,
+  customerName,
+  phone,
+  date,
+  time,
+  status,
+  "matchedServices": services[staffId == $staffId]{
+    name,
+    "options": coalesce(options, addons, [])
+  }
 }`;
 
 export type StaffListQueryInput = {
@@ -68,7 +57,7 @@ function buildStaffFilterClause(): string {
 
 export function buildStaffListQueries(input: StaffListQueryInput) {
   const filter = buildStaffFilterClause();
-  const listQuery = `*[${filter}] | order(_createdAt desc) [${input.start}...${input.end}] ${STAFF_PROJECTION}`;
+  const listQuery = `*[${filter}] | order(name asc) [${input.start}...${input.end}] ${STAFF_PROJECTION}`;
   const countQuery = `count(*[${filter}])`;
 
   return { listQuery, countQuery };

@@ -3,6 +3,8 @@ export type BookingStatus = "Confirmed" | "Pending" | "Completed" | "Cancelled";
 export interface BookingService {
   name: string;
   options: string[];
+  staffId?: string;
+  staffName?: string;
 }
 
 export interface Booking {

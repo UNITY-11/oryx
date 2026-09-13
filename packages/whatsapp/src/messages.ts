@@ -199,20 +199,34 @@ export function formatCustomerConfirmationMessage(
   const brand = company?.name?.trim() || "ORYX Beauty Spa & Salon";
   const firstName =
     booking.customerName.trim().split(/\s+/)[0] || booking.customerName;
-  const serviceLines = formatServicesBlock(booking.services);
   const total = summary?.total ?? booking.amount;
 
+  // WhatsApp bold uses *text*. Keep the same wording; emphasize headings/labels.
+  const serviceLines = booking.services.length
+    ? booking.services
+        .map((service, index) => {
+          const name = cleanLabel(service.name) || service.name.trim();
+          const options = (service.options ?? [])
+            .map((opt) => cleanLabel(opt) || opt.trim())
+            .filter(Boolean);
+          const header = `*${index + 1}- ${name}*`;
+          if (options.length === 0) return header;
+          return `${header}\n${options.map((opt) => `- ${opt}`).join("\n")}`;
+        })
+        .join("\n\n")
+    : "None";
+
   return (
-    `APPOINTMENT CONFIRMED\n\n` +
-    `Hello ${firstName},\n\n` +
-    `Your appointment at ${brand} is confirmed.\n\n` +
-    `${serviceLines}\n` +
-    `Date: ${formatFriendlyDate(booking.date)}\n` +
-    `Time: ${formatFriendlyTime(booking.time)}\n` +
-    `Total: QAR ${total}\n` +
-    `Reference: ${displayBookingRef(booking)}\n\n` +
+    `*APPOINTMENT CONFIRMED*\n\n` +
+    `Hello *${firstName}*,\n\n` +
+    `Your appointment at *${brand}* is confirmed.\n\n` +
+    `${serviceLines}\n\n` +
+    `*Date:* ${formatFriendlyDate(booking.date)}\n` +
+    `*Time:* ${formatFriendlyTime(booking.time)}\n` +
+    `*Total:* QAR ${total}\n` +
+    `*Reference:* ${displayBookingRef(booking)}\n\n` +
     `We look forward to welcoming you.\n\n` +
-    `Your beauty. Your ORYX experience.`
+    `_Your beauty. Your ORYX experience._`
   );
 }
 

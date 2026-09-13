@@ -87,20 +87,22 @@ function MobileTab({
   return (
     <Link
       href={href}
-      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors focus:outline-none ${
+      className={`flex min-w-[5.75rem] flex-1 flex-col items-center justify-center gap-1.5 px-3 py-3 transition-colors focus:outline-none sm:min-w-[6.5rem] sm:px-4 ${
         isActive ? "text-primary" : "text-background hover:text-primary"
       }`}
     >
-      <div className="flex h-10 w-10 items-center justify-center">
+      <div className="flex h-11 w-11 items-center justify-center">
         {variant === "center" ? (
-          <div className="shadow-spa bg-background flex h-10 w-10 items-center justify-center rounded-full">
+          <div className="shadow-spa bg-background flex h-11 w-11 items-center justify-center rounded-full">
             <Icon className="h-5 w-5 text-white" strokeWidth={2.5} />
           </div>
         ) : (
           <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
         )}
       </div>
-      <span className="text-[10px] leading-none font-medium">{name}</span>
+      <span className="text-[11px] leading-none font-medium tracking-wide">
+        {name}
+      </span>
     </Link>
   );
 }
@@ -217,10 +219,13 @@ export function TopNav() {
         </div>
       </header>
 
-      {/* Tablet: bottom dock */}
+      {/* Tablet: bottom dock (iPad mini / md–lg) */}
       <nav
         aria-label="Main navigation"
-        className="border-primary/15 fixed bottom-5 left-1/2 z-[100] hidden -translate-x-1/2 items-center gap-1 rounded-full border bg-white/95 p-1.5 shadow-lg backdrop-blur-md md:flex lg:hidden"
+        className="border-primary/15 fixed bottom-5 left-1/2 z-[100] hidden w-[min(26rem,calc(100%-2.5rem))] -translate-x-1/2 items-stretch justify-between gap-1 rounded-full border bg-white/95 px-2.5 py-1.5 shadow-lg backdrop-blur-md md:flex lg:hidden"
+        style={{
+          paddingBottom: "max(0.375rem, env(safe-area-inset-bottom, 0px))",
+        }}
       >
         {tabletNavItems.map((item, index) => (
           <MobileTab

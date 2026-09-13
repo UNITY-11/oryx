@@ -12,7 +12,16 @@ import {
 
 function withKeys(services: BookingService[] | undefined) {
   if (!services) return undefined;
-  return services.map((svc, i) => ({ ...svc, _key: `svc-${i}-${svc.name}` }));
+  return services.map((svc, i) => {
+    const staffId = svc.staffId?.trim();
+    const staffName = svc.staffName?.trim();
+    return {
+      _key: `svc-${i}-${svc.name}`,
+      name: svc.name,
+      options: svc.options ?? [],
+      ...(staffId ? { staffId, staffName: staffName || undefined } : {}),
+    };
+  });
 }
 
 export async function GET(
@@ -98,7 +107,12 @@ export async function PATCH(
       SERVICES_LIST_QUERY
     )) as CatalogService[];
 
-    const patchError = validateBookingPatchFields(fields, { catalog });
+    // Allow partial service edits (e.g. staff assignment) without blocking on options.
+    // Options are enforced client-side on Done / Confirm / Print.
+    const patchError = validateBookingPatchFields(fields, {
+      catalog,
+      requireServiceOptions: false,
+    });
     if (patchError) {
       return NextResponse.json({ error: patchError }, { status: 400 });
     }

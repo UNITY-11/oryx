@@ -4,10 +4,19 @@ import {
   type PaginatedResponse,
 } from "@/shared/lib/pagination";
 
-import { AttendanceRecord, Staff } from "./types";
+import type {
+  Staff,
+  StaffHistoryRange,
+  StaffServiceHistoryItem,
+} from "./types";
 
 export async function fetchStaffList(): Promise<Staff[]> {
   const res = await fetch("/api/staff", { cache: "no-store" });
+  return parseOrThrow<Staff[]>(res, "Failed to load staff list");
+}
+
+export async function fetchActiveStaffList(): Promise<Staff[]> {
+  const res = await fetch("/api/staff?active=1", { cache: "no-store" });
   return parseOrThrow<Staff[]>(res, "Failed to load staff list");
 }
 
@@ -26,47 +35,36 @@ export async function fetchStaffById(id: string): Promise<Staff | null> {
   return parseOrThrow<Staff>(res, "Failed to load staff details");
 }
 
-export async function fetchAttendance(
+export async function fetchStaffServiceHistory(
   staffId: string,
-  month?: string
-): Promise<AttendanceRecord[]> {
-  const query = month ? `?month=${month}` : "";
-  const res = await fetch(`/api/staff/${staffId}/attendance${query}`, {
+  params: {
+    range?: StaffHistoryRange;
+    from?: string;
+    to?: string;
+  }
+): Promise<StaffServiceHistoryItem[]> {
+  const qs = new URLSearchParams();
+  if (params.range) qs.set("range", params.range);
+  if (params.from) qs.set("from", params.from);
+  if (params.to) qs.set("to", params.to);
+  const res = await fetch(`/api/staff/${staffId}/history?${qs.toString()}`, {
     cache: "no-store",
   });
-  return parseOrThrow<AttendanceRecord[]>(res, "Failed to load attendance");
-}
-
-export async function fetchAttendanceReason(
-  id: string
-): Promise<{ reason?: string }> {
-  const res = await fetch(`/api/attendance/${id}/reason`, {
-    cache: "no-store",
-  });
-  return parseOrThrow<{ reason?: string }>(
+  return parseOrThrow<StaffServiceHistoryItem[]>(
     res,
-    "Failed to load attendance reason"
+    "Failed to load service history"
   );
 }
 
-export async function createStaff(data: Omit<Staff, "id">): Promise<Staff> {
+export async function createStaff(
+  data: Omit<Staff, "id" | "imageUrl">
+): Promise<Staff> {
   const res = await fetch("/api/staff", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   return parseOrThrow<Staff>(res, "Failed to create staff");
-}
-
-export async function addAttendance(
-  data: Omit<AttendanceRecord, "id">
-): Promise<AttendanceRecord> {
-  const res = await fetch(`/api/staff/${data.staffId}/attendance`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return parseOrThrow<AttendanceRecord>(res, "Failed to add attendance");
 }
 
 export async function updateStaff(

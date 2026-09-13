@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeTo24Hour } from "@/features/booking/availability";
 import { sanityWriteClient } from "@/shared/lib/sanity/client";
 import { generateNextBookingCode } from "@repo/sanity";
 import {
@@ -29,6 +30,27 @@ const COMPANY_CONTEXT_QUERY = `*[_type == "company" && _id == "companyDetails"][
 
 const SERVICES_CATALOG_QUERY = `*[_type == "service"]{ name, options }`;
 
+const BOOKED_TIMES_QUERY = `*[
+  _type == "booking"
+  && date == $date
+  && status in ["Confirmed", "Started"]
+  && count((services[defined(name)].name)[@ in $serviceNames]) > 0
+]{ time }`;
+
+async function hasConfirmedSlotConflict(
+  date: string,
+  time: string,
+  names: string[]
+): Promise<boolean> {
+  if (!date || !time || names.length === 0) return false;
+  const rows = (await sanityWriteClient.fetch(BOOKED_TIMES_QUERY, {
+    date,
+    serviceNames: names,
+  })) as { time?: string }[];
+  const target = normalizeTo24Hour(time);
+  return rows.some((row) => row.time && normalizeTo24Hour(row.time) === target);
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -47,6 +69,25 @@ export async function POST(request: Request) {
 
     const data = validated.data;
     const services: BookingServiceInput[] = data.services ?? [];
+    const bookedServiceNames = services.map((s) => s.name).filter(Boolean);
+    const bookingDate = data.date ?? new Date().toISOString().slice(0, 10);
+    const bookingTime = data.time ?? "10:00";
+
+    if (
+      await hasConfirmedSlotConflict(
+        bookingDate,
+        bookingTime,
+        bookedServiceNames
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "That time is already booked for one of the selected services. Please choose another slot.",
+        },
+        { status: 409 }
+      );
+    }
 
     const existingCustomer = await sanityWriteClient.fetch(
       `*[_type == "customer" && phone == $phone][0]`,
@@ -63,7 +104,7 @@ export async function POST(request: Request) {
         email: "",
         tier: "Bronze",
         totalSpent: 0,
-        lastVisit: data.date ?? new Date().toISOString().slice(0, 10),
+        lastVisit: bookingDate,
         status: "Active",
       });
       customerId = newCustomer._id;
@@ -84,20 +125,20 @@ export async function POST(request: Request) {
       phone: data.phone,
       customerId: customerId ?? null,
       services: servicesWithKeys,
-      date: data.date ?? new Date().toISOString().slice(0, 10),
-      time: data.time ?? "10:00",
+      date: bookingDate,
+      time: bookingTime,
       status: "Pending",
       amount: data.amount ?? 0,
     };
 
     const created = await sanityWriteClient.create(doc);
 
-    const serviceNames = services.map((s) => s.name).join(", ");
+    const serviceNamesLabel = bookedServiceNames.join(", ");
     const notificationDoc = {
       _type: "notification",
       type: "Booking",
       title: "New Booking Request",
-      message: `${data.customerName} requested a booking for ${serviceNames} on ${data.date ?? new Date().toISOString().slice(0, 10)} at ${data.time ?? "10:00"}.`,
+      message: `${data.customerName} requested a booking for ${serviceNamesLabel} on ${bookingDate} at ${bookingTime}.`,
       timestamp: "Just now",
       status: "Unread",
       isStarred: false,
@@ -106,12 +147,12 @@ export async function POST(request: Request) {
         customerId: customerId ?? `cust-${created._id.slice(-5)}`,
         customerName: data.customerName,
         customerPhone: data.phone,
-        serviceName: serviceNames,
+        serviceName: serviceNamesLabel,
         duration: "60 mins",
         options: services.flatMap((s) => s.options ?? []),
         price: data.amount ?? 0,
-        date: data.date ?? new Date().toISOString().slice(0, 10),
-        time: data.time ?? "10:00",
+        date: bookingDate,
+        time: bookingTime,
         staffName: "Emma",
         status: "Pending",
       },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   buildStaffListQueries,
+  STAFF_ACTIVE_QUERY,
   STAFF_QUERY,
 } from "@/features/staff/sanity-queries";
 import {
@@ -19,13 +20,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const today = new Date().toISOString().split("T")[0];
     const { searchParams } = new URL(request.url);
+    const activeOnly = searchParams.get("active") === "1";
     const { paginated, page, pageSize, q } =
       parsePaginationSearchParams(searchParams);
 
     if (!paginated) {
-      const data = await sanityClient.fetch(STAFF_QUERY, { today });
+      const data = await sanityClient.fetch(
+        activeOnly ? STAFF_ACTIVE_QUERY : STAFF_QUERY
+      );
       return NextResponse.json(data);
     }
 
@@ -47,7 +50,6 @@ export async function GET(request: Request) {
       pattern: pattern || "*",
       phoneDigits: phoneDigits.length >= 3 ? phoneDigits : "",
       phonePattern: phonePattern || "*",
-      today,
     };
 
     const [items, total] = await Promise.all([

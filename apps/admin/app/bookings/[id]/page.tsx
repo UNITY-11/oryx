@@ -18,7 +18,11 @@ import {
   updateBooking,
 } from "@features/bookings/api";
 import { filterServicesByQuery } from "@features/bookings/filter-services";
-import { canPrintBookingInvoice } from "@features/bookings/service-validation";
+import {
+  canPrintBookingInvoice,
+  getMissingStaffMessage,
+  getServicesMissingOptions,
+} from "@features/bookings/service-validation";
 import {
   getTimeSlotsForDate,
   isPastTimeSlot,
@@ -30,9 +34,12 @@ import {
   BookingStatus,
   getBookingDisplayId,
 } from "@features/bookings/types";
+import { StaffSelect } from "@features/bookings/ui/staff-select";
 import { fetchCompany } from "@features/company/api";
 import { fetchServices } from "@features/services/api";
 import { Service } from "@features/services/types";
+import { fetchActiveStaffList } from "@features/staff/api";
+import type { Staff } from "@features/staff/types";
 import {
   buildInvoiceSummaryPayload,
   formatCustomerConfirmationMessage,
@@ -107,6 +114,7 @@ export default function BookingDetailPage({
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
   const [realServices, setRealServices] = useState<Service[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [gymDiscountPercent, setGymDiscountPercent] = useState(0);
@@ -130,13 +138,18 @@ export default function BookingDetailPage({
   useEffect(() => {
     fetchBooking(id)
       .then((data) => {
-        // Older Sanity docs may have null options (or legacy addons)
+        // Older Sanity docs may have null options (or legacy addons).
+        // Sanity/GROQ returns null (not undefined) for unset numeric fields,
+        // which fails "must be a number" validation on later saves.
         const normalized: Booking = {
           ...data,
           services: (data.services ?? []).map((svc) => ({
             ...svc,
             options: svc.options ?? [],
           })),
+          discountPercent: data.discountPercent ?? 0,
+          discountAmount: data.discountAmount ?? 0,
+          subtotal: data.subtotal ?? 0,
         };
         setBooking(normalized);
         setSavedBooking(normalized);
@@ -150,6 +163,10 @@ export default function BookingDetailPage({
       .then(setRealServices)
       .catch((err) => setServicesError(err.message))
       .finally(() => setServicesLoading(false));
+
+    fetchActiveStaffList()
+      .then(setStaffList)
+      .catch(() => setStaffList([]));
   }, []);
 
   useEffect(() => {
@@ -247,10 +264,10 @@ export default function BookingDetailPage({
     setSaveError(null);
     try {
       const result = await updateBooking(id, {
-        membershipId: updated.membershipId,
-        discountPercent: updated.discountPercent,
-        discountAmount: updated.discountAmount,
-        subtotal: updated.subtotal,
+        membershipId: updated.membershipId ?? "",
+        discountPercent: updated.discountPercent ?? 0,
+        discountAmount: updated.discountAmount ?? 0,
+        subtotal: updated.subtotal ?? 0,
         amount: updated.amount,
       });
       setBooking(result);
@@ -270,26 +287,67 @@ export default function BookingDetailPage({
 
   const persistBookingUpdate = async (
     updated: Booking,
-    options?: { showLoading?: boolean }
+    options?: {
+      showLoading?: boolean;
+      requireStaff?: boolean;
+      requireOptions?: boolean;
+    }
   ) => {
     const showLoading = options?.showLoading ?? false;
+    const requireStaff = options?.requireStaff ?? false;
+    const requireOptions = options?.requireOptions ?? true;
+    if (requireStaff) {
+      const staffError = getMissingStaffMessage(updated);
+      if (staffError) {
+        setSaveError(staffError);
+        if (showLoading) setServicesSaving(false);
+        return false;
+      }
+    }
+    if (requireOptions) {
+      const missingOptions = getServicesMissingOptions(updated, realServices);
+      if (missingOptions.length > 0) {
+        setSaveError(
+          `Select service options for: ${missingOptions.join(", ")}.`
+        );
+        if (showLoading) setServicesSaving(false);
+        return false;
+      }
+    }
     if (showLoading) setServicesSaving(true);
     setSaveError(null);
     try {
+      const servicesPayload = updated.services.map((svc) => ({
+        name: svc.name,
+        options: svc.options ?? [],
+        ...(svc.staffId?.trim()
+          ? {
+              staffId: svc.staffId.trim(),
+              staffName: svc.staffName?.trim() || undefined,
+            }
+          : {}),
+      }));
       const result = await updateBooking(id, {
-        services: updated.services,
-        membershipId: updated.membershipId,
-        discountPercent: updated.discountPercent,
-        discountAmount: updated.discountAmount,
-        subtotal: updated.subtotal,
+        services: servicesPayload,
+        membershipId: updated.membershipId ?? "",
+        discountPercent: updated.discountPercent ?? 0,
+        discountAmount: updated.discountAmount ?? 0,
+        subtotal: updated.subtotal ?? 0,
         amount: updated.amount,
       });
+      // Prefer local staff fields if Sanity omits them from the response
       const normalized: Booking = {
         ...result,
-        services: (result.services ?? []).map((svc) => ({
-          ...svc,
-          options: svc.options ?? [],
-        })),
+        services: (result.services ?? []).map((svc, i) => {
+          const sent = servicesPayload[i];
+          const local = updated.services[i];
+          return {
+            ...svc,
+            options: svc.options ?? sent?.options ?? [],
+            staffId: svc.staffId ?? sent?.staffId ?? local?.staffId,
+            staffName: svc.staffName ?? sent?.staffName ?? local?.staffName,
+          };
+        }),
       };
       setBooking((prev) => {
         if (!prev) return normalized;
@@ -305,9 +363,7 @@ export default function BookingDetailPage({
       setSaveError(
         err instanceof Error ? err.message : "Failed to update booking"
       );
-      if (!isManagingServices) {
-        setBooking(savedBooking);
-      }
+      // Keep local edits (e.g. staff assignment) so the selection does not snap back
       return false;
     } finally {
       if (showLoading) setServicesSaving(false);
@@ -322,7 +378,10 @@ export default function BookingDetailPage({
     const toSave = pendingPersistRef.current;
     if (!toSave) return;
     pendingPersistRef.current = null;
-    await persistBookingUpdate(toSave, { showLoading: false });
+    await persistBookingUpdate(toSave, {
+      showLoading: false,
+      requireOptions: false,
+    });
   };
 
   const scheduleSilentPersist = (updated: Booking) => {
@@ -333,7 +392,10 @@ export default function BookingDetailPage({
       const toSave = pendingPersistRef.current;
       if (!toSave) return;
       pendingPersistRef.current = null;
-      persistBookingUpdate(toSave, { showLoading: false });
+      persistBookingUpdate(toSave, {
+        showLoading: false,
+        requireOptions: false,
+      });
     }, 450);
   };
 
@@ -346,8 +408,17 @@ export default function BookingDetailPage({
     current.subtotal !== saved.subtotal;
 
   const handleDoneManagingServices = async () => {
+    const staffError = getMissingStaffMessage(booking);
+    if (staffError) {
+      setSaveError(staffError);
+      return;
+    }
     if (hasServiceChanges(booking, savedBooking)) {
-      const ok = await persistBookingUpdate(booking, { showLoading: true });
+      const ok = await persistBookingUpdate(booking, {
+        showLoading: true,
+        requireStaff: true,
+        requireOptions: true,
+      });
       if (!ok) return;
     }
     setIsManagingServices(false);
@@ -541,6 +612,44 @@ export default function BookingDetailPage({
     });
   };
 
+  const assignStaffToService = (
+    index: number,
+    staffId: string,
+    staffName?: string
+  ) => {
+    if (!booking || isCompleted) return;
+
+    const applyAssign = (prev: Booking): Booking => {
+      const newServices = [...prev.services];
+      const current = newServices[index];
+      if (!current) return prev;
+
+      if (!staffId.trim()) {
+        newServices[index] = {
+          ...current,
+          staffId: undefined,
+          staffName: undefined,
+        };
+      } else {
+        const member = staffList.find((s) => s.id === staffId);
+        newServices[index] = {
+          ...current,
+          staffId,
+          staffName:
+            staffName?.trim() || member?.name || current.staffName || undefined,
+        };
+      }
+
+      return { ...prev, services: newServices };
+    };
+
+    const next = applyAssign(booking);
+    setBooking(next);
+    setSaveError(null);
+    // Always persist staff assignment (including while managing services)
+    scheduleSilentPersist(next);
+  };
+
   const configureAddonsFor = (index: number) => {
     setActiveServiceIndex(index);
     setPosMode("options");
@@ -587,6 +696,18 @@ export default function BookingDetailPage({
     setStatusMenuOpen(false);
     if (nextStatus === booking.status) return;
 
+    if (
+      nextStatus === "Confirmed" ||
+      nextStatus === "Completed" ||
+      nextStatus === "Started"
+    ) {
+      const staffError = getMissingStaffMessage(booking);
+      if (staffError) {
+        setSaveError(staffError);
+        return;
+      }
+    }
+
     const previousStatus = booking.status;
     setBooking((prev) => (prev ? { ...prev, status: nextStatus } : prev));
     setSaveError(null);
@@ -595,10 +716,15 @@ export default function BookingDetailPage({
       .then((result) => {
         const normalized: Booking = {
           ...result,
-          services: (result.services ?? []).map((svc) => ({
-            ...svc,
-            options: svc.options ?? [],
-          })),
+          services: (result.services ?? []).map((svc, i) => {
+            const local = booking.services[i];
+            return {
+              ...svc,
+              options: svc.options ?? [],
+              staffId: svc.staffId ?? local?.staffId,
+              staffName: svc.staffName ?? local?.staffName,
+            };
+          }),
         };
         setBooking(normalized);
         setSavedBooking(normalized);
@@ -920,30 +1046,65 @@ export default function BookingDetailPage({
                       (matchedObj?.options ?? []).length > 0;
                     const missingOptions =
                       catalogHasOptions && (svc.options ?? []).length === 0;
+                    const missingStaff = !svc.staffId?.trim();
                     return (
                       <div
-                        key={svc.name}
-                        className={`border-primary/10 rounded-2xl border bg-[#fcf4f0] p-4 sm:p-5 ${
-                          missingOptions
-                            ? "border-amber-400/60 ring-1 ring-amber-400/30"
-                            : ""
+                        key={`${svc.name}-${idx}`}
+                        className={`border-primary/10 relative z-0 rounded-2xl border bg-[#fcf4f0] p-4 sm:p-5 ${
+                          missingStaff
+                            ? "border-red-400/70 ring-1 ring-red-400/30"
+                            : missingOptions
+                              ? "border-amber-400/60 ring-1 ring-amber-400/30"
+                              : ""
                         }`}
                       >
                         <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                           <span className="text-primary-dark text-base font-semibold sm:text-lg">
                             {svc.name}
                           </span>
-                          {missingOptions && (
-                            <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                              Options required
-                            </span>
-                          )}
-                          {!missingOptions &&
-                            (svc.options ?? []).length === 0 && (
-                              <span className="text-text-secondary shrink-0 text-sm">
-                                No options selected
+                          <div className="flex flex-wrap gap-1.5">
+                            {missingStaff && (
+                              <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                                Staff required
                               </span>
                             )}
+                            {missingOptions && (
+                              <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                                Options required
+                              </span>
+                            )}
+                            {!missingOptions &&
+                              (svc.options ?? []).length === 0 && (
+                                <span className="text-text-secondary shrink-0 text-sm">
+                                  No options selected
+                                </span>
+                              )}
+                          </div>
+                        </div>
+
+                        <div className="relative z-10 mt-3">
+                          <label className="text-text-secondary mb-1.5 block text-[10px] font-bold tracking-wider uppercase">
+                            Assigned staff *
+                          </label>
+                          <StaffSelect
+                            value={svc.staffId ?? ""}
+                            staffList={staffList}
+                            fallback={
+                              svc.staffId && svc.staffName
+                                ? { id: svc.staffId, name: svc.staffName }
+                                : null
+                            }
+                            disabled={isCompleted || servicesSaving}
+                            hasError={missingStaff}
+                            onChange={(staffId, staffName) =>
+                              assignStaffToService(idx, staffId, staffName)
+                            }
+                          />
+                          {missingStaff && (
+                            <p className="mt-1.5 text-xs font-medium text-red-600">
+                              Please select a staff member for this service.
+                            </p>
+                          )}
                         </div>
                         {(svc.options ?? []).length > 0 && (
                           <div className="border-primary/10 mt-3 space-y-2 border-t pt-3">

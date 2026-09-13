@@ -47,7 +47,11 @@ export function validateStaff(data: StaffFormData): StaffFieldErrors {
     errors.email = "Enter a valid email address";
   }
 
-  if (Number.isNaN(data.baseSalary) || data.baseSalary < 0) {
+  if (
+    data.baseSalary !== undefined &&
+    data.baseSalary !== null &&
+    (Number.isNaN(data.baseSalary) || data.baseSalary < 0)
+  ) {
     errors.baseSalary = "Salary must be 0 or greater";
   } else if (data.baseSalary > 1_000_000) {
     errors.baseSalary = "Salary is too high";

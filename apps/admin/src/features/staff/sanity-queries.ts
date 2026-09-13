@@ -16,6 +16,20 @@ export const STAFF_ACTIVE_QUERY = `*[_type == "staff" && status == "Active"] | o
 
 export const STAFF_BY_ID_QUERY = `*[_type == "staff" && _id == $id][0] ${STAFF_PROJECTION}`;
 
+export const ATTENDANCE_BY_STAFF_QUERY = `*[_type == "attendance" && staff._ref == $staffId && date match $month + "*"] | order(date desc) {
+  "id": _id,
+  "staffId": staff._ref,
+  date,
+  checkIn,
+  checkOut,
+  totalHours,
+  status
+}`;
+
+export const ATTENDANCE_REASON_QUERY = `*[_type == "attendance" && _id == $id][0] {
+  reason
+}`;
+
 export const STAFF_SERVICE_HISTORY_QUERY = `*[
   _type == "booking"
   && date >= $from

@@ -696,11 +696,7 @@ export default function BookingDetailPage({
     setStatusMenuOpen(false);
     if (nextStatus === booking.status) return;
 
-    if (
-      nextStatus === "Confirmed" ||
-      nextStatus === "Completed" ||
-      nextStatus === "Started"
-    ) {
+    if (nextStatus === "Confirmed" || nextStatus === "Completed") {
       const staffError = getMissingStaffMessage(booking);
       if (staffError) {
         setSaveError(staffError);

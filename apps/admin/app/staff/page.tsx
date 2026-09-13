@@ -52,12 +52,13 @@ export default function StaffPage() {
         pageSize: 20,
       });
       setStaffList(data.items);
-      setTotalItems(data.totalItems);
+      setTotalItems(data.total);
       setTotalPages(data.totalPages);
-      setFrom(data.from);
-      setTo(data.to);
-      setHasPrev(data.hasPrev);
-      setHasNext(data.hasNext);
+      const pageSize = data.pageSize || 20;
+      setFrom(data.total === 0 ? 0 : (data.page - 1) * pageSize + 1);
+      setTo(Math.min(data.page * pageSize, data.total));
+      setHasPrev(data.page > 1);
+      setHasNext(data.page < data.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load staff");
     } finally {

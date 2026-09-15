@@ -80,14 +80,29 @@ export async function POST(request: Request) {
       );
     }
 
+    const name = input.name.trim();
+    const duplicateCount = await sanityClient.fetch<number>(
+      `count(*[_type == "service" && lower(name) == lower($name)])`,
+      { name }
+    );
+    if (duplicateCount > 0) {
+      return NextResponse.json(
+        {
+          error: "A service with this name already exists",
+          errors: { name: "A service with this name already exists" },
+        },
+        { status: 400 }
+      );
+    }
+
     const maxOrder = await sanityClient.fetch<number | null>(
       `math::max(*[_type == "service" && defined(order)].order)`
     );
 
     const doc = {
       _type: "service",
-      name: input.name,
-      category: input.name.trim(),
+      name,
+      category: name,
       status: input.status,
       description: input.description,
       shortDescription: input.shortDescription ?? "",

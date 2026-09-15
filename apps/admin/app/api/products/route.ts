@@ -128,9 +128,24 @@ export async function POST(request: Request) {
       );
     }
 
+    const name = parsed.name.trim();
+    const duplicateCount = await sanityClient.fetch<number>(
+      `count(*[_type == "product" && lower(name) == lower($name)])`,
+      { name }
+    );
+    if (duplicateCount > 0) {
+      return NextResponse.json(
+        {
+          error: "A product with this name already exists",
+          fieldErrors: { name: "A product with this name already exists" },
+        },
+        { status: 400 }
+      );
+    }
+
     const doc = {
       _type: "product",
-      name: parsed.name.trim(),
+      name,
       brand: parsed.brand.trim(),
       volumeOrWeight: parsed.volumeOrWeight.trim(),
       quantity: parsed.quantity,

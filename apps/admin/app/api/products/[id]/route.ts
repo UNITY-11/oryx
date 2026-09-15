@@ -107,8 +107,23 @@ export async function PATCH(
       );
     }
 
+    const name = merged.name.trim();
+    const duplicateCount = await sanityClient.fetch<number>(
+      `count(*[_type == "product" && _id != $id && lower(name) == lower($name)])`,
+      { id, name }
+    );
+    if (duplicateCount > 0) {
+      return NextResponse.json(
+        {
+          error: "A product with this name already exists",
+          fieldErrors: { name: "A product with this name already exists" },
+        },
+        { status: 400 }
+      );
+    }
+
     const patch = {
-      name: merged.name.trim(),
+      name,
       brand: merged.brand.trim(),
       volumeOrWeight: merged.volumeOrWeight.trim(),
       quantity: merged.quantity,

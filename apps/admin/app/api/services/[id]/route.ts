@@ -53,9 +53,24 @@ export async function PATCH(
       );
     }
 
+    const name = input.name.trim();
+    const duplicateCount = await sanityClient.fetch<number>(
+      `count(*[_type == "service" && _id != $id && lower(name) == lower($name)])`,
+      { id, name }
+    );
+    if (duplicateCount > 0) {
+      return NextResponse.json(
+        {
+          error: "A service with this name already exists",
+          errors: { name: "A service with this name already exists" },
+        },
+        { status: 400 }
+      );
+    }
+
     const patch: Record<string, unknown> = {
-      name: input.name,
-      category: input.name.trim(),
+      name,
+      category: name,
       status: input.status,
       description: input.description,
       shortDescription: input.shortDescription ?? "",

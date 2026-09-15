@@ -122,7 +122,7 @@ function SortableServiceCard({
         </div>
       )}
 
-      <div className="from-primary-dark/80 via-primary-dark/20 pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 opacity-100 transition-opacity duration-300 sm:p-4 md:via-transparent md:opacity-0 md:group-hover:opacity-100">
+      <div className="from-primary-dark/80 via-primary-dark/20 pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t to-transparent p-2.5 sm:p-4">
         <p className="line-clamp-2 text-xs leading-tight font-semibold text-white sm:text-sm">
           {service.name}
         </p>

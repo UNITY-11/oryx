@@ -58,25 +58,93 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Thermal printers only print solid black dots, and the brand logo is light
+ * peach, so it fades to nothing on paper. Redraw it as pure black on a
+ * transparent background for printing.
+ */
+const printLogoCache = new Map<string, Promise<string | null>>();
+
+export function loadPrintLogoDataUrl(
+  src = "/images/oryx-logo.png"
+): Promise<string | null> {
+  let cached = printLogoCache.get(src);
+  if (!cached) {
+    cached = renderPrintLogo(src);
+    printLogoCache.set(src, cached);
+  }
+  return cached;
+}
+
+async function renderPrintLogo(src: string): Promise<string | null> {
+  try {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const scale = Math.min(1, 1200 / img.naturalWidth);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const { width, height } = canvas;
+    const image = ctx.getImageData(0, 0, width, height);
+    const px = image.data;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let i = 0; i < px.length; i += 4) {
+      const luminance =
+        0.299 * px[i]! + 0.587 * px[i + 1]! + 0.114 * px[i + 2]!;
+      const ink = px[i + 3]! > 60 && luminance < 235;
+      px[i] = 0;
+      px[i + 1] = 0;
+      px[i + 2] = 0;
+      px[i + 3] = ink ? 255 : 0;
+      if (ink) {
+        const p = i / 4;
+        const x = p % width;
+        const y = (p - x) / width;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+    if (maxX < 0) return null;
+    ctx.putImageData(image, 0, 0);
+
+    const cropW = maxX - minX + 1;
+    const cropH = maxY - minY + 1;
+    const out = document.createElement("canvas");
+    out.width = cropW;
+    out.height = cropH;
+    out
+      .getContext("2d")
+      ?.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+    return out.toDataURL("image/png");
+  } catch {
+    return null;
+  }
+}
+
 export function buildInvoiceHTML(
   booking: BillingBooking,
   lines: ReturnType<typeof getServiceLineItems>,
   summary: InvoiceSummary,
-  thermalSize: ThermalSize
+  thermalSize: ThermalSize,
+  logoSrc: string | null = "/images/oryx-logo.png"
 ) {
   const date = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
-  const rollWidth =
-    thermalSize === "58mm"
-      ? "58mm"
-      : thermalSize === "110mm"
-        ? "110mm"
-        : "80mm";
-  // Thermal heads can't print the full roll width; sizing content to the
-  // printable area avoids the driver shrinking (and blurring) the page.
+  // Thermal heads print narrower than the roll (80mm roll ≈ 72mm printable).
+  // Laying the page out at the printable width, aligned left, keeps text from
+  // being cut off at the edge.
   const printableWidth =
     thermalSize === "58mm"
       ? "48mm"
@@ -103,48 +171,52 @@ export function buildInvoiceHTML(
   <meta charset="UTF-8"/>
   <title>Invoice ${getBookingDisplayId(booking)}</title>
   <style>
-    @page { size: ${rollWidth} auto; margin: 0; }
+    @page { size: ${printableWidth} auto; margin: 0; }
     * { box-sizing: border-box; margin: 0; padding: 0; color: #000; }
     html, body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html { width: ${printableWidth}; }
     body {
       width: ${printableWidth};
-      margin: 0 auto;
+      margin: 0;
+      padding: 0 2mm;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 700;
       line-height: 1.35;
-      -webkit-font-smoothing: none;
-      text-rendering: optimizeLegibility;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
-    .wrap { padding: 2mm 0 4mm; }
-    .logo { height: 40px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto 4px; filter: grayscale(1) contrast(2); }
+    .wrap { width: 100%; padding: 2mm 0 5mm; overflow: hidden; }
+    .logo { display: block; width: auto; height: auto; max-width: 70%; max-height: 18mm; margin: 0 auto 6px; }
     .center { text-align: center; }
-    .brand { font-size: 12px; font-weight: 700; }
-    .addr { font-size: 11px; margin-top: 2px; }
-    .title { font-size: 16px; font-weight: 700; }
-    .inv-num { font-size: 12px; font-weight: 700; margin-top: 2px; }
-    .meta { font-size: 11px; margin-top: 2px; }
-    .status { display: inline-block; margin-top: 4px; padding: 1px 6px; border: 1px solid #000; font-size: 11px; font-weight: 700; }
-    .dash { border: none; border-top: 1px dashed #000; margin: 6px 0; }
-    .label { font-size: 11px; font-weight: 700; margin-bottom: 1px; }
-    .val { font-size: 13px; font-weight: 700; }
-    .sub { font-size: 11px; }
-    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
-    .th { font-size: 11px; font-weight: 700; padding-bottom: 3px; border-bottom: 1px solid #000; }
-    .items { margin-top: 4px; }
-    .item { margin-bottom: 6px; }
-    .svc { font-size: 12px; font-weight: 700; }
-    .opt { padding-left: 6px; margin-top: 2px; font-size: 12px; }
-    .opt-name { flex: 1; min-width: 0; word-break: break-word; }
-    .amt { white-space: nowrap; font-weight: 700; }
-    .total-label { font-size: 13px; font-weight: 700; }
-    .total-val { font-size: 18px; font-weight: 700; white-space: nowrap; }
-    .footer { text-align: center; font-size: 11px; margin-top: 6px; }
+    .brand { font-size: 13px; }
+    .addr { font-size: 12px; margin-top: 2px; }
+    .title { font-size: 18px; letter-spacing: 1px; }
+    .inv-num { font-size: 14px; margin-top: 2px; }
+    .meta { font-size: 12px; margin-top: 2px; }
+    .status { display: inline-block; margin-top: 4px; padding: 1px 8px; border: 2px solid #000; font-size: 12px; }
+    .dash { border: none; border-top: 2px dashed #000; margin: 7px 0; }
+    .label { font-size: 12px; margin-bottom: 1px; }
+    .val { font-size: 15px; }
+    .sub { font-size: 12px; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; width: 100%; }
+    .row > span:first-child { flex: 1 1 auto; min-width: 0; }
+    .row > span:last-child { flex: 0 0 auto; text-align: right; }
+    .th { font-size: 12px; padding-bottom: 3px; border-bottom: 2px solid #000; }
+    .items { margin-top: 5px; }
+    .item { margin-bottom: 7px; }
+    .svc { font-size: 14px; }
+    .opt { padding-left: 4px; margin-top: 3px; font-size: 13px; }
+    .amt { white-space: nowrap; }
+    .total-label { font-size: 15px; }
+    .total-val { font-size: 17px; white-space: nowrap; }
+    .footer { text-align: center; font-size: 12px; margin-top: 7px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="center">
-      <img src="/images/oryx-logo.png" class="logo" alt="Oryx Spa" />
+      ${logoSrc ? `<img src="${logoSrc}" class="logo" alt="Oryx Spa" />` : ""}
       <div class="brand">Luxury Beauty &amp; Wellness</div>
       <div class="addr">123 Pearl Boulevard, Doha, Qatar<br/>+974 4444 0000</div>
     </div>

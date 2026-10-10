@@ -5,6 +5,7 @@ import { Check, Printer, X } from "lucide-react";
 import {
   BillingBooking,
   buildInvoiceHTML,
+  loadPrintLogoDataUrl,
   ThermalSize,
 } from "../api/use-billing-data";
 import type { InvoiceSummary } from "../invoice-summary";
@@ -41,21 +42,35 @@ export function PrintModal({
 
   const selectedMeta = THERMAL_SIZES.find((s) => s.id === thermalSize)!;
 
-  const handleConfirmPrint = () => {
+  const handleConfirmPrint = async () => {
     setPrinting(true);
-    const html = buildInvoiceHTML(booking, lines, summary, thermalSize);
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe) {
+      setPrinting(false);
+      return;
+    }
+    const logoSrc = await loadPrintLogoDataUrl();
+    const html = buildInvoiceHTML(
+      booking,
+      lines,
+      summary,
+      thermalSize,
+      logoSrc
+    );
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) return;
-    doc.open();
-    doc.write(html);
-    doc.close();
+    if (!doc) {
+      setPrinting(false);
+      return;
+    }
     iframe.onload = () => {
+      iframe.onload = null;
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
       setPrinting(false);
     };
+    doc.open();
+    doc.write(html);
+    doc.close();
   };
 
   const currentDate = new Date().toLocaleDateString("en-GB", {

@@ -50,6 +50,14 @@ export function openWhatsAppInvoice(
   openWhatsAppChat(booking.phone, message);
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export function buildInvoiceHTML(
   booking: BillingBooking,
   lines: ReturnType<typeof getServiceLineItems>,
@@ -67,24 +75,25 @@ export function buildInvoiceHTML(
       : thermalSize === "110mm"
         ? "110mm"
         : "80mm";
+  // Thermal heads can't print the full roll width; sizing content to the
+  // printable area avoids the driver shrinking (and blurring) the page.
+  const printableWidth =
+    thermalSize === "58mm"
+      ? "48mm"
+      : thermalSize === "110mm"
+        ? "104mm"
+        : "72mm";
   const lineItemsHtml = lines
     .map((svc) => {
-      const categoryHeader = `<div style="margin-bottom:4px;">
-      <span style="font-weight:700;color:#452c1e;font-size:11px;">${svc.name}</span>
-    </div>`;
-      if (svc.options.length === 0) {
-        return categoryHeader;
-      }
+      const header = `<div class="svc">${escapeHtml(svc.name)}</div>`;
+      if (svc.options.length === 0) return `<div class="item">${header}</div>`;
       const optionsHtml = svc.options
         .map(
           (a) =>
-            `<div style="display:flex;justify-content:space-between;padding-left:8px;margin-bottom:4px;">
-        <span style="font-size:11px;color:#452c1e;">${a.name}</span>
-        <span style="font-size:11px;font-weight:600;color:#452c1e;">QAR ${a.price}</span>
-      </div>`
+            `<div class="row opt"><span class="opt-name">${escapeHtml(a.name)}</span><span class="amt">QAR ${a.price}</span></div>`
         )
         .join("");
-      return `<div style="margin-bottom:8px;">${categoryHeader}${optionsHtml}</div>`;
+      return `<div class="item">${header}${optionsHtml}</div>`;
     })
     .join("");
 
@@ -95,24 +104,41 @@ export function buildInvoiceHTML(
   <title>Invoice ${getBookingDisplayId(booking)}</title>
   <style>
     @page { size: ${rollWidth} auto; margin: 0; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, "Inter", sans-serif; background: white; width: ${rollWidth}; }
-    .wrap { padding: 12px; }
-    .logo { height: 36px; object-fit: contain; filter: brightness(0.75) contrast(1.25); display: block; margin: 0 auto 4px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; color: #000; }
+    html, body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      width: ${printableWidth};
+      margin: 0 auto;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      line-height: 1.35;
+      -webkit-font-smoothing: none;
+      text-rendering: optimizeLegibility;
+    }
+    .wrap { padding: 2mm 0 4mm; }
+    .logo { height: 40px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto 4px; filter: grayscale(1) contrast(2); }
     .center { text-align: center; }
-    .brand { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: #86634f; }
-    .addr { font-size: 9px; color: #86634f; line-height: 1.5; margin-top: 4px; }
-    .inv-num { font-size: 10px; font-family: monospace; color: #86634f; margin-top: 2px; }
-    .dash { border: none; border-top: 1px dashed #cf8563; margin: 8px 0; }
-    .label { font-size: 8px; font-weight: 700; color: #cf8563; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 2px; }
-    .val { font-size: 11px; font-weight: 700; color: #452c1e; }
-    .sub { font-size: 9px; color: #86634f; }
-    .row { display: flex; justify-content: space-between; }
-    .th { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #86634f; padding-bottom: 4px; border-bottom: 1px solid #cf8563; }
-    .total-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #86634f; }
-    .total-val { font-size: 18px; font-weight: 700; color: #452c1e; }
-    .footer { text-align: center; font-size: 9px; color: #86634f; margin-top: 8px; }
-    .pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: #cf8563; color: white; }
+    .brand { font-size: 12px; font-weight: 700; }
+    .addr { font-size: 11px; margin-top: 2px; }
+    .title { font-size: 16px; font-weight: 700; }
+    .inv-num { font-size: 12px; font-weight: 700; margin-top: 2px; }
+    .meta { font-size: 11px; margin-top: 2px; }
+    .status { display: inline-block; margin-top: 4px; padding: 1px 6px; border: 1px solid #000; font-size: 11px; font-weight: 700; }
+    .dash { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+    .label { font-size: 11px; font-weight: 700; margin-bottom: 1px; }
+    .val { font-size: 13px; font-weight: 700; }
+    .sub { font-size: 11px; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+    .th { font-size: 11px; font-weight: 700; padding-bottom: 3px; border-bottom: 1px solid #000; }
+    .items { margin-top: 4px; }
+    .item { margin-bottom: 6px; }
+    .svc { font-size: 12px; font-weight: 700; }
+    .opt { padding-left: 6px; margin-top: 2px; font-size: 12px; }
+    .opt-name { flex: 1; min-width: 0; word-break: break-word; }
+    .amt { white-space: nowrap; font-weight: 700; }
+    .total-label { font-size: 13px; font-weight: 700; }
+    .total-val { font-size: 18px; font-weight: 700; white-space: nowrap; }
+    .footer { text-align: center; font-size: 11px; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -124,27 +150,27 @@ export function buildInvoiceHTML(
     </div>
     <hr class="dash"/>
     <div class="center">
-      <div style="font-size:13px;font-weight:700;color:#452c1e;">INVOICE</div>
-      <div class="inv-num">${getBookingDisplayId(booking)}</div>
-      <div style="font-size:9px;color:#86634f;margin-top:2px;">${date}</div>
-      <span class="pill" style="margin-top:4px;display:inline-block;">${booking.status}</span>
+      <div class="title">INVOICE</div>
+      <div class="inv-num">${escapeHtml(getBookingDisplayId(booking))}</div>
+      <div class="meta">${date}</div>
+      <span class="status">${escapeHtml(booking.status)}</span>
     </div>
     <hr class="dash"/>
     <div class="label">Billed To</div>
-    <div class="val">${booking.customerName}</div>
-    <div class="sub">${booking.phone}</div>
-    <div style="margin-top:4px;" class="sub">${booking.date} · ${booking.time}</div>
+    <div class="val">${escapeHtml(booking.customerName)}</div>
+    <div class="sub">${escapeHtml(booking.phone)}</div>
+    <div class="sub" style="margin-top:2px;">${escapeHtml(booking.date)} | ${escapeHtml(booking.time)}</div>
     <hr class="dash"/>
     <div class="row th"><span>Description</span><span>Amount</span></div>
-    <div style="margin-top:6px;">${lineItemsHtml}</div>
+    <div class="items">${lineItemsHtml}</div>
     <hr class="dash"/>
-    ${summary.hasDiscount ? `<div class="row" style="margin-bottom:4px;"><span class="sub">Subtotal</span><span class="sub" style="font-weight:600;">QAR ${summary.subtotal}</span></div><div class="row" style="margin-bottom:4px;"><span class="sub">Gym discount (${summary.discountPercent}%)</span><span class="sub" style="font-weight:600;">−QAR ${summary.discountAmount}</span></div><div class="sub" style="text-align:right;margin-bottom:4px;">Membership: ${summary.membershipId ?? ""}</div>` : ""}
-    <div class="row" style="align-items:center;">
+    ${summary.hasDiscount ? `<div class="row sub"><span>Subtotal</span><span class="amt">QAR ${summary.subtotal}</span></div><div class="row sub" style="margin-top:2px;"><span>Gym discount (${summary.discountPercent}%)</span><span class="amt">-QAR ${summary.discountAmount}</span></div><div class="sub" style="text-align:right;margin:2px 0 4px;">Membership: ${escapeHtml(summary.membershipId ?? "")}</div>` : ""}
+    <div class="row">
       <span class="total-label">Total Due</span>
       <span class="total-val">QAR ${summary.total}</span>
     </div>
     <hr class="dash"/>
-    <div class="footer">Thank you for choosing <strong>Oryx Spa</strong> 🌸</div>
+    <div class="footer">Thank you for choosing <strong>Oryx Spa</strong></div>
   </div>
 </body>
 </html>`;

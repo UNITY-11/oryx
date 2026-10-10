@@ -207,7 +207,8 @@ export function PrintModal({
                   Luxury Beauty & Wellness
                 </p>
                 <p className="text-text-secondary mt-1 text-[8px] leading-snug">
-                  123 Pearl Blvd, Doha · +974 4444 0000
+                  Abuhamour, Building no.152, Zone, 56 Street 995, Doha, Qatar ·
+                  +974 4444 0000
                 </p>
               </div>
 

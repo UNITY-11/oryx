@@ -218,7 +218,7 @@ export function buildInvoiceHTML(
     <div class="center">
       ${logoSrc ? `<img src="${logoSrc}" class="logo" alt="Oryx Spa" />` : ""}
       <div class="brand">Luxury Beauty &amp; Wellness</div>
-      <div class="addr">123 Pearl Boulevard, Doha, Qatar<br/>+974 4444 0000</div>
+      <div class="addr">Abuhamour, Building no.152, Zone, 56 Street 995, Doha, Qatar<br/>+974 4444 0000</div>
     </div>
     <hr class="dash"/>
     <div class="center">

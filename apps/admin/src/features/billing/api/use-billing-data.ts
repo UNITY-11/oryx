@@ -142,15 +142,17 @@ export function buildInvoiceHTML(
     month: "long",
     year: "numeric",
   });
-  // Thermal heads print narrower than the roll (80mm roll ≈ 72mm printable).
-  // Laying the page out at the printable width, aligned left, keeps text from
-  // being cut off at the edge.
-  const printableWidth =
+  // Use the full roll width for @page so the browser does not scale a
+  // narrower layout up to 80mm (that clips the right edge). Keep side
+  // padding so content stays inside the thermal head's printable area.
+  const rollWidth =
     thermalSize === "58mm"
-      ? "48mm"
+      ? "58mm"
       : thermalSize === "110mm"
-        ? "104mm"
-        : "72mm";
+        ? "110mm"
+        : "80mm";
+  const sidePad =
+    thermalSize === "58mm" ? "4mm" : thermalSize === "110mm" ? "3mm" : "5mm";
   const lineItemsHtml = lines
     .map((svc) => {
       const header = `<div class="svc">${escapeHtml(svc.name)}</div>`;
@@ -171,46 +173,51 @@ export function buildInvoiceHTML(
   <meta charset="UTF-8"/>
   <title>Invoice ${getBookingDisplayId(booking)}</title>
   <style>
-    @page { size: ${printableWidth} auto; margin: 0; }
+    @page { size: ${rollWidth} auto; margin: 0; }
     * { box-sizing: border-box; margin: 0; padding: 0; color: #000; }
-    html, body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    html { width: ${printableWidth}; }
+    html, body {
+      width: ${rollWidth};
+      max-width: ${rollWidth};
+      background: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
     body {
-      width: ${printableWidth};
       margin: 0;
-      padding: 0 2mm;
+      padding: 0 ${sidePad};
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      line-height: 1.35;
+      line-height: 1.3;
+      overflow-x: hidden;
       overflow-wrap: anywhere;
       word-break: break-word;
     }
-    .wrap { width: 100%; padding: 2mm 0 5mm; overflow: hidden; }
-    .logo { display: block; width: auto; height: auto; max-width: 70%; max-height: 18mm; margin: 0 auto 6px; }
+    .wrap { width: 100%; max-width: 100%; padding: 2mm 0 5mm; overflow: hidden; }
+    .logo { display: block; width: auto; height: auto; max-width: 65%; max-height: 16mm; margin: 0 auto 6px; }
     .center { text-align: center; }
-    .brand { font-size: 13px; }
-    .addr { font-size: 12px; margin-top: 2px; }
-    .title { font-size: 18px; letter-spacing: 1px; }
-    .inv-num { font-size: 14px; margin-top: 2px; }
-    .meta { font-size: 12px; margin-top: 2px; }
-    .status { display: inline-block; margin-top: 4px; padding: 1px 8px; border: 2px solid #000; font-size: 12px; }
-    .dash { border: none; border-top: 2px dashed #000; margin: 7px 0; }
-    .label { font-size: 12px; margin-bottom: 1px; }
-    .val { font-size: 15px; }
-    .sub { font-size: 12px; }
-    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; width: 100%; }
-    .row > span:first-child { flex: 1 1 auto; min-width: 0; }
-    .row > span:last-child { flex: 0 0 auto; text-align: right; }
-    .th { font-size: 12px; padding-bottom: 3px; border-bottom: 2px solid #000; }
-    .items { margin-top: 5px; }
-    .item { margin-bottom: 7px; }
-    .svc { font-size: 14px; }
-    .opt { padding-left: 4px; margin-top: 3px; font-size: 13px; }
+    .brand { font-size: 12px; }
+    .addr { font-size: 11px; margin-top: 2px; }
+    .title { font-size: 16px; letter-spacing: 1px; }
+    .inv-num { font-size: 13px; margin-top: 2px; }
+    .meta { font-size: 11px; margin-top: 2px; }
+    .status { display: inline-block; margin-top: 4px; padding: 1px 6px; border: 2px solid #000; font-size: 11px; }
+    .dash { border: none; border-top: 2px dashed #000; margin: 6px 0; width: 100%; }
+    .label { font-size: 11px; margin-bottom: 1px; }
+    .val { font-size: 14px; }
+    .sub { font-size: 11px; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; width: 100%; max-width: 100%; }
+    .row > span:first-child { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+    .row > span:last-child { flex: 0 0 auto; max-width: 42%; text-align: right; }
+    .th { font-size: 11px; padding-bottom: 3px; border-bottom: 2px solid #000; }
+    .items { margin-top: 4px; width: 100%; }
+    .item { margin-bottom: 6px; width: 100%; }
+    .svc { font-size: 13px; }
+    .opt { padding-left: 2px; margin-top: 2px; font-size: 12px; }
     .amt { white-space: nowrap; }
-    .total-label { font-size: 15px; }
-    .total-val { font-size: 17px; white-space: nowrap; }
-    .footer { text-align: center; font-size: 12px; margin-top: 7px; }
+    .total-label { font-size: 13px; }
+    .total-val { font-size: 15px; white-space: nowrap; }
+    .footer { text-align: center; font-size: 11px; margin-top: 6px; }
   </style>
 </head>
 <body>

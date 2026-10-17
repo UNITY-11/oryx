@@ -197,26 +197,26 @@ export function PrintModal({
                 maxWidth: "100%",
               }}
             >
-              <div className="bg-primary/10 border-primary/20 flex flex-col items-center border-b px-4 py-4 text-center">
+              <div className="bg-primary/10 border-primary/20 flex flex-col items-center border-b px-2.5 py-4 text-center sm:px-3">
                 <img
                   src="/images/oryx-logo.png"
                   alt="Oryx Spa"
-                  className="h-8 w-auto object-contain brightness-75 contrast-125"
+                  className="h-8 w-auto max-w-[70%] object-contain brightness-75 contrast-125"
                 />
                 <p className="text-text-secondary mt-1 text-[7px] font-medium tracking-widest uppercase">
                   Luxury Beauty & Wellness
                 </p>
-                <p className="text-text-secondary mt-1 text-[8px] leading-snug">
+                <p className="text-text-secondary mt-1 max-w-full text-[8px] leading-snug break-words">
                   Abuhamour, Building no.152, Zone, 56 Street 995, Doha, Qatar ·
                   +974 4444 0000
                 </p>
               </div>
 
-              <div className="border-primary/20 border-b border-dashed px-4 py-3 text-center">
+              <div className="border-primary/20 border-b border-dashed px-2.5 py-3 text-center sm:px-3">
                 <p className="text-text-primary text-xs font-bold tracking-widest">
                   INVOICE
                 </p>
-                <p className="text-text-secondary font-mono text-[9px]">
+                <p className="text-text-secondary font-mono text-[9px] break-all">
                   {getBookingDisplayId(booking)}
                 </p>
                 <p className="text-text-secondary mt-0.5 text-[9px]">
@@ -227,14 +227,14 @@ export function PrintModal({
                 </span>
               </div>
 
-              <div className="border-primary/20 border-b border-dashed px-4 py-3">
+              <div className="border-primary/20 border-b border-dashed px-2.5 py-3 sm:px-3">
                 <p className="text-primary mb-1 text-[7px] font-bold tracking-widest uppercase">
                   Billed To
                 </p>
-                <p className="text-text-primary text-[10px] font-bold">
+                <p className="text-text-primary text-[10px] font-bold break-words">
                   {booking.customerName}
                 </p>
-                <p className="text-text-secondary text-[8px]">
+                <p className="text-text-secondary text-[8px] break-all">
                   {booking.phone}
                 </p>
                 <p className="text-text-secondary mt-0.5 text-[8px]">
@@ -242,15 +242,15 @@ export function PrintModal({
                 </p>
               </div>
 
-              <div className="border-primary/20 border-b border-dashed px-4 py-3">
-                <div className="text-text-secondary border-primary/20 flex justify-between border-b pb-1.5 text-[7px] font-bold tracking-widest uppercase">
-                  <span>Description</span>
-                  <span>Amt</span>
+              <div className="border-primary/20 border-b border-dashed px-2.5 py-3 sm:px-3">
+                <div className="text-text-secondary border-primary/20 flex justify-between gap-2 border-b pb-1.5 text-[7px] font-bold tracking-widest uppercase">
+                  <span className="min-w-0">Description</span>
+                  <span className="shrink-0">Amt</span>
                 </div>
                 <div className="mt-2 space-y-1.5">
                   {lines.map((svc, i) => (
                     <div key={i} className="space-y-1">
-                      <div className="text-text-primary text-[9px] leading-tight font-bold">
+                      <div className="text-text-primary text-[9px] leading-tight font-bold break-words">
                         {svc.name}
                       </div>
                       {svc.options.length === 0
@@ -258,12 +258,12 @@ export function PrintModal({
                         : svc.options.map((a, j) => (
                             <div
                               key={j}
-                              className="flex justify-between gap-2 pl-1.5"
+                              className="flex justify-between gap-1.5 pl-1"
                             >
-                              <span className="text-text-primary min-w-0 text-[8px] break-words">
+                              <span className="text-text-primary min-w-0 flex-1 text-[8px] break-words">
                                 {a.name}
                               </span>
-                              <span className="text-text-primary shrink-0 text-[8px] font-semibold">
+                              <span className="text-text-primary max-w-[40%] shrink-0 text-right text-[8px] font-semibold whitespace-nowrap">
                                 {a.price}
                               </span>
                             </div>
@@ -273,33 +273,39 @@ export function PrintModal({
                 </div>
               </div>
 
-              <div className="border-primary/20 border-b border-dashed px-4 py-3">
+              <div className="border-primary/20 border-b border-dashed px-2.5 py-3 sm:px-3">
                 {summary.hasDiscount && (
                   <>
-                    <div className="text-text-secondary flex justify-between text-[8px]">
-                      <span>Subtotal</span>
-                      <span>QAR {summary.subtotal}</span>
+                    <div className="text-text-secondary flex justify-between gap-1.5 text-[8px]">
+                      <span className="min-w-0">Subtotal</span>
+                      <span className="shrink-0 whitespace-nowrap">
+                        QAR {summary.subtotal}
+                      </span>
                     </div>
-                    <div className="text-text-secondary mt-1 flex justify-between text-[8px]">
-                      <span>Gym discount ({summary.discountPercent}%)</span>
-                      <span>−QAR {summary.discountAmount}</span>
+                    <div className="text-text-secondary mt-1 flex justify-between gap-1.5 text-[8px]">
+                      <span className="min-w-0 break-words">
+                        Gym discount ({summary.discountPercent}%)
+                      </span>
+                      <span className="shrink-0 whitespace-nowrap">
+                        −QAR {summary.discountAmount}
+                      </span>
                     </div>
-                    <div className="text-text-secondary mt-0.5 text-right text-[7px]">
+                    <div className="text-text-secondary mt-0.5 text-right text-[7px] break-all">
                       Membership: {summary.membershipId}
                     </div>
                   </>
                 )}
-                <div className="border-primary/20 flex items-center justify-between border-t border-dashed pt-2">
-                  <span className="text-text-secondary text-[8px] font-bold tracking-widest uppercase">
+                <div className="border-primary/20 flex items-center justify-between gap-1.5 border-t border-dashed pt-2">
+                  <span className="text-text-secondary min-w-0 text-[8px] font-bold tracking-widest uppercase">
                     Total Due
                   </span>
-                  <span className="text-text-primary text-sm font-bold">
+                  <span className="text-text-primary shrink-0 text-sm font-bold whitespace-nowrap">
                     QAR {summary.total}
                   </span>
                 </div>
               </div>
 
-              <div className="px-4 py-3 text-center">
+              <div className="px-2.5 py-3 text-center sm:px-3">
                 <p className="text-text-secondary text-[8px] leading-snug">
                   Thank you for choosing
                   <br />
